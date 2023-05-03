@@ -1,9 +1,9 @@
 pub mod io;
 
 use hashbrown::HashMap;
-use ndarray::{self, Array2};
+use ndarray::{self, Array2, CowArray, Ix1};
 
-use crate::Embedding;
+use crate::Float;
 
 #[derive(Debug)]
 pub struct WordEmbeddings {
@@ -12,7 +12,7 @@ pub struct WordEmbeddings {
 }
 
 impl WordEmbeddings {
-    pub fn lookup(&self, word: &str) -> Option<Embedding> {
+    pub fn lookup(&self, word: &str) -> Option<CowArray<'_, Float, Ix1>> {
         if let Some(&idx) = self.word2idx.get(word) {
             let row = self.embeddings.slice(ndarray::s![idx, ..]);
             Some(row.into())

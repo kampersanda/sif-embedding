@@ -2,63 +2,87 @@ use std::collections::HashMap;
 
 use ndarray::Array2;
 
-use crate::WordEmbeddings;
+use crate::util;
+use crate::{Float, WordEmbeddings};
 
-pub struct Sif<'a, W, S> {
+pub struct Sif {
     word_embeddings: WordEmbeddings,
-    word_weights: &'a [(W, f32)],
-    sentences: &'a [S],
+    word2weight: HashMap<String, Float>,
     separator: char,
-    param_a: f32,
+    param_a: Float,
+    projection: Option<Array2<Float>>,
 }
 
-impl<'a, W, S> Sif<'a, W, S>
-where
-    W: AsRef<str>,
-    S: AsRef<str>,
-{
-    pub fn new(
-        word_embeddings: WordEmbeddings,
-        word_weights: &'a [(W, f32)],
-        sentences: &'a [S],
-    ) -> Self {
+impl Sif {
+    pub fn new<W>(word_embeddings: WordEmbeddings, word_weights: &[(W, Float)]) -> Self
+    where
+        W: AsRef<str>,
+    {
+        let word2weight = word_weights
+            .iter()
+            .map(|(word, weight)| (word.as_ref().to_string(), *weight))
+            .collect();
         Self {
             word_embeddings,
-            word_weights,
-            sentences,
+            word2weight,
             separator: ' ',
             param_a: 1e-3,
+            projection: None,
         }
+    }
+
+    pub fn embeddings<S>(&mut self, sentences: &[S]) -> Array2<Float>
+    where
+        S: AsRef<str>,
+    {
+        self.update_word_weigths();
+        let mut sent_embeddings = self.averaged_embeddings(sentences);
+        self.projection = Some(util::projection(&sent_embeddings, 1));
+        self.subtract_projection(&mut sent_embeddings);
+        sent_embeddings
     }
 
     /// a: Hyperparameter in Eq (3)
-    fn word_to_weight(&self) -> HashMap<String, f32> {
-        let mut sum_weight = 0.;
-        let mut word2weight = HashMap::new();
-        for (word, weight) in self.word_weights {
-            sum_weight += weight;
-            *word2weight.entry(word.as_ref().to_string()).or_insert(0.) += weight;
-        }
-        for (_, weight) in word2weight.iter_mut() {
-            *weight = self.param_a / (self.param_a + *weight / sum_weight);
-        }
-        word2weight
+    fn update_word_weigths(&mut self) {
+        let sum_weight = self.word2weight.values().fold(0., |acc, w| acc + w);
+        self.word2weight
+            .values_mut()
+            .for_each(|w| *w = self.param_a / (self.param_a + *w / sum_weight));
     }
 
     /// Lines 1--3
-    fn averaged_embeddings(&self) -> Array2<f32> {
+    fn averaged_embeddings<S>(&self, sentences: &[S]) -> Array2<Float>
+    where
+        S: AsRef<str>,
+    {
         let mut sent_embeddings =
-            Array2::<f32>::zeros((self.sentences.len(), self.word_embeddings.embedding_size()));
-        for (sent, mut sent_embedding) in self.sentences.iter().zip(sent_embeddings.rows_mut()) {
+            Array2::<Float>::zeros((sentences.len(), self.word_embeddings.embedding_size()));
+        for (sent, mut sent_embedding) in sentences.iter().zip(sent_embeddings.rows_mut()) {
             let sent = sent.as_ref();
-            let mut num_words = 0;
+            let mut n_words = 0.;
+            let mut word_weight = 0.;
             for word in sent.split(self.separator) {
-                num_words += 1;
+                n_words += 1.;
+                if let Some(&weight) = self.word2weight.get(word) {
+                    word_weight += weight;
+                } else {
+                    word_weight += 1.;
+                }
                 if let Some(word_embedding) = self.word_embeddings.lookup(word) {
                     sent_embedding += &word_embedding;
                 }
             }
+            sent_embedding *= word_weight;
+            sent_embedding /= n_words;
         }
         sent_embeddings
+    }
+
+    fn subtract_projection(&mut self, sent_embeddings: &mut Array2<Float>) {
+        let proj = self.projection.as_ref().unwrap();
+        for mut sent_embedding in sent_embeddings.rows_mut() {
+            let sub = proj.dot(&sent_embedding);
+            sent_embedding -= &sub;
+        }
     }
 }
