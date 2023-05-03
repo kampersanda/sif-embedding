@@ -22,7 +22,7 @@ where
     vt.slice(ndarray::s![..k, ..]).to_owned()
 }
 
-///
+/// Direction c_0
 pub fn principal_components<S>(x: &ArrayBase<S, Ix2>, k: usize) -> Array2<Float>
 where
     S: Data<Elem = Float>,

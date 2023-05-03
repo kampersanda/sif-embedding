@@ -6,7 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-approx = "0.5.1"
+anyhow = "1.0"
 hashbrown = "0.13.2"
 ndarray = { version = "0.15.6", features = ["approx-0_5"] }
 ndarray-linalg = { version = "0.16.0", features = ["openblas-static"] }
+
+[dev-dependencies]
+approx = "0.5.1"
