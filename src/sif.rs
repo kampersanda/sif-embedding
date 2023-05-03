@@ -10,7 +10,8 @@ pub struct Sif {
     word2weight: HashMap<String, Float>,
     separator: char,
     param_a: Float,
-    projection: Option<Array2<Float>>,
+    param_k: usize,
+    principal_components: Option<Array2<Float>>,
 }
 
 impl Sif {
@@ -27,7 +28,8 @@ impl Sif {
             word2weight,
             separator: ' ',
             param_a: 1e-3,
-            projection: None,
+            param_k: 1,
+            principal_components: None,
         }
     }
 
@@ -36,9 +38,10 @@ impl Sif {
         S: AsRef<str>,
     {
         self.update_word_weigths();
-        let mut sent_embeddings = self.averaged_embeddings(sentences);
-        self.projection = Some(util::projection(&sent_embeddings, 1));
-        self.subtract_projection(&mut sent_embeddings);
+        let mut sent_embeddings = self.weighted_average_embeddings(sentences);
+        self.principal_components =
+            Some(util::principal_components(&sent_embeddings, self.param_k));
+        self.subtract_principal_components(&mut sent_embeddings);
         sent_embeddings
     }
 
@@ -51,7 +54,7 @@ impl Sif {
     }
 
     /// Lines 1--3
-    fn averaged_embeddings<S>(&self, sentences: &[S]) -> Array2<Float>
+    fn weighted_average_embeddings<S>(&self, sentences: &[S]) -> Array2<Float>
     where
         S: AsRef<str>,
     {
@@ -78,8 +81,8 @@ impl Sif {
         sent_embeddings
     }
 
-    fn subtract_projection(&mut self, sent_embeddings: &mut Array2<Float>) {
-        let proj = self.projection.as_ref().unwrap();
+    fn subtract_principal_components(&mut self, sent_embeddings: &mut Array2<Float>) {
+        let proj = self.principal_components.as_ref().unwrap();
         for mut sent_embedding in sent_embeddings.rows_mut() {
             let sub = proj.dot(&sent_embedding);
             sent_embedding -= &sub;

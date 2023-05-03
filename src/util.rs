@@ -23,7 +23,7 @@ where
 }
 
 ///
-pub fn projection<S>(x: &ArrayBase<S, Ix2>, k: usize) -> Array2<Float>
+pub fn principal_components<S>(x: &ArrayBase<S, Ix2>, k: usize) -> Array2<Float>
 where
     S: Data<Elem = Float>,
 {
