@@ -8,3 +8,7 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.2.7", features = ["derive"] }
 sif-embedding = { path = ".." }
+
+[[bin]]
+name = "eval_sts"
+path = "src/eval_sts.rs"

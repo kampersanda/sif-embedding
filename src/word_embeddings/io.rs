@@ -5,6 +5,7 @@ use hashbrown::HashMap;
 use ndarray::Array2;
 
 use super::WordEmbeddings;
+use crate::Float;
 
 impl WordEmbeddings {
     pub fn from_text<R: BufRead>(rdr: R) -> Result<Self> {
@@ -28,7 +29,7 @@ impl WordEmbeddings {
             } else {
                 embedding_size = Some(raw_embedding.len());
             }
-            embeddings.extend(raw_embedding.iter().map(|&v| v.parse::<f32>().unwrap()));
+            embeddings.extend(raw_embedding.iter().map(|&v| v.parse::<Float>().unwrap()));
         }
 
         let embedding_size = embedding_size.unwrap();

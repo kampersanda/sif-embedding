@@ -50,6 +50,10 @@ impl Sif {
         let sent_embeddings = self.weighted_average_embeddings(sentences);
         let principal_components = util::principal_components(&sent_embeddings, 1);
         self.principal_component = Some(principal_components[[0, 0]]);
+        println!("principal_component = {:?}", self.principal_component);
+        if self.principal_component.unwrap() == 1. {
+            panic!("principal_component == 1.");
+        }
         let sent_embeddings = self.subtract_principal_components(sent_embeddings);
         (sent_embeddings, self)
     }
@@ -77,8 +81,8 @@ impl Sif {
                 n_words += 1.;
                 if let Some(&weight) = self.word2weight.get(word) {
                     word_weight += weight;
-                } else {
-                    word_weight += 1.;
+                    // } else {
+                    //     word_weight += 1.;
                 }
                 if let Some(word_embedding) = self.word_embeddings.lookup(word) {
                     sent_embedding += &word_embedding;
