@@ -52,7 +52,7 @@ where
 }
 
 /// Computes the principal components of the input data `x`,
-/// returning a 2D-array of shape `(k, k)`.
+/// returning a 2D-array of shape `(m, m)`.
 ///
 /// This is direction c_0.
 ///
@@ -60,12 +60,15 @@ where
 ///
 /// - `x`: 2D-array of shape `(n, m)`
 /// - `k`: Number of components
-pub fn principal_components<S>(x: &ArrayBase<S, Ix2>, k: usize) -> Array2<Float>
+pub fn principal_component<S>(x: &ArrayBase<S, Ix2>, k: usize) -> Array2<Float>
 where
     S: Data<Elem = Float>,
 {
+    // u of shape (k, m)
     let u = right_singular_vectors(x, k);
-    u.dot(&u.t())
+    // NOTE(kampersanda): Algorithm 1 says uu^T for a column vector u, not a row vector.
+    // So, u^Tu is correct here.
+    u.t().dot(&u)
 }
 
 #[cfg(test)]
@@ -113,8 +116,8 @@ mod tests {
             [0., 0., 0., 5., 5.],
             [0., 1., 0., 2., 2.],
         ]);
-        let y = principal_components(&x, 1);
-        assert_eq!(y.shape(), &[1, 1]);
+        let y = principal_component(&x, 1);
+        assert_eq!(y.shape(), &[5, 5]);
     }
 
     #[test]
@@ -128,7 +131,7 @@ mod tests {
             [0., 0., 0., 5., 5.],
             [0., 1., 0., 2., 2.],
         ]);
-        let y = principal_components(&x, 2);
-        assert_eq!(y.shape(), &[2, 2]);
+        let y = principal_component(&x, 2);
+        assert_eq!(y.shape(), &[5, 5]);
     }
 }

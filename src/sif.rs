@@ -5,57 +5,16 @@ use ndarray::Array2;
 use crate::util;
 use crate::{Float, WordEmbeddings};
 
-pub struct Sif {
+struct InnerSif {
     word_embeddings: WordEmbeddings,
     word2weight: HashMap<String, Float>,
     separator: char,
     param_a: Float,
-    principal_component: Option<Float>,
 }
 
-impl Sif {
-    ///
-    pub fn new<W>(word_embeddings: WordEmbeddings, word_weights: &[(W, Float)]) -> Self
-    where
-        W: AsRef<str>,
-    {
-        let word2weight = word_weights
-            .iter()
-            .map(|(word, weight)| (word.as_ref().to_string(), *weight))
-            .collect();
-        Self {
-            word_embeddings,
-            word2weight,
-            separator: ' ',
-            param_a: 1e-3,
-            principal_component: None,
-        }
-    }
-
+impl InnerSif {
     pub fn embedding_size(&self) -> usize {
         self.word_embeddings.embedding_size()
-    }
-
-    /// Computes embeddings for the input sentences,
-    /// returning a 2D-array of shape `(sentences.len(), embedding_size())`.
-    ///
-    /// # Arguments
-    ///
-    /// - `sentences`: Sentences to be embedded.
-    pub fn embeddings<S>(mut self, sentences: &[S]) -> (Array2<Float>, Self)
-    where
-        S: AsRef<str>,
-    {
-        self.update_word_weigths();
-        let sent_embeddings = self.weighted_average_embeddings(sentences);
-        let principal_components = util::principal_components(&sent_embeddings, 1);
-        self.principal_component = Some(principal_components[[0, 0]]);
-        println!("principal_component = {:?}", self.principal_component);
-        if self.principal_component.unwrap() == 1. {
-            panic!("principal_component == 1.");
-        }
-        let sent_embeddings = self.subtract_principal_components(sent_embeddings);
-        (sent_embeddings, self)
     }
 
     /// a: Hyperparameter in Eq (3)
@@ -95,9 +54,89 @@ impl Sif {
     }
 
     /// Lines 5--7
-    fn subtract_principal_components(&mut self, sent_embeddings: Array2<Float>) -> Array2<Float> {
-        let project = self.principal_component.unwrap();
-        sent_embeddings.to_owned() - &(sent_embeddings * project)
+    fn subtract_principal_components(
+        sent_embeddings: Array2<Float>,
+        principal_component: &Array2<Float>,
+    ) -> Array2<Float> {
+        sent_embeddings.to_owned() - &(sent_embeddings.dot(principal_component))
+    }
+}
+
+pub struct Sif {
+    inner: InnerSif,
+}
+
+impl Sif {
+    ///
+    pub fn new<W>(word_embeddings: WordEmbeddings, word_weights: &[(W, Float)]) -> Self
+    where
+        W: AsRef<str>,
+    {
+        let word2weight = word_weights
+            .iter()
+            .map(|(word, weight)| (word.as_ref().to_string(), *weight))
+            .collect();
+        let inner = InnerSif {
+            word_embeddings,
+            word2weight,
+            separator: ' ',
+            param_a: 1e-3,
+        };
+        Self { inner }
+    }
+
+    /// Computes embeddings for the input sentences,
+    /// returning a 2D-array of shape `(sentences.len(), embedding_size())`.
+    ///
+    /// # Arguments
+    ///
+    /// - `sentences`: Sentences to be embedded.
+    pub fn embeddings<S>(mut self, sentences: &[S]) -> (Array2<Float>, FreezedSif)
+    where
+        S: AsRef<str>,
+    {
+        self.inner.update_word_weigths();
+        let sent_embeddings = self.inner.weighted_average_embeddings(sentences);
+        // principal_components has shape (embedding_size(), embedding_size())
+        let principal_component = util::principal_component(&sent_embeddings, 1);
+        let sent_embeddings =
+            InnerSif::subtract_principal_components(sent_embeddings, &principal_component);
+        let freezed_model = FreezedSif {
+            inner: self.inner,
+            principal_component,
+        };
+        (sent_embeddings, freezed_model)
+    }
+
+    pub fn embedding_size(&self) -> usize {
+        self.inner.embedding_size()
+    }
+}
+
+pub struct FreezedSif {
+    inner: InnerSif,
+    principal_component: Array2<Float>,
+}
+
+impl FreezedSif {
+    pub fn embedding_size(&self) -> usize {
+        self.inner.embedding_size()
+    }
+
+    /// Computes embeddings for the input sentences,
+    /// returning a 2D-array of shape `(sentences.len(), embedding_size())`.
+    ///
+    /// # Arguments
+    ///
+    /// - `sentences`: Sentences to be embedded.
+    pub fn embeddings<S>(self, sentences: &[S]) -> Array2<Float>
+    where
+        S: AsRef<str>,
+    {
+        let sent_embeddings = self.inner.weighted_average_embeddings(sentences);
+        let sent_embeddings =
+            InnerSif::subtract_principal_components(sent_embeddings, &self.principal_component);
+        sent_embeddings
     }
 }
 
