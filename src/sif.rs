@@ -10,11 +10,11 @@ pub struct Sif {
     word2weight: HashMap<String, Float>,
     separator: char,
     param_a: Float,
-    param_k: usize,
-    principal_components: Option<Array2<Float>>,
+    principal_component: Option<Float>,
 }
 
 impl Sif {
+    ///
     pub fn new<W>(word_embeddings: WordEmbeddings, word_weights: &[(W, Float)]) -> Self
     where
         W: AsRef<str>,
@@ -28,21 +28,29 @@ impl Sif {
             word2weight,
             separator: ' ',
             param_a: 1e-3,
-            param_k: 1,
-            principal_components: None,
+            principal_component: None,
         }
     }
 
+    pub fn embedding_size(&self) -> usize {
+        self.word_embeddings.embedding_size()
+    }
+
+    /// Computes embeddings for the input sentences,
+    /// returning a 2D-array of shape `(sentences.len(), embedding_size())`.
+    ///
+    /// # Arguments
+    ///
+    /// - `sentences`: Sentences to be embedded.
     pub fn embeddings<S>(&mut self, sentences: &[S]) -> Array2<Float>
     where
         S: AsRef<str>,
     {
         self.update_word_weigths();
-        let mut sent_embeddings = self.weighted_average_embeddings(sentences);
-        self.principal_components =
-            Some(util::principal_components(&sent_embeddings, self.param_k));
-        self.subtract_principal_components(&mut sent_embeddings);
-        sent_embeddings
+        let sent_embeddings = self.weighted_average_embeddings(sentences);
+        let principal_components = util::principal_components(&sent_embeddings, 1);
+        self.principal_component = Some(principal_components[[0, 0]]);
+        self.subtract_principal_components(sent_embeddings)
     }
 
     /// a: Hyperparameter in Eq (3)
@@ -81,11 +89,9 @@ impl Sif {
         sent_embeddings
     }
 
-    fn subtract_principal_components(&mut self, sent_embeddings: &mut Array2<Float>) {
-        let proj = self.principal_components.as_ref().unwrap();
-        for mut sent_embedding in sent_embeddings.rows_mut() {
-            let sub = proj.dot(&sent_embedding);
-            sent_embedding -= &sub;
-        }
+    /// Lines 5--7
+    fn subtract_principal_components(&mut self, sent_embeddings: Array2<Float>) -> Array2<Float> {
+        let project = self.principal_component.unwrap();
+        sent_embeddings.to_owned() - &(sent_embeddings * project)
     }
 }

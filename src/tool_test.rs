@@ -11,6 +11,12 @@ fn test_sum_2d() {
 }
 
 #[test]
+fn test_sub_2d() {
+    let mut x = arr2(&[[0, 1], [2, 3], [4, 5]]);
+    x -= &(x.to_owned() * 2);
+}
+
+#[test]
 fn test_sum_2d_cast() {
     let mut x = arr2(&[[0, 1], [2, 3], [4, 5]]);
     let t = arr1(&[10]);

@@ -1,12 +1,13 @@
 use std::io::BufRead;
 
+use anyhow::{anyhow, Ok, Result};
 use hashbrown::HashMap;
 use ndarray::Array2;
 
 use super::WordEmbeddings;
 
 impl WordEmbeddings {
-    pub fn from_text<R: BufRead>(rdr: R) -> Self {
+    pub fn from_text<R: BufRead>(rdr: R) -> Result<Self> {
         let mut embeddings = vec![];
         let mut word2idx = HashMap::new();
         let mut embedding_size = None;
@@ -22,7 +23,7 @@ impl WordEmbeddings {
             let raw_embedding = &cols[1..];
             if let Some(es) = embedding_size {
                 if es != raw_embedding.len() {
-                    panic!("");
+                    return Err(anyhow!(""));
                 }
             } else {
                 embedding_size = Some(raw_embedding.len());
@@ -34,10 +35,10 @@ impl WordEmbeddings {
         let embeddings =
             Array2::from_shape_vec((word2idx.len(), embedding_size), embeddings).unwrap();
 
-        Self {
+        Ok(Self {
             embeddings,
             word2idx,
-        }
+        })
     }
 }
 
@@ -54,7 +55,7 @@ mod tests {
         let WordEmbeddings {
             embeddings,
             word2idx,
-        } = WordEmbeddings::from_text(text.as_bytes());
+        } = WordEmbeddings::from_text(text.as_bytes()).unwrap();
 
         assert_eq!(
             word2idx,
