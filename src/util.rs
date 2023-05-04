@@ -1,7 +1,23 @@
+use std::io::BufRead;
+
+use anyhow::{anyhow, Result};
 use ndarray::{self, Array2, ArrayBase, Data, Ix2};
 use ndarray_linalg::SVD;
 
 use crate::Float;
+
+pub fn word_weights_from_text<R: BufRead>(rdr: R) -> Result<Vec<(String, Float)>> {
+    let mut word_weights = vec![];
+    for line in rdr.lines() {
+        let line = line?;
+        let cols: Vec<_> = line.split_ascii_whitespace().collect();
+        if cols.len() != 2 {
+            return Err(anyhow!(""));
+        }
+        word_weights.push((cols[0].to_string(), cols[1].parse()?));
+    }
+    Ok(word_weights)
+}
 
 /// Computes the right singular vectors of the input data `x`,
 /// returning a 2D-array of shape `(k, m)`.

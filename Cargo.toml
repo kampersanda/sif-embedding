@@ -13,3 +13,6 @@ ndarray-linalg = { version = "0.16.0", features = ["openblas-static"] }
 
 [dev-dependencies]
 approx = "0.5.1"
+
+[workspace]
+members = ["cli"]

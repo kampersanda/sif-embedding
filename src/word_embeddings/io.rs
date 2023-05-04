@@ -1,6 +1,6 @@
 use std::io::BufRead;
 
-use anyhow::{anyhow, Ok, Result};
+use anyhow::{anyhow, Result};
 use hashbrown::HashMap;
 use ndarray::Array2;
 
@@ -13,8 +13,8 @@ impl WordEmbeddings {
         let mut embedding_size = None;
 
         for line in rdr.lines() {
-            let line = line.unwrap();
-            let cols: Vec<&str> = line.split_ascii_whitespace().collect();
+            let line = line?;
+            let cols: Vec<_> = line.split_ascii_whitespace().collect();
 
             let idx = word2idx.len();
             let word = cols[0].to_owned();

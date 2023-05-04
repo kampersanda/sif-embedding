@@ -42,7 +42,7 @@ impl Sif {
     /// # Arguments
     ///
     /// - `sentences`: Sentences to be embedded.
-    pub fn embeddings<S>(&mut self, sentences: &[S]) -> Array2<Float>
+    pub fn embeddings<S>(mut self, sentences: &[S]) -> (Array2<Float>, Self)
     where
         S: AsRef<str>,
     {
@@ -50,7 +50,8 @@ impl Sif {
         let sent_embeddings = self.weighted_average_embeddings(sentences);
         let principal_components = util::principal_components(&sent_embeddings, 1);
         self.principal_component = Some(principal_components[[0, 0]]);
-        self.subtract_principal_components(sent_embeddings)
+        let sent_embeddings = self.subtract_principal_components(sent_embeddings);
+        (sent_embeddings, self)
     }
 
     /// a: Hyperparameter in Eq (3)
@@ -105,9 +106,8 @@ mod tests {
         let we_text = "A 0.0 1.0 2.0\nBB -3.0 -4.0 -5.0\nCCC 6.0 -7.0 8.0\nDDDD -9.0 10.0 -11.0\n";
         let we = WordEmbeddings::from_text(we_text.as_bytes()).unwrap();
 
-        let mut sif = Sif::new(we, &[("A", 1.), ("BB", 2.), ("CCC", 3.), ("DDDD", 4.)]);
-        let se = sif.embeddings(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""]);
-
+        let (se, _) = Sif::new(we, &[("A", 1.), ("BB", 2.), ("CCC", 3.), ("DDDD", 4.)])
+            .embeddings(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""]);
         assert_eq!(se.shape(), &[5, 3]);
     }
 }
