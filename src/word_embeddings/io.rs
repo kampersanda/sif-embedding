@@ -1,6 +1,7 @@
 use std::io::BufRead;
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
+use hashbrown::hash_map::Entry;
 use hashbrown::HashMap;
 use ndarray::Array2;
 
@@ -13,21 +14,38 @@ impl WordEmbeddings {
         let mut word2idx = HashMap::new();
         let mut embedding_size = None;
 
-        for line in rdr.lines() {
+        for (i, line) in rdr.lines().enumerate() {
             let line = line?;
             let cols: Vec<_> = line.split_ascii_whitespace().collect();
 
-            let idx = word2idx.len();
             let word = cols[0].to_owned();
-            word2idx.try_insert(word, idx).unwrap();
-
             let raw_embedding = &cols[1..];
+
             if let Some(es) = embedding_size {
                 if es != raw_embedding.len() {
-                    return Err(anyhow!(""));
+                    eprintln!(
+                        "Line {i}: embedding_size should be {es}, but got {}. Skipped.",
+                        raw_embedding.len()
+                    );
+                    continue;
                 }
             } else {
                 embedding_size = Some(raw_embedding.len());
+            }
+
+            let idx = word2idx.len();
+            match word2idx.entry(word) {
+                Entry::Occupied(e) => {
+                    eprintln!(
+                        "Line {i}: word {} is already registered at line {}. Skipped.",
+                        e.key(),
+                        e.get()
+                    );
+                    continue;
+                }
+                Entry::Vacant(e) => {
+                    e.insert(idx);
+                }
             }
             embeddings.extend(raw_embedding.iter().map(|&v| v.parse::<Float>().unwrap()));
         }

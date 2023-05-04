@@ -14,7 +14,7 @@ struct InnerSif {
 }
 
 impl InnerSif {
-    pub fn embedding_size(&self) -> usize {
+    fn embedding_size(&self) -> usize {
         self.word_embeddings.embedding_size()
     }
 
