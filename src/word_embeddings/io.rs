@@ -47,30 +47,20 @@ mod tests {
     use super::*;
 
     use approx::assert_relative_eq;
-    use ndarray::arr2;
+    use ndarray::arr1;
 
     #[test]
     fn test_from_text() {
-        let text = "A 0.0 1.0 2.0\nB -3.0 -4.0 -5.0\nC 6.0 -7.0 8.0\n";
-        let WordEmbeddings {
-            embeddings,
-            word2idx,
-        } = WordEmbeddings::from_text(text.as_bytes()).unwrap();
+        let text = "A 0.0 1.0 2.0\nBB -3.0 -4.0 -5.0\nCCC 6.0 -7.0 8.0\nDDDD -9.0 10.0 -11.0\n";
+        let we = WordEmbeddings::from_text(text.as_bytes()).unwrap();
 
-        assert_eq!(
-            word2idx,
-            [
-                ("A".to_string(), 0),
-                ("B".to_string(), 1),
-                ("C".to_string(), 2)
-            ]
-            .into_iter()
-            .collect::<HashMap<String, usize>>()
-        );
+        assert_eq!(we.len(), 4);
+        assert_eq!(we.embedding_size(), 3);
 
-        assert_relative_eq!(
-            embeddings,
-            arr2(&[[0.0, 1.0, 2.0], [-3.0, -4.0, -5.0], [6.0, -7.0, 8.0]])
-        );
+        assert_relative_eq!(we.lookup("A").unwrap(), arr1(&[0.0, 1.0, 2.0]));
+        assert_relative_eq!(we.lookup("BB").unwrap(), arr1(&[-3.0, -4.0, -5.0]));
+        assert_relative_eq!(we.lookup("CCC").unwrap(), arr1(&[6.0, -7.0, 8.0]));
+        assert_relative_eq!(we.lookup("DDDD").unwrap(), arr1(&[-9.0, 10.0, -11.0]));
+        assert_eq!(we.lookup("EEEEE"), None);
     }
 }
