@@ -4,9 +4,11 @@ use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 
 use clap::Parser;
+use ndarray::Array2;
+use ndarray_stats::CorrelationExt;
 
 use sif_embedding::util;
-use sif_embedding::{Sif, WordEmbeddings};
+use sif_embedding::{Float, Sif, WordEmbeddings};
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
@@ -39,7 +41,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("word_weights.len() = {}", word_weights.len());
 
     let mut sentences = vec![];
-    let mut scores = vec![];
+    let mut gold_scores = vec![];
 
     let lines = std::io::stdin().lock().lines();
     for line in lines {
@@ -47,17 +49,36 @@ fn main() -> Result<(), Box<dyn Error>> {
         let cols: Vec<_> = line.split('\t').collect();
         sentences.push(cols[0].to_string());
         sentences.push(cols[1].to_string());
-        scores.push(cols[2].parse::<f32>()?);
+        gold_scores.push(cols[2].parse::<Float>()?);
     }
+    let n_examples = gold_scores.len();
+
+    println!("n_examples = {}", n_examples);
     println!("sentences.len() = {}", sentences.len());
 
     let (sent_embeddings, _) = Sif::new(word_embeddings, &word_weights).embeddings(&sentences);
-    for i in 0..10 {
-        let sim =
-            util::cosine_similarity(&sent_embeddings.row(i * 2), &sent_embeddings.row(i * 2 + 1))
-                .unwrap_or(0.);
-        println!("{}: {:.3} vs {}", i, sim, scores[i]);
+    let mut pred_scores = Vec::with_capacity(sentences.len());
+
+    for i in 0..n_examples {
+        let e1 = &sent_embeddings.row(i * 2);
+        let e2 = &sent_embeddings.row(i * 2 + 1);
+        let score = util::cosine_similarity(e1, e2).unwrap();
+        pred_scores.push(score);
     }
 
+    let scores = array2_from_two_slices(&pred_scores, &gold_scores).unwrap();
+    let corr = scores.pearson_correlation().unwrap();
+
+    println!("{:?}", corr[[0, 1]]);
+
     Ok(())
+}
+
+fn array2_from_two_slices<T: Copy>(s1: &[T], s2: &[T]) -> Option<Array2<T>> {
+    if s1.len() == s2.len() {
+        let concat = [s1, s2].concat();
+        Array2::from_shape_vec((2, s1.len()), concat).ok()
+    } else {
+        None
+    }
 }

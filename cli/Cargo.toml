@@ -7,6 +7,8 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.2.7", features = ["derive"] }
+ndarray = "0.15.6"
+ndarray-stats = "0.5.1"
 sif-embedding = { path = ".." }
 
 [[bin]]

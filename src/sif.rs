@@ -10,6 +10,7 @@ struct InnerSif {
     word2weight: HashMap<String, Float>,
     separator: char,
     param_a: Float,
+    n_components: usize,
 }
 
 impl InnerSif {
@@ -81,6 +82,7 @@ impl Sif {
             word2weight,
             separator: ' ',
             param_a: 1e-3,
+            n_components: 1,
         };
         Self { inner }
     }
@@ -98,7 +100,8 @@ impl Sif {
         self.inner.update_word_weigths();
         let sent_embeddings = self.inner.weighted_average_embeddings(sentences);
         // principal_components has shape (embedding_size(), embedding_size())
-        let principal_component = util::principal_component(&sent_embeddings, 1);
+        let principal_component =
+            util::principal_component(&sent_embeddings, self.inner.n_components);
         let sent_embeddings =
             InnerSif::subtract_principal_components(sent_embeddings, &principal_component);
         let freezed_model = FreezedSif {
