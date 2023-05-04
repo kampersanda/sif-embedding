@@ -33,12 +33,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         util::word_weights_from_text(reader)?
     };
 
-    println!("word_embeddings.len() = {}", word_embeddings.len());
-    println!(
+    eprintln!("word_embeddings.len() = {}", word_embeddings.len());
+    eprintln!(
         "word_embeddings.embedding_size() = {}",
         word_embeddings.embedding_size()
     );
-    println!("word_weights.len() = {}", word_weights.len());
+    eprintln!("word_weights.len() = {}", word_weights.len());
 
     let corpora = vec![
         (
@@ -89,25 +89,28 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let sif = Sif::new(word_embeddings, &word_weights);
     for (dir, files) in corpora {
-        let mut sum_curr = 0.;
-        for file in &files {
-            let corr = simeval(sif.clone(), &format!("{dir}/{file}"))?;
-            sum_curr += corr;
+        let mut corrs = vec![];
+        for &file in &files {
+            let corr = simeval(&sif, &format!("{dir}/{file}"))?;
+            corrs.push(corr);
         }
-        println!(
-            "Average Pearson Correlation: {:.3}",
-            sum_curr / files.len() as Float
-        );
+        println!("== {dir} ==");
+        for (&file, &corr) in files.iter().zip(corrs.iter()) {
+            println!("{file}\t{corr}");
+        }
+        let ave_corr = corrs.iter().sum::<Float>() / corrs.len() as Float;
+        println!("Average\t{ave_corr}");
     }
 
     Ok(())
 }
 
-fn simeval(sif: Sif, curpus: &str) -> Result<Float, Box<dyn Error>> {
-    println!("[{curpus}]");
+fn simeval(sif: &Sif, curpus: &str) -> Result<Float, Box<dyn Error>> {
+    eprintln!("[{curpus}]");
 
     let mut gold_scores = vec![];
-    let mut sentences = vec![];
+    let mut sentences1 = vec![];
+    let mut sentences2 = vec![];
 
     let reader = BufReader::new(File::open(curpus)?);
     for (i, line) in reader.lines().enumerate() {
@@ -123,28 +126,25 @@ fn simeval(sif: Sif, curpus: &str) -> Result<Float, Box<dyn Error>> {
                 .parse::<Float>()
                 .map_err(|e| format!("{e} at Line {i}: {line}"))?,
         );
-        sentences.push(cols[1].to_string());
-        sentences.push(cols[2].to_string());
+        sentences1.push(cols[1].to_string());
+        sentences2.push(cols[2].to_string());
     }
     let n_examples = gold_scores.len();
+    eprintln!("n_examples = {}", n_examples);
 
-    println!("n_examples = {}", n_examples);
-    println!("sentences.len() = {}", sentences.len());
+    let (sent_embeddings1, _) = sif.clone().embeddings(&sentences1);
+    let (sent_embeddings2, _) = sif.clone().embeddings(&sentences2);
 
-    let (sent_embeddings, _) = sif.embeddings(&sentences);
-    let mut pred_scores = Vec::with_capacity(sentences.len());
+    let mut pred_scores = Vec::with_capacity(n_examples);
 
     for i in 0..n_examples {
-        let e1 = &sent_embeddings.row(i * 2);
-        let e2 = &sent_embeddings.row(i * 2 + 1);
+        let e1 = &sent_embeddings1.row(i);
+        let e2 = &sent_embeddings2.row(i);
         let score = util::cosine_similarity(e1, e2).unwrap_or(0.); // ok?
         pred_scores.push(score);
     }
 
-    let corr = pearson_correlation(&pred_scores, &gold_scores);
-    println!("{:?}", corr);
-
-    Ok(corr)
+    Ok(pearson_correlation(&pred_scores, &gold_scores))
 }
 
 fn pearson_correlation(s1: &[Float], s2: &[Float]) -> Float {
