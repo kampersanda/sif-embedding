@@ -8,3 +8,5 @@ pub type Float = f32;
 
 #[cfg(test)]
 pub mod tool_test;
+
+pub use sif::Sif;
