@@ -5,6 +5,7 @@ use ndarray::Array2;
 use crate::util;
 use crate::{Float, WordEmbeddings};
 
+#[derive(Debug, Clone)]
 struct InnerSif {
     word_embeddings: WordEmbeddings,
     word2weight: HashMap<String, Float>,
@@ -63,6 +64,7 @@ impl InnerSif {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct Sif {
     inner: InnerSif,
 }
@@ -116,6 +118,7 @@ impl Sif {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct FreezedSif {
     inner: InnerSif,
     principal_component: Array2<Float>,

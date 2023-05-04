@@ -12,5 +12,5 @@ ndarray-stats = "0.5.1"
 sif-embedding = { path = ".." }
 
 [[bin]]
-name = "eval_sts"
-path = "src/eval_sts.rs"
+name = "semeval_sts"
+path = "src/semeval_sts.rs"
