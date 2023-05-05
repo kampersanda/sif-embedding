@@ -24,3 +24,4 @@ semeval-sts-clean
 semeval-sts-clean-wo-stopwords
 logs/
 .vscode
+dataset-sts
