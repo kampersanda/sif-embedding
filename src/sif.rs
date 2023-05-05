@@ -4,56 +4,6 @@ use crate::util;
 use crate::{Float, Lexicon};
 
 #[derive(Debug, Clone)]
-struct InnerSif {
-    lexcon: Lexicon,
-    separator: char,
-    param_a: Float,
-    n_components: usize,
-}
-
-impl InnerSif {
-    fn embedding_size(&self) -> usize {
-        self.lexcon.embedding_size()
-    }
-
-    /// Lines 1--3
-    fn weighted_average_embeddings<S>(&self, sentences: &[S]) -> Array2<Float>
-    where
-        S: AsRef<str>,
-    {
-        let mut sent_embeddings =
-            Array2::<Float>::zeros((sentences.len(), self.lexcon.embedding_size()));
-        for (sent, mut sent_embedding) in sentences.iter().zip(sent_embeddings.rows_mut()) {
-            let sent = sent.as_ref();
-            let mut n_words = 0;
-            for word in sent.split(self.separator) {
-                if let Some(word_embedding) = self.lexcon.embedding(word) {
-                    n_words += 1;
-                    let weight = if let Some(prob) = self.lexcon.probability(word) {
-                        self.param_a / (self.param_a + prob)
-                    } else {
-                        1.
-                    };
-                    sent_embedding += &(word_embedding.to_owned() * weight);
-                }
-            }
-            if n_words != 0 {
-                sent_embedding /= n_words as Float;
-            }
-        }
-        sent_embeddings
-    }
-
-    /// Lines 5--7
-    fn subtract_principal_components(
-        sent_embeddings: Array2<Float>,
-        principal_component: &Array2<Float>,
-    ) -> Array2<Float> {
-        sent_embeddings.to_owned() - &(sent_embeddings.dot(principal_component))
-    }
-}
-
-#[derive(Debug, Clone)]
 pub struct Sif {
     inner: InnerSif,
 }
@@ -138,6 +88,52 @@ impl FreezedSif {
         let sent_embeddings =
             InnerSif::subtract_principal_components(sent_embeddings, &self.principal_component);
         sent_embeddings
+    }
+}
+
+#[derive(Debug, Clone)]
+struct InnerSif {
+    lexcon: Lexicon,
+    separator: char,
+    param_a: Float,
+    n_components: usize,
+}
+
+impl InnerSif {
+    fn embedding_size(&self) -> usize {
+        self.lexcon.embedding_size()
+    }
+
+    /// Lines 1--3
+    fn weighted_average_embeddings<S>(&self, sentences: &[S]) -> Array2<Float>
+    where
+        S: AsRef<str>,
+    {
+        let mut sent_embeddings =
+            Array2::<Float>::zeros((sentences.len(), self.lexcon.embedding_size()));
+        for (sent, mut sent_embedding) in sentences.iter().zip(sent_embeddings.rows_mut()) {
+            let sent = sent.as_ref();
+            let mut n_words = 0;
+            for word in sent.split(self.separator) {
+                if let Some(word_embedding) = self.lexcon.embedding(word) {
+                    let weight = self.param_a / (self.param_a + self.lexcon.probability(word));
+                    sent_embedding += &(word_embedding.to_owned() * weight);
+                    n_words += 1;
+                }
+            }
+            if n_words != 0 {
+                sent_embedding /= n_words as Float;
+            }
+        }
+        sent_embeddings
+    }
+
+    /// Lines 5--7
+    fn subtract_principal_components(
+        sent_embeddings: Array2<Float>,
+        principal_component: &Array2<Float>,
+    ) -> Array2<Float> {
+        sent_embeddings.to_owned() - &(sent_embeddings.dot(principal_component))
     }
 }
 

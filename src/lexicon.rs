@@ -53,11 +53,11 @@ impl Lexicon {
         None
     }
 
-    pub fn probability<W>(&self, word: W) -> Option<Float>
+    pub fn probability<W>(&self, word: W) -> Float
     where
         W: AsRef<str>,
     {
-        self.word2weight.get(word.as_ref()).cloned()
+        self.word2weight.get(word.as_ref()).cloned().unwrap_or(0.)
     }
 
     pub fn embedding_size(&self) -> usize {

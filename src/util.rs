@@ -6,19 +6,23 @@ use ndarray_linalg::SVD;
 
 use crate::Float;
 
+///
 pub fn word_weights_from_text<R: BufRead>(rdr: R) -> Result<Vec<(String, Float)>> {
     let mut word_weights = vec![];
-    for line in rdr.lines() {
+    for (i, line) in rdr.lines().enumerate() {
         let line = line?;
         let cols: Vec<_> = line.split_ascii_whitespace().collect();
         if cols.len() != 2 {
-            return Err(anyhow!(""));
+            return Err(anyhow!(
+                "Line {i}: a line should be <word><SPACE><weight>, but got {line}."
+            ));
         }
         word_weights.push((cols[0].to_string(), cols[1].parse()?));
     }
     Ok(word_weights)
 }
 
+/// Computes the cosine similarity.
 pub fn cosine_similarity<S, T>(a: &ArrayBase<S, Ix1>, b: &ArrayBase<T, Ix1>) -> Option<Float>
 where
     S: Data<Elem = Float>,
@@ -27,7 +31,6 @@ where
     let dot_product = a.dot(b);
     let norm_a = a.dot(a).sqrt();
     let norm_b = b.dot(b).sqrt();
-
     if norm_a == 0. || norm_b == 0. {
         None
     } else {
@@ -42,7 +45,7 @@ where
 ///
 /// - `x`: 2D-array of shape `(n, m)`
 /// - `k`: Number of components
-pub fn right_singular_vectors<S>(x: &ArrayBase<S, Ix2>, k: usize) -> Array2<Float>
+fn right_singular_vectors<S>(x: &ArrayBase<S, Ix2>, k: usize) -> Array2<Float>
 where
     S: Data<Elem = Float>,
 {
@@ -60,7 +63,7 @@ where
 ///
 /// - `x`: 2D-array of shape `(n, m)`
 /// - `k`: Number of components
-pub fn principal_component<S>(x: &ArrayBase<S, Ix2>, k: usize) -> Array2<Float>
+pub(crate) fn principal_component<S>(x: &ArrayBase<S, Ix2>, k: usize) -> Array2<Float>
 where
     S: Data<Elem = Float>,
 {
