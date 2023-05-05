@@ -115,7 +115,7 @@ impl WordEmbeddings {
         if let Some(avg) = self.avg_embedding.as_ref() {
             return Some(avg.into());
         }
-        return None;
+        None
     }
 
     /// Returns an iterator to enumerate words and their embeddings.
@@ -128,6 +128,11 @@ impl WordEmbeddings {
     /// Returns the number of words.
     pub fn len(&self) -> usize {
         self.embeddings.shape()[0]
+    }
+
+    /// Checks if it is empty.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     /// Returns the number of dimensions for word embeddings.

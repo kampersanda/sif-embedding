@@ -45,7 +45,7 @@ pub struct Sif {
 
 impl Sif {
     /// Creates an instance from a lexicon.
-    pub fn new(lexicon: Lexicon) -> Self {
+    pub const fn new(lexicon: Lexicon) -> Self {
         let inner = InnerSif {
             lexicon,
             separator: ' ',
@@ -56,13 +56,13 @@ impl Sif {
     }
 
     /// Sets a separator for sentence segmentation (default: the ASCII whitespace ` `).
-    pub fn separator(mut self, separator: char) -> Self {
+    pub const fn separator(mut self, separator: char) -> Self {
         self.inner.separator = separator;
         self
     }
 
     /// Sets a weighting parameter `a` (default: `1e-3`).
-    pub fn param_a(mut self, param_a: Float) -> Self {
+    pub const fn param_a(mut self, param_a: Float) -> Self {
         self.inner.param_a = param_a;
         self
     }
@@ -73,7 +73,7 @@ impl Sif {
     ///
     /// The original idea uses only the first principal component.
     /// This parameter is for experimental purposes and will not need to be changed.
-    pub fn n_components(mut self, n_components: usize) -> Self {
+    pub const fn n_components(mut self, n_components: usize) -> Self {
         self.inner.n_components = n_components;
         self
     }
@@ -137,9 +137,7 @@ impl FreezedSif {
         S: AsRef<str>,
     {
         let sent_embeddings = self.inner.weighted_average_embeddings(sentences);
-        let sent_embeddings =
-            InnerSif::subtract_principal_components(sent_embeddings, &self.principal_component);
-        sent_embeddings
+        InnerSif::subtract_principal_components(sent_embeddings, &self.principal_component)
     }
 
     /// Returns the number of dimensions for sentence embeddings,
