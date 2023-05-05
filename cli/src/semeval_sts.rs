@@ -40,11 +40,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     );
     eprintln!("word_weights.len() = {}", word_weights.len());
 
-    let lexicon = Lexicon::new(word_embeddings, word_weights);
+    let lexicon = Lexicon::new(word_embeddings, word_weights).unk_word("unk");
     let sif = Sif::new(lexicon);
 
     // let project_dir = "semeval-sts/all";
     let project_dir = "semeval-sts-clean/all";
+    // let project_dir = "semeval-sts-clean-wo-stopwords/all";
 
     let corpora = vec![
         (
@@ -68,7 +69,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 "headlines.test.tsv",
                 "images.test.tsv",
                 "OnWN.test.tsv",
-                // "tweet-news.test.tsv", // due to error UTF8
+                // "tweet-news.test.tsv", // due to invalid UTF8 errors
             ],
         ),
         (
@@ -114,8 +115,7 @@ fn simeval(sif: &Sif, curpus: &str) -> Result<Float, Box<dyn Error>> {
     eprintln!("[{curpus}]");
 
     let mut gold_scores = vec![];
-    let mut sentences1 = vec![];
-    let mut sentences2 = vec![];
+    let mut sentences = vec![];
 
     let reader = BufReader::new(File::open(curpus)?);
     for (i, line) in reader.lines().enumerate() {
@@ -131,20 +131,20 @@ fn simeval(sif: &Sif, curpus: &str) -> Result<Float, Box<dyn Error>> {
                 .parse::<Float>()
                 .map_err(|e| format!("{e} at Line {i}: {line}"))?,
         );
-        sentences1.push(cols[1].to_string());
-        sentences2.push(cols[2].to_string());
+        sentences.push(cols[1].to_string());
+        sentences.push(cols[2].to_string());
     }
+
     let n_examples = gold_scores.len();
     eprintln!("n_examples = {}", n_examples);
 
-    let (sent_embeddings1, _) = sif.clone().embeddings(&sentences1);
-    let (sent_embeddings2, _) = sif.clone().embeddings(&sentences2);
-
+    // NOTE(kampersanda): Should we split the corpus into cols[1] and cols[2]?
+    let (sent_embeddings, _) = sif.clone().embeddings(&sentences);
     let mut pred_scores = Vec::with_capacity(n_examples);
 
     for i in 0..n_examples {
-        let e1 = &sent_embeddings1.row(i);
-        let e2 = &sent_embeddings2.row(i);
+        let e1 = &sent_embeddings.row(i * 2);
+        let e2 = &sent_embeddings.row(i * 2 + 1);
         let score = util::cosine_similarity(e1, e2).unwrap_or(0.); // ok?
         pred_scores.push(score);
     }

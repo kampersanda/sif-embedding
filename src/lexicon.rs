@@ -32,6 +32,14 @@ impl Lexicon {
         }
     }
 
+    pub fn unk_word<W>(mut self, unk_word: W) -> Self
+    where
+        W: AsRef<str>,
+    {
+        self.unk_word = Some(unk_word.as_ref().to_string());
+        self
+    }
+
     pub fn embedding<W>(&self, word: W) -> Option<CowArray<'_, Float, Ix1>>
     where
         W: AsRef<str>,
