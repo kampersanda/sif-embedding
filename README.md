@@ -6,7 +6,7 @@
 
 **This is currently a prototype version.**
 
-This is a Rust implementation of *Smooth inverse frequency (SIF)* that is a simple but powerful embedding technique for sentences, described in the paper:
+This is a Rust implementation of *smooth inverse frequency (SIF)* that is a simple but powerful embedding technique for sentences, described in the paper:
 
 > Sanjeev Arora, Yingyu Liang, and Tengyu Ma,
 > [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
