@@ -27,7 +27,7 @@ https://docs.rs/sif-embedding/
 ## Evaluation
 
 This repository provides an easy tool to evaluate this library using [SemEval STS Task](https://aclanthology.org/S16-1081/).
-We show an procedure example run the evaluation, assuming you are in the root of this repository.
+We show a procedure example run the evaluation, assuming you are in the root of this repository.
 
 ### 1. Download SemEval STS datasets
 
