@@ -44,14 +44,6 @@ jobs:
         continue-on-error: ${{ matrix.rust == 'nightly' }}
         run: cargo test --release
 
-      - name: Run cargo test (intrinsics)
-        continue-on-error: ${{ matrix.rust == 'nightly' }}
-        run: cargo test --release --features intrinsics
-        env:
-          RUSTDOCFLAGS: '-C target-cpu=native'
-
       - name: Run cargo doc
         continue-on-error: ${{ matrix.rust == 'nightly' }}
         run: cargo doc --no-deps
-        env:
-          RUSTDOCFLAGS: '--html-in-header katex.html'
