@@ -12,3 +12,17 @@ Cargo.lock
 
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
+
+
+# Added by cargo
+
+/target
+
+# Custom
+semeval-sts
+semeval-sts-clean
+semeval-sts-clean-wo-stopwords
+logs/
+.vscode
+dataset-sts
+venv/
