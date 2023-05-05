@@ -3,16 +3,35 @@ use ndarray::Array2;
 use crate::util;
 use crate::{Float, Lexicon};
 
+/// An implementation of *Smooth Inverse Frequency (SIF)* that is a simple but pewerful
+/// embedding technique for sentences, described in the paper:
+///
+/// > Sanjeev Arora, Yingyu Liang, and Tengyu Ma,
+/// > [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
+/// > ICLR 2017.
+///
+/// # Examples
+///
+/// ```
+/// use sif_embedding::{Lexicon, Sif, WordEmbeddings};
+///
+/// let word_model = "A 0.0 1.0 2.0\nBB -3.0 -4.0 -5.0\nCCC 6.0 -7.0 8.0\nDDDD -9.0 10.0 -11.0\n";
+/// let word_embeddings = WordEmbeddings::from_text(word_model.as_bytes()).unwrap();
+/// let word_weights = [("A", 1.), ("BB", 2.), ("CCC", 3.), ("DDDD", 4.)];
+///
+/// let lexicon = Lexicon::new(word_embeddings, word_weights);
+/// let (sent_embeddings, _) = Sif::new(lexicon).embeddings(&["A BB CCC DDDD", "BB CCC"]);
+/// ```
 #[derive(Debug, Clone)]
 pub struct Sif {
     inner: InnerSif,
 }
 
 impl Sif {
-    ///
-    pub fn new(lexcon: Lexicon) -> Self {
+    /// Creates an instance from a lexicon.
+    pub fn new(lexicon: Lexicon) -> Self {
         let inner = InnerSif {
-            lexcon,
+            lexicon,
             separator: ' ',
             param_a: 1e-3,
             n_components: 1,
@@ -20,27 +39,28 @@ impl Sif {
         Self { inner }
     }
 
+    /// Sets a separator for sentence segmentation.
     pub fn separator(mut self, separator: char) -> Self {
         self.inner.separator = separator;
         self
     }
 
+    /// Sets a parameter `a` (default = `1e-3`).
     pub fn param_a(mut self, param_a: Float) -> Self {
         self.inner.param_a = param_a;
         self
     }
 
+    /// Sets the number of components (default = `1`).
     pub fn n_components(mut self, n_components: usize) -> Self {
         self.inner.n_components = n_components;
         self
     }
 
-    /// Computes embeddings for the input sentences,
-    /// returning a 2D-array of shape `(sentences.len(), embedding_size())`.
+    /// Computes embeddings for the input sentences, returning the two items:
     ///
-    /// # Arguments
-    ///
-    /// - `sentences`: Sentences to be embedded.
+    ///  - Embeddings of shape `(sentences.len(), embedding_size())`.
+    ///  - Freezed model.
     pub fn embeddings<S>(self, sentences: &[S]) -> (Array2<Float>, FreezedSif)
     where
         S: AsRef<str>,
@@ -93,7 +113,7 @@ impl FreezedSif {
 
 #[derive(Debug, Clone)]
 struct InnerSif {
-    lexcon: Lexicon,
+    lexicon: Lexicon,
     separator: char,
     param_a: Float,
     n_components: usize,
@@ -101,7 +121,7 @@ struct InnerSif {
 
 impl InnerSif {
     fn embedding_size(&self) -> usize {
-        self.lexcon.embedding_size()
+        self.lexicon.embedding_size()
     }
 
     /// Lines 1--3
@@ -110,13 +130,13 @@ impl InnerSif {
         S: AsRef<str>,
     {
         let mut sent_embeddings =
-            Array2::<Float>::zeros((sentences.len(), self.lexcon.embedding_size()));
+            Array2::<Float>::zeros((sentences.len(), self.lexicon.embedding_size()));
         for (sent, mut sent_embedding) in sentences.iter().zip(sent_embeddings.rows_mut()) {
             let sent = sent.as_ref();
             let mut n_words = 0;
             for word in sent.split(self.separator) {
-                if let Some(word_embedding) = self.lexcon.embedding(word) {
-                    let weight = self.param_a / (self.param_a + self.lexcon.probability(word));
+                if let Some(word_embedding) = self.lexicon.embedding(word) {
+                    let weight = self.param_a / (self.param_a + self.lexicon.probability(word));
                     sent_embedding += &(word_embedding.to_owned() * weight);
                     n_words += 1;
                 }
@@ -149,8 +169,8 @@ mod tests {
         let embeddings = WordEmbeddings::from_text(model.as_bytes()).unwrap();
         let word_weights = [("A", 1.), ("BB", 2.), ("CCC", 3.), ("DDDD", 4.)];
 
-        let lexcon = Lexicon::new(embeddings, word_weights);
-        let (se, _) = Sif::new(lexcon).embeddings(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""]);
+        let lexicon = Lexicon::new(embeddings, word_weights);
+        let (se, _) = Sif::new(lexicon).embeddings(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""]);
         assert_eq!(se.shape(), &[5, 3]);
     }
 }

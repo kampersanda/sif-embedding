@@ -3,6 +3,7 @@ use ndarray::{CowArray, Ix1};
 
 use crate::{Float, WordEmbeddings};
 
+/// Lexicon that handles embeddings and weights of words.
 #[derive(Debug, Clone)]
 pub struct Lexicon {
     embeddings: WordEmbeddings,
