@@ -7,6 +7,7 @@ use crate::{Float, WordEmbeddings};
 pub struct Lexicon {
     embeddings: WordEmbeddings,
     word2weight: HashMap<String, Float>,
+    unk_word: Option<String>,
 }
 
 impl Lexicon {
@@ -27,6 +28,7 @@ impl Lexicon {
         Self {
             embeddings,
             word2weight,
+            unk_word: None,
         }
     }
 
@@ -34,7 +36,13 @@ impl Lexicon {
     where
         W: AsRef<str>,
     {
-        self.embeddings.lookup(word.as_ref())
+        if let Some(e) = self.embeddings.lookup(word.as_ref()) {
+            return Some(e);
+        }
+        if let Some(unk_word) = self.unk_word.as_ref() {
+            return self.embeddings.lookup(unk_word);
+        }
+        None
     }
 
     pub fn probability<W>(&self, word: W) -> Option<Float>

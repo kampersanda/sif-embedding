@@ -117,6 +117,7 @@ fn simeval(sif: &Sif, curpus: &str) -> Result<Float, Box<dyn Error>> {
     let reader = BufReader::new(File::open(curpus)?);
     for (i, line) in reader.lines().enumerate() {
         let line = line?;
+        let line = line.to_lowercase();
         let cols: Vec<_> = line.split('\t').collect();
         assert_eq!(cols.len(), 3);
         if cols[0].is_empty() {

@@ -20,3 +20,4 @@ Cargo.lock
 
 # Sybolic links
 semeval-sts
+logs/

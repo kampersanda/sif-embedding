@@ -25,21 +25,21 @@ impl InnerSif {
             Array2::<Float>::zeros((sentences.len(), self.lexcon.embedding_size()));
         for (sent, mut sent_embedding) in sentences.iter().zip(sent_embeddings.rows_mut()) {
             let sent = sent.as_ref();
-            let mut n_words = 0.;
-            let mut word_weight = 0.;
+            let mut n_words = 0;
             for word in sent.split(self.separator) {
-                n_words += 1.;
-                if let Some(prob) = self.lexcon.probability(word) {
-                    word_weight += self.param_a / (self.param_a + prob);
-                } else {
-                    word_weight += 1.;
-                }
                 if let Some(word_embedding) = self.lexcon.embedding(word) {
-                    sent_embedding += &word_embedding;
+                    n_words += 1;
+                    let weight = if let Some(prob) = self.lexcon.probability(word) {
+                        self.param_a / (self.param_a + prob)
+                    } else {
+                        1.
+                    };
+                    sent_embedding += &(word_embedding.to_owned() * weight);
                 }
             }
-            sent_embedding *= word_weight;
-            sent_embedding /= n_words;
+            if n_words != 0 {
+                sent_embedding /= n_words as Float;
+            }
         }
         sent_embeddings
     }
