@@ -19,7 +19,7 @@ $ ln -s dataset-sts/data/sts/semeval-sts
 
 ### 2. Proprocess datasets
 
-`scripts/clean_semeval_sts.py` is a script to preprocess sentences (such as tokenization, or lowercasing), referencing [the original code](https://github.com/PrincetonML/SIF).
+`scripts/clean_semeval_sts.py` is a script to preprocess sentences (such as tokenization, or lowercasing), referencing [the authors' code](https://github.com/PrincetonML/SIF).
 
 ```shell
 $ python -m venv venv
@@ -50,9 +50,11 @@ $ unzip glove.840B.300d.zip
 ### 4. Run evaluation
 
 `cli/semeval_sts` is a command line tool that evaluates `sif_embedding::Sif` using the SemEval STS datasets.
+The SIF algorithm requires unigram probabilities.
+You can use `auxiliary_data/enwiki_vocab_min200.txt` that has word frequencies (copied from [the authors' repository](https://github.com/PrincetonML/SIF)).
 
 ```shell
-$ cargo run --release -p cli --bin semeval_sts -- -e path/to/glove.840B.300d.txt -w path/to/enwiki_vocab_min200.txt -c path/to/semeval-sts-clean/all
+$ cargo run --release -p cli --bin semeval_sts -- -e glove.840B.300d.txt -w auxiliary_data/enwiki_vocab_min200.txt -c semeval-sts-clean/all
 ```
 
 This will report Pearson’s $r$ between estimated similarities (i.e., cosine similarity between sentence embeddings) and gold scores, following the evaluation metric of the task.
