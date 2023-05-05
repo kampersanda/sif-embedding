@@ -1,4 +1,4 @@
-//! Handlers for word embeddings from pretrained word2vec/GloVe models.
+//! Handlers for word embeddings from pretrained word2vec/[GloVe](https://nlp.stanford.edu/projects/glove/) models.
 use std::io::BufRead;
 
 use anyhow::Result;
@@ -8,7 +8,7 @@ use ndarray::{self, Array1, Array2, ArrayView1, CowArray, Ix1};
 
 use crate::Float;
 
-/// Handlers for word embeddings from pretrained word2vec/GloVe models.
+/// Handlers for word embeddings from pretrained word2vec/[GloVe](https://nlp.stanford.edu/projects/glove/) models.
 #[derive(Debug, Clone)]
 pub struct WordEmbeddings {
     word2idx: HashMap<String, usize>,
@@ -17,7 +17,8 @@ pub struct WordEmbeddings {
 }
 
 impl WordEmbeddings {
-    /// Loads a pretrained model in a text format.
+    /// Loads a pretrained model in a text format,
+    /// where each line has a word and its embedding sparated by the ASCII whitespace.
     ///
     /// ```text
     /// <word> <value1> <value2> ... <valueD>
@@ -92,15 +93,15 @@ impl WordEmbeddings {
         })
     }
 
-    /// Builds the average embedding for OOV words.
+    /// Builds the average embedding for OOV words, referencing [this page](https://stackoverflow.com/questions/49239941/what-is-unk-in-the-pretrained-glove-vector-files-e-g-glove-6b-50d-txt).
     ///
-    /// https://stackoverflow.com/questions/49239941/what-is-unk-in-the-pretrained-glove-vector-files-e-g-glove-6b-50d-txt
+    /// If enabled, [`Self::lookup()`] will never return [`None`].
     pub fn build_oov_embedding(mut self) -> Self {
         let mut avg_embedding = Array1::zeros(self.embedding_size());
         for embedding in self.embeddings.rows() {
             avg_embedding += &embedding;
         }
-        avg_embedding /= self.embeddings.len() as Float;
+        avg_embedding /= self.len() as Float;
         self.avg_embedding = Some(avg_embedding);
         self
     }
@@ -117,6 +118,7 @@ impl WordEmbeddings {
         return None;
     }
 
+    /// Returns an iterator to enumerate words and their embeddings.
     pub fn iter(&self) -> impl Iterator<Item = (&str, ArrayView1<Float>)> {
         self.word2idx
             .iter()
@@ -128,7 +130,7 @@ impl WordEmbeddings {
         self.embeddings.shape()[0]
     }
 
-    /// Returns the number of dimensions for embeddings.
+    /// Returns the number of dimensions for word embeddings.
     pub fn embedding_size(&self) -> usize {
         self.embeddings.shape()[1]
     }
@@ -154,5 +156,19 @@ mod tests {
         assert_relative_eq!(we.lookup("CCC").unwrap(), arr1(&[6.0, -7.0, 8.0]));
         assert_relative_eq!(we.lookup("DDDD").unwrap(), arr1(&[-9.0, 10.0, -11.0]));
         assert_eq!(we.lookup("EEEEE"), None);
+    }
+
+    #[test]
+    fn test_build_oov_embedding() {
+        let text = "A 0.0 1.0 2.0\nBB -3.0 -4.0 -5.0\nCCC 6.0 -7.0 8.0\nDDDD -9.0 10.0 -11.0\n";
+        let we = WordEmbeddings::from_text(text.as_bytes())
+            .unwrap()
+            .build_oov_embedding();
+
+        assert_relative_eq!(we.lookup("A").unwrap(), arr1(&[0.0, 1.0, 2.0]));
+        assert_relative_eq!(we.lookup("BB").unwrap(), arr1(&[-3.0, -4.0, -5.0]));
+        assert_relative_eq!(we.lookup("CCC").unwrap(), arr1(&[6.0, -7.0, 8.0]));
+        assert_relative_eq!(we.lookup("DDDD").unwrap(), arr1(&[-9.0, 10.0, -11.0]));
+        assert_relative_eq!(we.lookup("EEEEE").unwrap(), arr1(&[-1.5, 0.0, -1.5]));
     }
 }

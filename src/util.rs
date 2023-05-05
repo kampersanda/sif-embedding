@@ -1,3 +1,4 @@
+//! Utilities.
 use std::io::BufRead;
 
 use anyhow::{anyhow, Result};
@@ -6,7 +7,29 @@ use ndarray_linalg::SVD;
 
 use crate::Float;
 
+/// Parses pairs of a word and its weight from a text file,
+/// where each line has a word and its weight sparated by the ASCII whitespace.
 ///
+/// ```text
+/// <word> <weight>
+/// ```
+///
+/// # Examples
+///
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use sif_embedding::util;
+///
+/// let word_weight_text = "las 10\nvegas 20\n";
+/// let word_weights = util::word_weights_from_text(word_weight_text.as_bytes())?;
+///
+/// assert_eq!(
+///     word_weights,
+///     vec![("las".to_string(), 10.), ("vegas".to_string(), 20.)]
+/// );
+/// # Ok(())
+/// # }
+/// ```
 pub fn word_weights_from_text<R: BufRead>(rdr: R) -> Result<Vec<(String, Float)>> {
     let mut word_weights = vec![];
     for (i, line) in rdr.lines().enumerate() {

@@ -27,6 +27,7 @@ use crate::{Float, Lexicon};
 /// let lexicon = Lexicon::new(word_embeddings, word_weights);
 ///
 /// // Embed sentences using the lexicon.
+/// //
 /// let (sent_embeddings, freezed_model) = Sif::new(lexicon).embeddings(["go to las vegas", "mega vegas"]);
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
 ///
@@ -54,28 +55,38 @@ impl Sif {
         Self { inner }
     }
 
-    /// Sets a separator for sentence segmentation.
+    /// Sets a separator for sentence segmentation (default: the ASCII whitespace ` `).
     pub fn separator(mut self, separator: char) -> Self {
         self.inner.separator = separator;
         self
     }
 
-    /// Sets a parameter `a` (default = `1e-3`).
+    /// Sets a weighting parameter `a` (default: `1e-3`).
     pub fn param_a(mut self, param_a: Float) -> Self {
         self.inner.param_a = param_a;
         self
     }
 
-    /// Sets the number of components (default = `1`).
+    /// Sets the number of principal components to estimate a common discourse vector `c_0` (default: `1`).
+    ///
+    /// # Notes
+    ///
+    /// The original idea uses only the first principal component.
+    /// This parameter is for experimental purposes and will not need to be changed.
     pub fn n_components(mut self, n_components: usize) -> Self {
         self.inner.n_components = n_components;
         self
     }
 
-    /// Computes embeddings for the input sentences, returning the two items:
+    /// Computes embeddings for the input sentences,
+    /// returning a 2D-array of shape `(n_sentences, embedding_size)`
+    /// as the first item, where
     ///
-    ///  - Embeddings of shape `(sentences.len(), embedding_size())`.
-    ///  - Freezed model.
+    /// - `n_sentences` is the number of input sentences, and
+    /// - `embedding_size` is [`Self::embedding_size()`].
+    ///
+    /// This function consumes itself and, as the second item,
+    /// returns a compiled model [`FreezedSif`] for subsequent embeddings.
     pub fn embeddings<I, S>(self, sentences: I) -> (Array2<Float>, FreezedSif)
     where
         I: IntoIterator<Item = S>,
@@ -94,12 +105,20 @@ impl Sif {
         (sent_embeddings, freezed_model)
     }
 
-    /// Returns the number of dimensions for sentence embeddings.
+    /// Returns the number of dimensions for sentence embeddings,
+    /// which is equivalent to that of the input word embedding, i.e., [`Lexicon::embedding_size()`].
     pub fn embedding_size(&self) -> usize {
         self.inner.embedding_size()
     }
 }
 
+/// A compiled model of [`Sif`] that maintains the common discourse vector
+/// (`c_0` in the paper) estimated from the input sentences of [`Sif::embeddings()`].
+///
+/// # Notes
+///
+/// I do not know if the SIF algorithm assumes that a common discourse vector from
+/// one corpus will be used for other corpora.
 #[derive(Debug, Clone)]
 pub struct FreezedSif {
     inner: InnerSif,
@@ -108,11 +127,10 @@ pub struct FreezedSif {
 
 impl FreezedSif {
     /// Computes embeddings for the input sentences,
-    /// returning a 2D-array of shape `(sentences.len(), embedding_size())`.
+    /// returning a 2D-array of shape `(n_sentences, embedding_size)`, where
     ///
-    /// # Arguments
-    ///
-    /// - `sentences`: Sentences to be embedded.
+    /// - `n_sentences` is the number of input sentences, and
+    /// - `embedding_size` is [`Self::embedding_size()`].
     pub fn embeddings<I, S>(&self, sentences: I) -> Array2<Float>
     where
         I: IntoIterator<Item = S>,
@@ -124,7 +142,8 @@ impl FreezedSif {
         sent_embeddings
     }
 
-    /// Returns the number of dimensions for sentence embeddings.
+    /// Returns the number of dimensions for sentence embeddings,
+    /// which is equivalent to that of the input word embedding, i.e., [`Lexicon::embedding_size()`].
     pub fn embedding_size(&self) -> usize {
         self.inner.embedding_size()
     }
