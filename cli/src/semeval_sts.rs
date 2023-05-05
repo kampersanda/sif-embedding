@@ -8,7 +8,7 @@ use ndarray::Array2;
 use ndarray_stats::CorrelationExt;
 
 use sif_embedding::util;
-use sif_embedding::{Float, Sif, WordEmbeddings};
+use sif_embedding::{Float, Lexicon, Sif, WordEmbeddings};
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
@@ -39,6 +39,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         word_embeddings.embedding_size()
     );
     eprintln!("word_weights.len() = {}", word_weights.len());
+
+    let lexicon = Lexicon::new(word_embeddings, word_weights);
+    let sif = Sif::new(lexicon);
 
     let corpora = vec![
         (
@@ -87,7 +90,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         ),
     ];
 
-    let sif = Sif::new(word_embeddings, &word_weights);
     for (dir, files) in corpora {
         let mut corrs = vec![];
         for &file in &files {

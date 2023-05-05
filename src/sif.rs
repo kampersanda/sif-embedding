@@ -1,14 +1,11 @@
-use std::collections::HashMap;
-
 use ndarray::Array2;
 
 use crate::util;
-use crate::{Float, WordEmbeddings};
+use crate::{Float, Lexicon};
 
 #[derive(Debug, Clone)]
 struct InnerSif {
-    word_embeddings: WordEmbeddings,
-    word2weight: HashMap<String, Float>,
+    lexcon: Lexicon,
     separator: char,
     param_a: Float,
     n_components: usize,
@@ -16,15 +13,7 @@ struct InnerSif {
 
 impl InnerSif {
     fn embedding_size(&self) -> usize {
-        self.word_embeddings.embedding_size()
-    }
-
-    /// a: Hyperparameter in Eq (3)
-    fn update_word_weigths(&mut self) {
-        let sum_weight = self.word2weight.values().fold(0., |acc, w| acc + w);
-        self.word2weight
-            .values_mut()
-            .for_each(|w| *w = self.param_a / (self.param_a + *w / sum_weight));
+        self.lexcon.embedding_size()
     }
 
     /// Lines 1--3
@@ -33,19 +22,19 @@ impl InnerSif {
         S: AsRef<str>,
     {
         let mut sent_embeddings =
-            Array2::<Float>::zeros((sentences.len(), self.word_embeddings.embedding_size()));
+            Array2::<Float>::zeros((sentences.len(), self.lexcon.embedding_size()));
         for (sent, mut sent_embedding) in sentences.iter().zip(sent_embeddings.rows_mut()) {
             let sent = sent.as_ref();
             let mut n_words = 0.;
             let mut word_weight = 0.;
             for word in sent.split(self.separator) {
                 n_words += 1.;
-                if let Some(&weight) = self.word2weight.get(word) {
-                    word_weight += weight;
+                if let Some(prob) = self.lexcon.probability(word) {
+                    word_weight += self.param_a / (self.param_a + prob);
                 } else {
                     word_weight += 1.;
                 }
-                if let Some(word_embedding) = self.word_embeddings.lookup(word) {
+                if let Some(word_embedding) = self.lexcon.embedding(word) {
                     sent_embedding += &word_embedding;
                 }
             }
@@ -71,17 +60,9 @@ pub struct Sif {
 
 impl Sif {
     ///
-    pub fn new<W>(word_embeddings: WordEmbeddings, word_weights: &[(W, Float)]) -> Self
-    where
-        W: AsRef<str>,
-    {
-        let word2weight = word_weights
-            .iter()
-            .map(|(word, weight)| (word.as_ref().to_string(), *weight))
-            .collect();
+    pub fn new(lexcon: Lexicon) -> Self {
         let inner = InnerSif {
-            word_embeddings,
-            word2weight,
+            lexcon,
             separator: ' ',
             param_a: 1e-3,
             n_components: 1,
@@ -95,11 +76,10 @@ impl Sif {
     /// # Arguments
     ///
     /// - `sentences`: Sentences to be embedded.
-    pub fn embeddings<S>(mut self, sentences: &[S]) -> (Array2<Float>, FreezedSif)
+    pub fn embeddings<S>(self, sentences: &[S]) -> (Array2<Float>, FreezedSif)
     where
         S: AsRef<str>,
     {
-        self.inner.update_word_weigths();
         let sent_embeddings = self.inner.weighted_average_embeddings(sentences);
         // principal_components has shape (embedding_size(), embedding_size())
         let principal_component =
@@ -150,13 +130,16 @@ impl FreezedSif {
 mod tests {
     use super::*;
 
+    use crate::WordEmbeddings;
+
     #[test]
     fn test_sif_basic() {
-        let we_text = "A 0.0 1.0 2.0\nBB -3.0 -4.0 -5.0\nCCC 6.0 -7.0 8.0\nDDDD -9.0 10.0 -11.0\n";
-        let we = WordEmbeddings::from_text(we_text.as_bytes()).unwrap();
+        let model = "A 0.0 1.0 2.0\nBB -3.0 -4.0 -5.0\nCCC 6.0 -7.0 8.0\nDDDD -9.0 10.0 -11.0\n";
+        let embeddings = WordEmbeddings::from_text(model.as_bytes()).unwrap();
+        let word_weights = [("A", 1.), ("BB", 2.), ("CCC", 3.), ("DDDD", 4.)];
 
-        let (se, _) = Sif::new(we, &[("A", 1.), ("BB", 2.), ("CCC", 3.), ("DDDD", 4.)])
-            .embeddings(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""]);
+        let lexcon = Lexicon::new(embeddings, word_weights);
+        let (se, _) = Sif::new(lexcon).embeddings(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""]);
         assert_eq!(se.shape(), &[5, 3]);
     }
 }

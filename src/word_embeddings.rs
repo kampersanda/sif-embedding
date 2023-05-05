@@ -7,8 +7,8 @@ use crate::Float;
 
 #[derive(Debug, Clone)]
 pub struct WordEmbeddings {
-    embeddings: Array2<Float>,
     word2idx: HashMap<String, usize>,
+    embeddings: Array2<Float>,
 }
 
 impl WordEmbeddings {
