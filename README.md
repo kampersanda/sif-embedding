@@ -6,6 +6,14 @@ This is a Rust implementation of *Smooth inverse frequency (SIF)* that is a simp
 > [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
 > ICLR 2017.
 
+This is currently a prototype version.
+
+## TODO
+
+- Add the unsupervised SIF described in [the paper](https://aclanthology.org/W18-3012/).
+- Support [fastText](https://fasttext.cc/) models for word embeddings.
+- Conduct more evaluations.
+
 ## Evaluation
 
 This repository provides an easy tool to evaluate this library using [SemEval STS Task](https://aclanthology.org/S16-1081/).
@@ -100,8 +108,3 @@ The original results by the authors are also shown as a baseline, from Table 5 (
 
 This library is not an exact port of the original code, and the experimental results do not exactly match.
 However, similar results were obtained (except for `2012.MSRpar.test.tsv`).
-
-## Links
-
-https://github.com/PrincetonML/SIF
-https://github.com/brmson/dataset-sts
