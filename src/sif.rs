@@ -70,6 +70,21 @@ impl Sif {
         Self { inner }
     }
 
+    pub fn separator(mut self, separator: char) -> Self {
+        self.inner.separator = separator;
+        self
+    }
+
+    pub fn param_a(mut self, param_a: Float) -> Self {
+        self.inner.param_a = param_a;
+        self
+    }
+
+    pub fn n_components(mut self, n_components: usize) -> Self {
+        self.inner.n_components = n_components;
+        self
+    }
+
     /// Computes embeddings for the input sentences,
     /// returning a 2D-array of shape `(sentences.len(), embedding_size())`.
     ///
