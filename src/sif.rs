@@ -42,8 +42,8 @@ impl InnerSif {
                 n_words += 1.;
                 if let Some(&weight) = self.word2weight.get(word) {
                     word_weight += weight;
-                    // } else {
-                    //     word_weight += 1.;
+                } else {
+                    word_weight += 1.;
                 }
                 if let Some(word_embedding) = self.word_embeddings.lookup(word) {
                     sent_embedding += &word_embedding;
