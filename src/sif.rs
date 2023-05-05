@@ -1,4 +1,4 @@
-use ndarray::Array2;
+use ndarray::{Array1, Array2};
 
 use crate::util;
 use crate::{Float, Lexicon};
@@ -63,8 +63,9 @@ impl Sif {
     ///
     ///  - Embeddings of shape `(sentences.len(), embedding_size())`.
     ///  - Freezed model.
-    pub fn embeddings<S>(self, sentences: &[S]) -> (Array2<Float>, FreezedSif)
+    pub fn embeddings<I, S>(self, sentences: I) -> (Array2<Float>, FreezedSif)
     where
+        I: IntoIterator<Item = S>,
         S: AsRef<str>,
     {
         let sent_embeddings = self.inner.weighted_average_embeddings(sentences);
@@ -99,8 +100,9 @@ impl FreezedSif {
     /// # Arguments
     ///
     /// - `sentences`: Sentences to be embedded.
-    pub fn embeddings<S>(self, sentences: &[S]) -> Array2<Float>
+    pub fn embeddings<I, S>(self, sentences: I) -> Array2<Float>
     where
+        I: IntoIterator<Item = S>,
         S: AsRef<str>,
     {
         let sent_embeddings = self.inner.weighted_average_embeddings(sentences);
@@ -129,15 +131,17 @@ impl InnerSif {
     }
 
     /// Lines 1--3
-    fn weighted_average_embeddings<S>(&self, sentences: &[S]) -> Array2<Float>
+    fn weighted_average_embeddings<I, S>(&self, sentences: I) -> Array2<Float>
     where
+        I: IntoIterator<Item = S>,
         S: AsRef<str>,
     {
-        let mut sent_embeddings =
-            Array2::<Float>::zeros((sentences.len(), self.lexicon.embedding_size()));
-        for (sent, mut sent_embedding) in sentences.iter().zip(sent_embeddings.rows_mut()) {
+        let mut sent_embeddings = vec![];
+        let mut n_sentences = 0;
+        for sent in sentences {
             let sent = sent.as_ref();
             let mut n_words = 0;
+            let mut sent_embedding = Array1::zeros(self.lexicon.embedding_size());
             for word in sent.split(self.separator) {
                 if let Some(word_embedding) = self.lexicon.embedding(word) {
                     let weight = self.param_a / (self.param_a + self.lexicon.probability(word));
@@ -148,8 +152,14 @@ impl InnerSif {
             if n_words != 0 {
                 sent_embedding /= n_words as Float;
             }
+            sent_embeddings.extend(sent_embedding.iter());
+            n_sentences += 1;
         }
-        sent_embeddings
+        Array2::from_shape_vec(
+            (n_sentences, self.lexicon.embedding_size()),
+            sent_embeddings,
+        )
+        .unwrap()
     }
 
     /// Lines 5--7
