@@ -1,6 +1,10 @@
 # sif-embedding
 
-Smooth inverse frequency
+This is a Rust implementation of *Smooth inverse frequency (SIF)* that is a simple but powerful embedding technique for sentences, described in the paper:
+
+> Sanjeev Arora, Yingyu Liang, and Tengyu Ma,
+> [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
+> ICLR 2017.
 
 ## Evaluation
 
