@@ -18,6 +18,8 @@ Cargo.lock
 
 /target
 
-# Sybolic links
+# Custom
 semeval-sts
+semeval-sts-clean
 logs/
+.vscode

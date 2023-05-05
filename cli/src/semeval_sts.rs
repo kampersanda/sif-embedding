@@ -43,9 +43,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let lexicon = Lexicon::new(word_embeddings, word_weights);
     let sif = Sif::new(lexicon);
 
+    // let project_dir = "semeval-sts/all";
+    let project_dir = "semeval-sts-clean/all";
+
     let corpora = vec![
         (
-            "semeval-sts/2012",
+            "2012",
             vec![
                 "MSRpar.test.tsv",
                 "OnWN.test.tsv",
@@ -54,22 +57,22 @@ fn main() -> Result<(), Box<dyn Error>> {
             ],
         ),
         (
-            "semeval-sts/2013",
+            "2013",
             vec!["FNWN.test.tsv", "headlines.test.tsv", "OnWN.test.tsv"],
         ),
         (
-            "semeval-sts/2014",
+            "2014",
             vec![
                 "deft-forum.test.tsv",
                 "deft-news.test.tsv",
                 "headlines.test.tsv",
                 "images.test.tsv",
                 "OnWN.test.tsv",
-                "tweet-news.test.tsv",
+                // "tweet-news.test.tsv", // due to error UTF8
             ],
         ),
         (
-            "semeval-sts/2015",
+            "2015",
             vec![
                 "answers-forums.test.tsv",
                 "answers-students.test.tsv",
@@ -79,7 +82,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             ],
         ),
         (
-            "semeval-sts/2016",
+            "2016",
             vec![
                 "answer-answer.test.tsv",
                 "headlines.test.tsv",
@@ -90,13 +93,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         ),
     ];
 
-    for (dir, files) in corpora {
+    for (year, files) in corpora {
         let mut corrs = vec![];
         for &file in &files {
-            let corr = simeval(&sif, &format!("{dir}/{file}"))?;
+            let corr = simeval(&sif, &format!("{project_dir}/{year}.{file}"))?;
             corrs.push(corr);
         }
-        println!("== {dir} ==");
+        println!("== {year} ==");
         for (&file, &corr) in files.iter().zip(corrs.iter()) {
             println!("{file}\t{corr}");
         }
@@ -117,7 +120,6 @@ fn simeval(sif: &Sif, curpus: &str) -> Result<Float, Box<dyn Error>> {
     let reader = BufReader::new(File::open(curpus)?);
     for (i, line) in reader.lines().enumerate() {
         let line = line?;
-        let line = line.to_lowercase();
         let cols: Vec<_> = line.split('\t').collect();
         assert_eq!(cols.len(), 3);
         if cols[0].is_empty() {
