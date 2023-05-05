@@ -8,6 +8,10 @@ This is a Rust implementation of *Smooth inverse frequency (SIF)* that is a simp
 > [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
 > ICLR 2017.
 
+## Documentation
+
+https://docs.rs/sif-embedding/
+
 ## TODO
 
 - Add the unsupervised SIF described in [the paper](https://aclanthology.org/W18-3012/).

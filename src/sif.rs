@@ -1,3 +1,4 @@
+//! Smooth Inverse Frequency (SIF).
 use ndarray::{Array1, Array2};
 
 use crate::util;
