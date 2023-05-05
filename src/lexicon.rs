@@ -32,11 +32,11 @@ impl Lexicon {
         }
     }
 
-    pub fn unk_word<W>(mut self, unk_word: W) -> Self
+    pub fn unk_word<W>(mut self, unk_word: Option<W>) -> Self
     where
         W: AsRef<str>,
     {
-        self.unk_word = Some(unk_word.as_ref().to_string());
+        self.unk_word = unk_word.map(|s| s.as_ref().to_string());
         self
     }
 

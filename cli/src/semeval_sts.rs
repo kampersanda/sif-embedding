@@ -21,6 +21,9 @@ struct Args {
 
     #[arg(short = 'c', long)]
     corpora_dir: PathBuf,
+
+    #[arg(short = 'u', long)]
+    unk_word: Option<String>,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -42,7 +45,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     );
     eprintln!("word_weights.len() = {}", word_weights.len());
 
-    let lexicon = Lexicon::new(word_embeddings, word_weights).unk_word("unk");
+    let lexicon = Lexicon::new(word_embeddings, word_weights).unk_word(args.unk_word);
     let sif = Sif::new(lexicon);
 
     let corpora_dir = args.corpora_dir;
