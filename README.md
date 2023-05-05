@@ -113,6 +113,62 @@ The original results by the authors are also shown as a baseline, from Table 5 (
 This library is not an exact port of the original code, and the experimental results do not exactly match.
 However, similar results were obtained (except for `2012.MSRpar.test.tsv`).
 
+## Trouble shooting
+
+I provide tips on how to resolve errors I faced in my environment (WSL2+Ubuntu22.04 that installs `build-essential` at least).
+
+### Compile error from ndarray-linalg
+
+Maybe due to FFI for LAPACK.
+
+#### openssl-sys
+
+```shell
+$ cargo build
+...
+error: failed to run custom build command for `openssl-sys vX.Y.Z`
+```
+
+However, OpenSSL is installed.
+
+```shell
+$ openssl version
+OpenSSL 3.0.2 15 Mar 2022 (Library: OpenSSL 3.0.2 15 Mar 2022)
+```
+
+It is necessary to set up the link correctly.
+First, find the locations of openssl.
+
+```shell
+$ dpkg -L libssl-dev | grep lib
+$ dpkg -L libssl-dev | grep include
+```
+
+Next, set up links to the appropriate paths.
+
+```shell
+$ export OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu
+$ export OPENSSL_INCLUDE_DIR=/usr/include/openssl
+```
+
+Solve it!
+
+#### openblas-src
+
+```shell
+$ cargo build
+...
+error: failed to run custom build command for `openblas-src v0.10.8`
+```
+
+Maybe, Fortran is not installed.
+
+```shell
+$ sudo apt install gfortran
+```
+
+Solve it!
+
 ## Licensing
 
 Licensed under either of
