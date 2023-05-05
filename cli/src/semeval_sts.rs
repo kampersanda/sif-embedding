@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use clap::Parser;
 use ndarray::Array2;
@@ -10,7 +10,6 @@ use ndarray_stats::CorrelationExt;
 use sif_embedding::util;
 use sif_embedding::{Float, Lexicon, Sif, WordEmbeddings};
 
-/// Simple program to greet a person
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -19,6 +18,9 @@ struct Args {
 
     #[arg(short = 'w', long)]
     word_weights: PathBuf,
+
+    #[arg(short = 'c', long)]
+    corpora_dir: PathBuf,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -43,10 +45,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let lexicon = Lexicon::new(word_embeddings, word_weights).unk_word("unk");
     let sif = Sif::new(lexicon);
 
-    // let project_dir = "semeval-sts/all";
-    let project_dir = "semeval-sts-clean/all";
-    // let project_dir = "semeval-sts-clean-wo-stopwords/all";
-
+    let corpora_dir = args.corpora_dir;
     let corpora = vec![
         (
             "2012",
@@ -97,7 +96,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     for (year, files) in corpora {
         let mut corrs = vec![];
         for &file in &files {
-            let corr = simeval(&sif, &format!("{project_dir}/{year}.{file}"))?;
+            let mut curpus_path = corpora_dir.clone();
+            curpus_path.push(year);
+            curpus_path.set_extension(file);
+            let corr = simeval(&sif, &curpus_path)?;
             corrs.push(corr);
         }
         println!("== {year} ==");
@@ -111,13 +113,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn simeval(sif: &Sif, curpus: &str) -> Result<Float, Box<dyn Error>> {
-    eprintln!("[{curpus}]");
+fn simeval(sif: &Sif, curpus_path: &Path) -> Result<Float, Box<dyn Error>> {
+    eprintln!("[{curpus_path:?}]");
 
     let mut gold_scores = vec![];
     let mut sentences = vec![];
 
-    let reader = BufReader::new(File::open(curpus)?);
+    let reader = BufReader::new(File::open(curpus_path)?);
     for (i, line) in reader.lines().enumerate() {
         let line = line?;
         let cols: Vec<_> = line.split('\t').collect();
