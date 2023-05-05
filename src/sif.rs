@@ -16,15 +16,27 @@ use crate::{Float, Lexicon};
 /// ```
 /// use sif_embedding::{Lexicon, Sif, WordEmbeddings};
 ///
+/// // Load word embeddings from a pretrained model.
 /// let word_model = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
 /// let word_embeddings = WordEmbeddings::from_text(word_model.as_bytes()).unwrap();
+///
+/// // Prepare word-frequency pairs.
 /// let word_weights = [("las", 10.), ("vegas", 20.)];
 ///
+/// // Create a lexicon instance.
 /// let lexicon = Lexicon::new(word_embeddings, word_weights);
-/// let (sent_embeddings, _) = Sif::new(lexicon).embeddings(&["go to las vegas", "mega vegas"]);
 ///
+/// // Embed sentences using the lexicon.
+/// let (sent_embeddings, freezed_model) = Sif::new(lexicon).embeddings(["go to las vegas", "mega vegas"]);
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
+///
+/// // freezed_model is a model compiled using the first input sentences.
+/// let other_embeddings = freezed_model.embeddings(["vegas pro"]);
+/// assert_eq!(other_embeddings.shape(), &[1, 3]);
+/// assert_eq!(freezed_model.embedding_size(), 3);
 /// ```
+///
+/// See [`FreezedSif`] for more details on `freezed_model`.
 #[derive(Debug, Clone)]
 pub struct Sif {
     inner: InnerSif,
@@ -101,7 +113,7 @@ impl FreezedSif {
     /// # Arguments
     ///
     /// - `sentences`: Sentences to be embedded.
-    pub fn embeddings<I, S>(self, sentences: I) -> Array2<Float>
+    pub fn embeddings<I, S>(&self, sentences: I) -> Array2<Float>
     where
         I: IntoIterator<Item = S>,
         S: AsRef<str>,

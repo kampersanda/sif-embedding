@@ -12,6 +12,7 @@ pub struct Lexicon {
 }
 
 impl Lexicon {
+    ///
     pub fn new<I, W>(embeddings: WordEmbeddings, word_weights: I) -> Self
     where
         I: IntoIterator<Item = (W, Float)>,

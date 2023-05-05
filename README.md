@@ -16,6 +16,7 @@ https://docs.rs/sif-embedding/
 
 - Add the unsupervised SIF described in [the paper](https://aclanthology.org/W18-3012/).
 - Support [fastText](https://fasttext.cc/) models for word embeddings.
+- Support serialization/deserialization of models.
 - Conduct more evaluations.
 
 ## Evaluation
