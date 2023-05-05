@@ -10,12 +10,7 @@ clap = { version = "4.2.7", features = ["derive"] }
 ndarray = "0.15.6"
 ndarray-stats = "0.5.1"
 sif-embedding = { path = ".." }
-# tokenizers = "0.13.3"
 
 [[bin]]
 name = "semeval_sts"
 path = "src/semeval_sts.rs"
-
-# [[bin]]
-# name = "segment"
-# path = "src/segment.rs"
