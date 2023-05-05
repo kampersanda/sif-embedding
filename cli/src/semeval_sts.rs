@@ -22,14 +22,14 @@ struct Args {
     #[arg(short = 'c', long)]
     corpora_dir: PathBuf,
 
-    #[arg(short = 'u', long)]
-    unk_word: Option<String>,
+    #[arg(short = 'a', long)]
+    avg_embedding: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
-    let word_embeddings = {
+    let mut word_embeddings = {
         let reader = BufReader::new(File::open(&args.word_embedding)?);
         WordEmbeddings::from_text(reader)?
     };
@@ -45,7 +45,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     );
     eprintln!("word_weights.len() = {}", word_weights.len());
 
-    let lexicon = Lexicon::new(word_embeddings, word_weights).unk_word(args.unk_word);
+    if args.avg_embedding {
+        eprintln!("Build averaged word embedding for OOVs.");
+        word_embeddings = word_embeddings.build_avg_embedding();
+    }
+
+    let lexicon = Lexicon::new(word_embeddings, word_weights);
     let sif = Sif::new(lexicon);
 
     let corpora_dir = args.corpora_dir;

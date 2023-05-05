@@ -1,18 +1,19 @@
-//! Handlers for pretrained word embedding models.
+//! Handlers for word embeddings from pretrained word2vec/GloVe models.
 use std::io::BufRead;
 
 use anyhow::Result;
 use hashbrown::hash_map::Entry;
 use hashbrown::HashMap;
-use ndarray::{self, Array2, CowArray, Ix1};
+use ndarray::{self, Array1, Array2, ArrayView1, CowArray, Ix1};
 
 use crate::Float;
 
-/// Word embeddings to handle pretrained models.
+/// Handlers for word embeddings from pretrained word2vec/GloVe models.
 #[derive(Debug, Clone)]
 pub struct WordEmbeddings {
     word2idx: HashMap<String, usize>,
     embeddings: Array2<Float>,
+    avg_embedding: Option<Array1<Float>>, // for OOV
 }
 
 impl WordEmbeddings {
@@ -87,17 +88,39 @@ impl WordEmbeddings {
         Ok(Self {
             embeddings,
             word2idx,
+            avg_embedding: None,
         })
+    }
+
+    /// Builds the average embedding for OOV words.
+    ///
+    /// https://stackoverflow.com/questions/49239941/what-is-unk-in-the-pretrained-glove-vector-files-e-g-glove-6b-50d-txt
+    pub fn build_avg_embedding(mut self) -> Self {
+        let mut avg_embedding = Array1::zeros(self.embedding_size());
+        for embedding in self.embeddings.rows() {
+            avg_embedding += &embedding;
+        }
+        avg_embedding /= self.embeddings.len() as Float;
+        self.avg_embedding = Some(avg_embedding);
+        self
     }
 
     /// Returns the embedding for the input word.
     pub fn lookup(&self, word: &str) -> Option<CowArray<'_, Float, Ix1>> {
         if let Some(&idx) = self.word2idx.get(word) {
             let row = self.embeddings.slice(ndarray::s![idx, ..]);
-            Some(row.into())
-        } else {
-            None
+            return Some(row.into());
         }
+        if let Some(avg) = self.avg_embedding.as_ref() {
+            return Some(avg.into());
+        }
+        return None;
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&str, ArrayView1<Float>)> {
+        self.word2idx
+            .iter()
+            .map(|(w, i)| (w.as_str(), self.embeddings.row(*i)))
     }
 
     /// Returns the number of words.
