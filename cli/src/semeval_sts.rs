@@ -102,20 +102,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     ];
 
     for (year, files) in corpora {
-        let mut corrs = vec![];
+        println!("{year}");
         for &file in &files {
             let mut curpus_path = corpora_dir.clone();
             curpus_path.push(year);
             curpus_path.set_extension(file);
             let corr = simeval(&sif, &curpus_path)?;
-            corrs.push(corr);
-        }
-        println!("== {year} ==");
-        for (&file, &corr) in files.iter().zip(corrs.iter()) {
             println!("{file}\t{corr}");
         }
-        let ave_corr = corrs.iter().sum::<Float>() / corrs.len() as Float;
-        println!("Average\t{ave_corr}");
+        println!();
     }
 
     Ok(())
