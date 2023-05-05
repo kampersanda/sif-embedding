@@ -21,7 +21,7 @@ $ ln -s dataset-sts/data/sts/semeval-sts
 
 `scripts/clean_semeval_sts.py` is a script to preprocess sentences (such as tokenization, or lowercasing), referencing [the original code](https://github.com/PrincetonML/SIF).
 
-```
+```shell
 $ python -m venv venv
 $ . ./venv/bin/activate
 $ pip install -r scripts/requirements.txt
@@ -42,7 +42,7 @@ $ ls -1 semeval-sts-clean/all
 
 Download a pretrained model of word embeddings, such as [GloVe](https://nlp.stanford.edu/projects/glove/).
 
-```
+```shell
 $ wget https://nlp.stanford.edu/data/glove.840B.300d.zip
 $ unzip glove.840B.300d.zip
 ```
@@ -51,7 +51,7 @@ $ unzip glove.840B.300d.zip
 
 `cli/semeval_sts` is a command line tool that evaluates `sif_embedding::Sif` using the SemEval STS datasets.
 
-```
+```shell
 $ cargo run --release -p cli --bin semeval_sts -- -e path/to/glove.840B.300d.txt -w path/to/enwiki_vocab_min200.txt -c path/to/semeval-sts-clean/all
 ```
 
