@@ -108,3 +108,14 @@ The original results by the authors are also shown as a baseline, from Table 5 (
 
 This library is not an exact port of the original code, and the experimental results do not exactly match.
 However, similar results were obtained (except for `2012.MSRpar.test.tsv`).
+
+## Licensing
+
+Licensed under either of
+
+ * Apache License, Version 2.0
+   ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+ * MIT license
+   ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+
+at your option.
