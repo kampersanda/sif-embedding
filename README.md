@@ -1,4 +1,4 @@
-# usif-rs
+# sif-embedding
 
 Smooth inverse frequency
 
