@@ -1,3 +1,4 @@
+//! Handlers for vocabulary.
 use hashbrown::HashMap;
 use ndarray::{CowArray, Ix1};
 

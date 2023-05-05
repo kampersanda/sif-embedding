@@ -15,12 +15,14 @@ use crate::{Float, Lexicon};
 /// ```
 /// use sif_embedding::{Lexicon, Sif, WordEmbeddings};
 ///
-/// let word_model = "A 0.0 1.0 2.0\nBB -3.0 -4.0 -5.0\nCCC 6.0 -7.0 8.0\nDDDD -9.0 10.0 -11.0\n";
+/// let word_model = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
 /// let word_embeddings = WordEmbeddings::from_text(word_model.as_bytes()).unwrap();
-/// let word_weights = [("A", 1.), ("BB", 2.), ("CCC", 3.), ("DDDD", 4.)];
+/// let word_weights = [("las", 10.), ("vegas", 20.)];
 ///
 /// let lexicon = Lexicon::new(word_embeddings, word_weights);
-/// let (sent_embeddings, _) = Sif::new(lexicon).embeddings(&["A BB CCC DDDD", "BB CCC"]);
+/// let (sent_embeddings, _) = Sif::new(lexicon).embeddings(&["go to las vegas", "mega vegas"]);
+///
+/// assert_eq!(sent_embeddings.shape(), &[2, 3]);
 /// ```
 #[derive(Debug, Clone)]
 pub struct Sif {
@@ -78,6 +80,7 @@ impl Sif {
         (sent_embeddings, freezed_model)
     }
 
+    /// Returns the number of dimensions for sentence embeddings.
     pub fn embedding_size(&self) -> usize {
         self.inner.embedding_size()
     }
@@ -90,10 +93,6 @@ pub struct FreezedSif {
 }
 
 impl FreezedSif {
-    pub fn embedding_size(&self) -> usize {
-        self.inner.embedding_size()
-    }
-
     /// Computes embeddings for the input sentences,
     /// returning a 2D-array of shape `(sentences.len(), embedding_size())`.
     ///
@@ -108,6 +107,11 @@ impl FreezedSif {
         let sent_embeddings =
             InnerSif::subtract_principal_components(sent_embeddings, &self.principal_component);
         sent_embeddings
+    }
+
+    /// Returns the number of dimensions for sentence embeddings.
+    pub fn embedding_size(&self) -> usize {
+        self.inner.embedding_size()
     }
 }
 

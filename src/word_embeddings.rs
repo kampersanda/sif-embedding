@@ -1,3 +1,4 @@
+//! Handlers for pretrained word embedding models.
 use std::io::BufRead;
 
 use anyhow::Result;
@@ -7,6 +8,7 @@ use ndarray::{self, Array2, CowArray, Ix1};
 
 use crate::Float;
 
+/// Word embeddings to handle pretrained models.
 #[derive(Debug, Clone)]
 pub struct WordEmbeddings {
     word2idx: HashMap<String, usize>,
@@ -14,6 +16,29 @@ pub struct WordEmbeddings {
 }
 
 impl WordEmbeddings {
+    /// Loads a pretrained model in a text format.
+    ///
+    /// ```text
+    /// <word> <value1> <value2> ... <valueD>
+    /// ```
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// use sif_embedding::WordEmbeddings;
+    ///
+    /// let word_model = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
+    /// let word_embeddings = WordEmbeddings::from_text(word_model.as_bytes())?;
+    ///
+    /// assert_eq!(word_embeddings.len(), 2);
+    /// assert_eq!(word_embeddings.embedding_size(), 3);
+    ///
+    /// word_embeddings.lookup("vegas");
+    /// // => Some([-3.0, -4.0, -5.0])
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn from_text<R: BufRead>(rdr: R) -> Result<Self> {
         let mut embeddings = vec![];
         let mut word2idx = HashMap::new();
@@ -65,6 +90,7 @@ impl WordEmbeddings {
         })
     }
 
+    /// Returns the embedding for the input word.
     pub fn lookup(&self, word: &str) -> Option<CowArray<'_, Float, Ix1>> {
         if let Some(&idx) = self.word2idx.get(word) {
             let row = self.embeddings.slice(ndarray::s![idx, ..]);
@@ -74,10 +100,12 @@ impl WordEmbeddings {
         }
     }
 
+    /// Returns the number of words.
     pub fn len(&self) -> usize {
         self.embeddings.shape()[0]
     }
 
+    /// Returns the number of dimensions for embeddings.
     pub fn embedding_size(&self) -> usize {
         self.embeddings.shape()[1]
     }
