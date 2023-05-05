@@ -6,7 +6,7 @@
 
 **This is currently a prototype version.**
 
-This is a Rust implementation of *Smooth inverse frequency (SIF)* that is a simple but powerful embedding technique for sentences, described in the paper:
+This is a Rust implementation of *smooth inverse frequency (SIF)* that is a simple but powerful embedding technique for sentences, described in the paper:
 
 > Sanjeev Arora, Yingyu Liang, and Tengyu Ma,
 > [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
@@ -18,15 +18,16 @@ https://docs.rs/sif-embedding/
 
 ## TODO
 
-- Add the unsupervised SIF described in [the paper](https://aclanthology.org/W18-3012/).
-- Support [fastText](https://fasttext.cc/) models for word embeddings.
-- Support serialization/deserialization of models.
-- Conduct more evaluations.
+- [ ] Add the unsupervised SIF described in [the paper](https://aclanthology.org/W18-3012/).
+- [ ] Support [fastText](https://fasttext.cc/) models for word embeddings.
+- [ ] Support serialization/deserialization of models.
+- [ ] Provide Python binding
+- [ ] Conduct more evaluations.
 
 ## Evaluation
 
 This repository provides an easy tool to evaluate this library using [SemEval STS Task](https://aclanthology.org/S16-1081/).
-We show an procedure example run the evaluation, assuming you are in the root of this repository.
+We show a procedure example run the evaluation, assuming you are in the root of this repository.
 
 ### 1. Download SemEval STS datasets
 
@@ -118,59 +119,9 @@ The original results by the authors are also shown as a baseline, from Table 5 (
 This library is not an exact port of the original code, and the experimental results do not exactly match.
 However, similar results were obtained (except for `2012.MSRpar.test.tsv`).
 
-## Trouble shooting
+## Wiki
 
-I provide tips on how to resolve errors I faced in my environment (WSL2+Ubuntu22.04 that installs `build-essential` at least).
-
-### Compile error from ndarray-linalg
-
-#### openssl-sys
-
-```shell
-$ cargo build
-...
-error: failed to run custom build command for `openssl-sys vX.Y.Z`
-```
-
-However, OpenSSL is installed.
-
-```shell
-$ openssl version
-OpenSSL 3.0.2 15 Mar 2022 (Library: OpenSSL 3.0.2 15 Mar 2022)
-```
-
-It is necessary to set up the link correctly.
-First, find the locations of openssl.
-
-```shell
-$ dpkg -L libssl-dev | grep lib
-$ dpkg -L libssl-dev | grep include
-```
-
-Next, set up links to the appropriate paths.
-
-```shell
-$ export OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu
-$ export OPENSSL_INCLUDE_DIR=/usr/include/openssl
-```
-
-Solve it!
-
-#### openblas-src
-
-```shell
-$ cargo build
-...
-error: failed to run custom build command for `openblas-src v0.10.8`
-```
-
-Maybe, Fortran is not installed.
-
-```shell
-$ sudo apt install gfortran
-```
-
-Solve it!
+- [Trouble shooting](https://github.com/kampersanda/sif-embedding/wiki/Trouble-shooting): Tips on how to resolve errors I faced in my environment.
 
 ## Licensing
 
