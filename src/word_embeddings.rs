@@ -95,7 +95,7 @@ impl WordEmbeddings {
     /// Builds the average embedding for OOV words.
     ///
     /// https://stackoverflow.com/questions/49239941/what-is-unk-in-the-pretrained-glove-vector-files-e-g-glove-6b-50d-txt
-    pub fn build_avg_embedding(mut self) -> Self {
+    pub fn build_oov_embedding(mut self) -> Self {
         let mut avg_embedding = Array1::zeros(self.embedding_size());
         for embedding in self.embeddings.rows() {
             avg_embedding += &embedding;

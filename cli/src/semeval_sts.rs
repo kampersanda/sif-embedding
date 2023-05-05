@@ -22,8 +22,8 @@ struct Args {
     #[arg(short = 'c', long)]
     corpora_dir: PathBuf,
 
-    #[arg(short = 'a', long)]
-    avg_embedding: bool,
+    #[arg(long)]
+    oov: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -45,9 +45,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     );
     eprintln!("word_weights.len() = {}", word_weights.len());
 
-    if args.avg_embedding {
+    if args.oov {
         eprintln!("Build averaged word embedding for OOVs.");
-        word_embeddings = word_embeddings.build_avg_embedding();
+        word_embeddings = word_embeddings.build_oov_embedding();
     }
 
     let lexicon = Lexicon::new(word_embeddings, word_weights);
