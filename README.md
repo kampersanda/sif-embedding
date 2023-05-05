@@ -119,8 +119,6 @@ I provide tips on how to resolve errors I faced in my environment (WSL2+Ubuntu22
 
 ### Compile error from ndarray-linalg
 
-Maybe due to FFI for LAPACK.
-
 #### openssl-sys
 
 ```shell
