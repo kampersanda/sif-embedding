@@ -16,6 +16,23 @@ This is a Rust implementation of *smooth inverse frequency (SIF)* that is a simp
 
 https://docs.rs/sif-embedding/
 
+## Usage
+
+This library depends on [ndarray-linalg](https://github.com/rust-ndarray/ndarray-linalg).
+You must *always* specify which backend will be used with `features`, following the specifications of ndarray-linalg.
+See [README of ndarray-linalg v0.16.0](https://github.com/rust-ndarray/ndarray-linalg/tree/ndarray-linalg-v0.16.0) since the feature names of sif-embedding are the same.
+
+For example, you can specify the [OpenBLAS](https://www.openblas.net/) backend as follows:
+
+```toml
+# Cargo.toml
+
+[dependencies]
+sif-embedding = { version = "0.1", features = ["openblas"] }
+```
+
+If you are having problems compiling this library due to the backend, [my tips](https://github.com/kampersanda/sif-embedding/wiki/Trouble-shooting) may help.
+
 ## TODO
 
 - [ ] Add the unsupervised SIF described in [the paper](https://aclanthology.org/W18-3012/).
@@ -76,10 +93,14 @@ The SIF algorithm requires unigram probabilities.
 You can use `auxiliary_data/enwiki_vocab_min200.txt` that has word frequencies (copied from [the authors' repository](https://github.com/PrincetonML/SIF)).
 
 ```shell
-$ cargo run --release -p cli --bin semeval_sts -- -e glove.840B.300d.txt -w auxiliary_data/enwiki_vocab_min200.txt -c semeval-sts-clean/all
+$ cargo run --release -p cli --bin semeval_sts --features openblas -- -e glove.840B.300d.txt -w auxiliary_data/enwiki_vocab_min200.txt -c semeval-sts-clean/all
 ```
 
-This will report Pearson’s $r$ between estimated similarities (i.e., cosine similarity between sentence embeddings) and gold scores, following the evaluation metric of the task.
+This will report the Pearson correlation coefficient between estimated similarities
+(i.e., cosine similarity between sentence embeddings) and gold scores, following the evaluation metric of the task.
+
+Note that it can consume a large working memory according to the size of input word embeddings.
+For example, the above procedure consumed ~5.4 GiB of memory in my environment.
 
 ### Experimental results
 
