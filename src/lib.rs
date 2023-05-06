@@ -7,7 +7,13 @@
 //! > [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
 //! > ICLR 2017.
 //!
-//! See the document of [`Sif`] for the basic usage.
+//! ## Usage
+//!
+//! See [README](https://github.com/kampersanda/sif-embedding) for information
+//! on how to specify this crate in your dependencies; the backend to be used in
+//! [ndarray-linalg](https://github.com/rust-ndarray/ndarray-linalg) must be properly specified.
+//!
+//! See the document of [`Sif`] for an example on how to compute sentence embeddings.
 #![deny(missing_docs)]
 
 pub mod lexicon;
