@@ -42,7 +42,8 @@ jobs:
 
       - name: Run cargo test
         continue-on-error: ${{ matrix.rust == 'nightly' }}
-        run: cargo test --release
+        # It may become faster if installing openblas and specifying openblas-system.
+        run: cargo test --release --features openblas
 
       - name: Run cargo doc
         continue-on-error: ${{ matrix.rust == 'nightly' }}
