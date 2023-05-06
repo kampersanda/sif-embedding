@@ -107,35 +107,35 @@ For example, the above procedure consumed ~5.4 GiB of memory in my environment.
 The following table shows the actual results obtained from the above procedure.
 The original results by the authors are also shown as a baseline, from Table 5 (GloVe+WR) in [ICLR 2017](https://openreview.net/forum?id=SyK00v5xx).
 
-| Dataset                    | ICLR 2017 | `sif_embedding::Sif` |
-| -------------------------- | --------- | -------------------- |
-| 2012                       |           |                      |
-| MSRpar.test.tsv            | 35.6%     | 21.9%                |
-| OnWN.test.tsv              | 66.2%     | 66.2%                |
-| SMTeuroparl.test.tsv       | 49.9%     | 50.3%                |
-| SMTnews.test.tsv           | 45.6%     | 48.7%                |
-| 2013                       |           |                      |
-| FNWN.test.tsv              | 39.4%     | 40.5%                |
-| headlines.test.tsv         | 69.2%     | 70.4%                |
-| OnWN.test.tsv              | 82.8%     | 80.1%                |
-| 2014                       |           |                      |
-| deft-forum.test.tsv        | 41.2%     | 41.1%                |
-| deft-news.test.tsv         | 69.4%     | 69.3%                |
-| headlines.test.tsv         | 64.7%     | 65.5%                |
-| images.test.tsv            | 82.6%     | 82.9%                |
-| OnWN.test.tsv              | 82.8%     | 83.1%                |
-| 2015                       |           |                      |
-| answers-forums.test.tsv    | 63.9%     | 63.9%                |
-| answers-students.test.tsv  | 70.4%     | 70.7%                |
-| belief.test.tsv            | 71.8%     | 72.5%                |
-| headlines.test.tsv         | 70.7%     | 73.5%                |
-| images.test.tsv            | 81.5%     | 81.5%                |
-| 2016                       |           |                      |
-| answer-answer.test.tsv     | NA        | 51.9%                |
-| headlines.test.tsv         | NA        | 69.7%                |
-| plagiarism.test.tsv        | NA        | 79.4%                |
-| postediting.test.tsv       | NA        | 79.4%                |
-| question-question.test.tsv | NA        | 69.6%                |
+| Dataset                    | GloVe+WR | `sif_embedding::Sif` |
+| -------------------------- | -------- | -------------------- |
+| 2012                       |          |                      |
+| MSRpar.test.tsv            | 35.6%    | 21.9%                |
+| OnWN.test.tsv              | 66.2%    | 66.2%                |
+| SMTeuroparl.test.tsv       | 49.9%    | 50.3%                |
+| SMTnews.test.tsv           | 45.6%    | 48.7%                |
+| 2013                       |          |                      |
+| FNWN.test.tsv              | 39.4%    | 40.5%                |
+| headlines.test.tsv         | 69.2%    | 70.4%                |
+| OnWN.test.tsv              | 82.8%    | 80.1%                |
+| 2014                       |          |                      |
+| deft-forum.test.tsv        | 41.2%    | 41.1%                |
+| deft-news.test.tsv         | 69.4%    | 69.3%                |
+| headlines.test.tsv         | 64.7%    | 65.5%                |
+| images.test.tsv            | 82.6%    | 82.9%                |
+| OnWN.test.tsv              | 82.8%    | 83.1%                |
+| 2015                       |          |                      |
+| answers-forums.test.tsv    | 63.9%    | 63.9%                |
+| answers-students.test.tsv  | 70.4%    | 70.7%                |
+| belief.test.tsv            | 71.8%    | 72.5%                |
+| headlines.test.tsv         | 70.7%    | 73.5%                |
+| images.test.tsv            | 81.5%    | 81.5%                |
+| 2016                       |          |                      |
+| answer-answer.test.tsv     | NA       | 51.9%                |
+| headlines.test.tsv         | NA       | 69.7%                |
+| plagiarism.test.tsv        | NA       | 79.4%                |
+| postediting.test.tsv       | NA       | 79.4%                |
+| question-question.test.tsv | NA       | 69.6%                |
 
 This library is not an exact port of the original code, and the experimental results do not exactly match.
 However, similar results were obtained (except for `2012.MSRpar.test.tsv`).
