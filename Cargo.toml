@@ -18,7 +18,7 @@ rust-version = "1.61.0"
 [features]
 default = []
 
-# Need always to specify any feature.
+# One of these features must always be specified.
 # See https://github.com/rust-ndarray/ndarray-linalg/tree/ndarray-linalg-v0.16.0.
 openblas = ["ndarray-linalg/openblas"]
 netlib = ["ndarray-linalg/netlib"]
@@ -41,3 +41,4 @@ approx = "0.5.1"
 
 [workspace]
 members = ["cli"]
+exclude = ["evaluations"]
