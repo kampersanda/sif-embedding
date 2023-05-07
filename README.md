@@ -16,7 +16,7 @@ This is a Rust implementation of *smooth inverse frequency (SIF)* that is a simp
 
 https://docs.rs/sif-embedding/
 
-## Usage
+## Specifications
 
 This library depends on [ndarray-linalg](https://github.com/rust-ndarray/ndarray-linalg).
 You must *always* specify which backend will be used with `features`, following the specifications of ndarray-linalg.
@@ -41,9 +41,9 @@ If you are having problems compiling this library due to the backend, [my tips](
 - [ ] Provide Python binding
 - [ ] Conduct more evaluations.
 
-## Evaluation
+## Evaluations
 
-hoge
+[`evaluations/semeval`](./evaluations/semeval) provides tools to evaluate sif-embedding on SemEval STS Task.
 
 ## Wiki
 
