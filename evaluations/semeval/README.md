@@ -1,7 +1,12 @@
 # SemEval on sif-embedding
 
 Here, we provide a tool to evaluate this library on [SemEval STS Task](https://aclanthology.org/S16-1081/).
-We show a procedure example run the evaluation, assuming you are at directory `sif-embedding/evaluations/semeval`.
+We aim to reproduce the experiments at [ICLR 2017](https://openreview.net/forum?id=SyK00v5xx),
+but some parts (such as pre-processing) have not been fully reproduced.
+
+## Evaluation steps
+
+We show steps to run the evaluation, assuming you are at directory `sif-embedding/evaluations/semeval`.
 
 ### 1. Download SemEval STS datasets
 
@@ -36,14 +41,14 @@ $ ls -1 semeval-sts-clean/all
 
 ### 3. Download pretrained word embeddings
 
-Download a pretrained model of word embeddings, such as [GloVe](https://nlp.stanford.edu/projects/glove/).
+Download a [GloVe](https://nlp.stanford.edu/projects/glove/) model of pretrained word embeddings.
 
 ```shell
 $ wget https://nlp.stanford.edu/data/glove.840B.300d.zip
 $ unzip glove.840B.300d.zip
 ```
 
-### 4. Run evaluation
+### 4. Conduct evaluation
 
 `cli/semeval_sts` is a command line tool that evaluates `sif_embedding::Sif` using the SemEval STS datasets.
 The SIF algorithm requires unigram probabilities.
@@ -59,7 +64,7 @@ This will report the Pearson correlation coefficient between estimated similarit
 Note that it can consume a large working memory according to the size of input word embeddings.
 For example, the above procedure consumed ~5.4 GiB of memory in my environment.
 
-### Experimental results
+## Experimental results
 
 The following table shows the actual results obtained from the above procedure.
 The original results by the authors are also shown as a baseline, from Table 5 (GloVe+WR) in [ICLR 2017](https://openreview.net/forum?id=SyK00v5xx).
