@@ -16,23 +16,6 @@ This is a Rust implementation of *smooth inverse frequency (SIF)* that is a simp
 
 https://docs.rs/sif-embedding/
 
-## Specifications
-
-This library depends on [ndarray-linalg](https://github.com/rust-ndarray/ndarray-linalg).
-You must *always* specify which backend will be used with `features`, following the specifications of ndarray-linalg.
-See [README of ndarray-linalg v0.16.0](https://github.com/rust-ndarray/ndarray-linalg/tree/ndarray-linalg-v0.16.0) since the feature names of sif-embedding are the same.
-
-For example, you can specify the [OpenBLAS](https://www.openblas.net/) backend as follows:
-
-```toml
-# Cargo.toml
-
-[dependencies]
-sif-embedding = { version = "0.1", features = ["openblas"] }
-```
-
-If you are having problems compiling this library due to the backend, [my tips](https://github.com/kampersanda/sif-embedding/wiki/Trouble-shooting) may help.
-
 ## TODO
 
 - [ ] Add the unsupervised SIF described in [the paper](https://aclanthology.org/W18-3012/).
@@ -47,7 +30,7 @@ If you are having problems compiling this library due to the backend, [my tips](
 
 ## Wiki
 
-- [Trouble shooting](https://github.com/kampersanda/sif-embedding/wiki/Trouble-shooting): Tips on how to resolve errors I faced in my environment.
+[Trouble shooting](https://github.com/kampersanda/sif-embedding/wiki/Trouble-shooting): Tips on how to resolve errors I faced in my environment.
 
 ## Licensing
 
