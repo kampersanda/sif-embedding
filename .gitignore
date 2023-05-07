@@ -18,11 +18,4 @@ Cargo.lock
 
 /target
 
-# Custom
-semeval-sts
-semeval-sts-clean
-semeval-sts-clean-wo-stopwords
-logs/
 .vscode
-dataset-sts
-venv/

@@ -1,7 +1,7 @@
 # SemEval on sif-embedding
 
-This repository provides an easy tool to evaluate this library using [SemEval STS Task](https://aclanthology.org/S16-1081/).
-We show a procedure example run the evaluation, assuming you are in the root of this repository.
+Here, we provide a tool to evaluate this library on [SemEval STS Task](https://aclanthology.org/S16-1081/).
+We show a procedure example run the evaluation, assuming you are at directory `sif-embedding/evaluations/semeval`.
 
 ### 1. Download SemEval STS datasets
 
@@ -50,7 +50,7 @@ The SIF algorithm requires unigram probabilities.
 You can use `auxiliary_data/enwiki_vocab_min200.txt` that has word frequencies (copied from [the authors' repository](https://github.com/PrincetonML/SIF)).
 
 ```shell
-$ cargo run --release -p cli --bin semeval_sts --features openblas -- -e glove.840B.300d.txt -w auxiliary_data/enwiki_vocab_min200.txt -c semeval-sts-clean/all
+$ cargo run --release --features openblas -- -e glove.840B.300d.txt -w auxiliary_data/enwiki_vocab_min200.txt -c semeval-sts-clean/all > scores.txt
 ```
 
 This will report the Pearson correlation coefficient between estimated similarities
