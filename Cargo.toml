@@ -24,10 +24,8 @@ intel-mkl = ["ndarray-linalg/intel-mkl"]
 
 openblas-static = ["ndarray-linalg/openblas-static"]
 openblas-system = ["ndarray-linalg/openblas-system"]
-
 netlib-static = ["ndarray-linalg/netlib-static"]
 netlib-system = ["ndarray-linalg/netlib-system"]
-
 intel-mkl-static = ["ndarray-linalg/intel-mkl-static"]
 intel-mkl-system = ["ndarray-linalg/intel-mkl-system"]
 
