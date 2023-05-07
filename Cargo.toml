@@ -1,6 +1,6 @@
 [package]
 name = "sif-embedding"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Shunsuke Kanda (kampersanda) <shnsk.knd@gmail.com>"]
 description = "Smooth inverse frequency (SIF), a simple but powerful embedding technique for sentences"
 license = "MIT OR Apache-2.0"
@@ -18,16 +18,15 @@ rust-version = "1.61.0"
 [features]
 default = []
 
+# One of these features must always be specified.
+# See https://github.com/rust-ndarray/ndarray-linalg/tree/ndarray-linalg-v0.16.0.
 openblas = ["ndarray-linalg/openblas"]
 netlib = ["ndarray-linalg/netlib"]
 intel-mkl = ["ndarray-linalg/intel-mkl"]
-
 openblas-static = ["ndarray-linalg/openblas-static"]
 openblas-system = ["ndarray-linalg/openblas-system"]
-
 netlib-static = ["ndarray-linalg/netlib-static"]
 netlib-system = ["ndarray-linalg/netlib-system"]
-
 intel-mkl-static = ["ndarray-linalg/intel-mkl-static"]
 intel-mkl-system = ["ndarray-linalg/intel-mkl-system"]
 
@@ -41,4 +40,4 @@ ndarray-linalg = { version = "0.16.0", default-features = false }
 approx = "0.5.1"
 
 [workspace]
-members = ["cli"]
+exclude = ["evaluations"]

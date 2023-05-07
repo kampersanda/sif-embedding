@@ -8,21 +8,20 @@ use crate::{Float, WordEmbeddings};
 #[derive(Debug, Clone)]
 pub struct Lexicon {
     embeddings: WordEmbeddings,
-    word2weight: HashMap<String, Float>,
+    word2probs: HashMap<String, Float>,
 }
 
 impl Lexicon {
-    /// Creates an instance from word embeddings and frequencies.
+    /// Creates an instance from word embeddings and weights.
     ///
-    /// `word_freqs` is used to estimate unigram probabilities of words.
-    /// It should be pairs of a word and its frequency obtained from a curpus.
-    /// The frequency should be represented in [`Float`] to avoid casting in this function.
-    pub fn new<I, W>(embeddings: WordEmbeddings, word_freqs: I) -> Self
+    /// `word_weights` is used to estimate unigram probabilities of words.
+    /// It should be pairs of a word and its frequency (or probability) obtained from a curpus.
+    pub fn new<I, W>(embeddings: WordEmbeddings, word_weights: I) -> Self
     where
         I: IntoIterator<Item = (W, Float)>,
         W: AsRef<str>,
     {
-        let mut word2weight: HashMap<_, _> = word_freqs
+        let mut word2weight: HashMap<_, _> = word_weights
             .into_iter()
             .map(|(word, weight)| (word.as_ref().to_string(), weight))
             .collect();
@@ -33,7 +32,7 @@ impl Lexicon {
 
         Self {
             embeddings,
-            word2weight,
+            word2probs: word2weight,
         }
     }
 
@@ -53,7 +52,7 @@ impl Lexicon {
     where
         W: AsRef<str>,
     {
-        self.word2weight.get(word.as_ref()).cloned().unwrap_or(0.)
+        self.word2probs.get(word.as_ref()).cloned().unwrap_or(0.)
     }
 
     /// Returns the number of dimensions for word embeddings.

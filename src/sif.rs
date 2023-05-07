@@ -27,7 +27,6 @@ use crate::{Float, Lexicon};
 /// let lexicon = Lexicon::new(word_embeddings, word_weights);
 ///
 /// // Embed sentences using the lexicon.
-/// //
 /// let (sent_embeddings, freezed_model) = Sif::new(lexicon).embeddings(["go to las vegas", "mega vegas"]);
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
 ///

@@ -1,19 +1,32 @@
 //! # sif-embedding
 //!
-//! It provides simple but powerful sentence embedding techniques based on
+//! This crate provides simple but powerful sentence embedding techniques based on
 //! *Smooth Inverse Frequency (SIF)* described in the paper:
 //!
 //! > Sanjeev Arora, Yingyu Liang, and Tengyu Ma,
 //! > [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
 //! > ICLR 2017.
 //!
-//! ## Usage
+//! ## Specifications
 //!
-//! See [README](https://github.com/kampersanda/sif-embedding) for information
-//! on how to specify this crate in your dependencies; the backend to be used in
-//! [ndarray-linalg](https://github.com/rust-ndarray/ndarray-linalg) must be properly specified.
+//! This crate depends on [ndarray-linalg](https://github.com/rust-ndarray/ndarray-linalg).
+//! You must *always* specify which backend will be used with `features`, following the specifications of ndarray-linalg.
+//! See [README of ndarray-linalg v0.16.0](https://github.com/rust-ndarray/ndarray-linalg/tree/ndarray-linalg-v0.16.0) since the feature names of sif-embedding are the same.
 //!
-//! See the document of [`Sif`] for an example on how to compute sentence embeddings.
+//! For example, you can specify the [OpenBLAS](https://www.openblas.net/) backend as follows:
+//!
+//! ```toml
+//! # Cargo.toml
+//!
+//! [dependencies]
+//! sif-embedding = { version = "0.1", features = ["openblas"] }
+//! ```
+//!
+//! If you are having problems compiling this library due to the backend, [my tips](https://github.com/kampersanda/sif-embedding/wiki/Trouble-shooting) may help.
+//!
+//! ## Basic usage
+//!
+//! See the document of [`Sif`].
 #![deny(missing_docs)]
 
 pub mod lexicon;

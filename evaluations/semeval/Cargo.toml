@@ -1,6 +1,6 @@
 [package]
-name = "cli"
-version = "0.1.1"
+name = "semeval"
+version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -8,16 +8,15 @@ edition = "2021"
 [features]
 default = []
 
+# One of these features must always be specified.
+# See https://github.com/rust-ndarray/ndarray-linalg/tree/ndarray-linalg-v0.16.0.
 openblas = ["sif-embedding/openblas"]
 netlib = ["sif-embedding/netlib"]
 intel-mkl = ["sif-embedding/intel-mkl"]
-
 openblas-static = ["sif-embedding/openblas-static"]
 openblas-system = ["sif-embedding/openblas-system"]
-
 netlib-static = ["sif-embedding/netlib-static"]
 netlib-system = ["sif-embedding/netlib-system"]
-
 intel-mkl-static = ["sif-embedding/intel-mkl-static"]
 intel-mkl-system = ["sif-embedding/intel-mkl-system"]
 
@@ -25,8 +24,4 @@ intel-mkl-system = ["sif-embedding/intel-mkl-system"]
 clap = { version = "4.2.7", features = ["derive"] }
 ndarray = "0.15.6"
 ndarray-stats = "0.5.1"
-sif-embedding = { path = "..", default-features = false }
-
-[[bin]]
-name = "semeval_sts"
-path = "src/semeval_sts.rs"
+sif-embedding = { path = "../..", default-features = false }
