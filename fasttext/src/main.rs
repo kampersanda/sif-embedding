@@ -1,7 +1,8 @@
 use std::fs::File;
 use std::io::BufReader;
 
-use finalfusion::prelude::*;
+use finalfusion::prelude::Embeddings;
+use finalfusion::prelude::ReadFastText;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
