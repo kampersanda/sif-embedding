@@ -13,7 +13,7 @@ fn main() {
     let embeddings = Embeddings::read_fasttext(&mut reader).unwrap();
 
     // Look up an embedding.
-    let embedding = embeddings.embedding("zwei");
+    let embedding = embeddings.embedding("apple");
 
     // Print the embedding.
     println!("{:?}", embedding);

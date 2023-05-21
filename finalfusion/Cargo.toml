@@ -1,5 +1,5 @@
 [package]
-name = "fasttext"
+name = "finalfusion"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,3 +7,15 @@ edition = "2021"
 
 [dependencies]
 finalfusion = "0.17.2"
+
+[[bin]]
+name = "fasttext"
+path = "src/fasttext.rs"
+
+[[bin]]
+name = "glove"
+path = "src/glove.rs"
+
+[[bin]]
+name = "unique"
+path = "src/unique.rs"

@@ -41,4 +41,5 @@ ndarray-linalg = { version = "0.16.0", default-features = false }
 approx = "0.5.1"
 
 [workspace]
-exclude = ["evaluations", "fasttext"]
+members = ["finalfusion"]
+exclude = ["evaluations"]
