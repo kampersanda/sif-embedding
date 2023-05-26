@@ -24,4 +24,4 @@ intel-mkl-system = ["sif-embedding/intel-mkl-system"]
 clap = { version = "4.2.7", features = ["derive"] }
 ndarray = "0.15.6"
 ndarray-stats = "0.5.1"
-sif-embedding = { path = "../..", default-features = false }
+sif-embedding = { version = "=0.1.2", default-features = false }
