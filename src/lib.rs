@@ -56,7 +56,6 @@ pub mod unigram;
 pub mod util;
 
 pub use lexicon::Lexicon;
-pub use sif::FreezedSif;
 pub use sif::Sif;
 pub use unigram::UnigramLM;
 

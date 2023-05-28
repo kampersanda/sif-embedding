@@ -4,6 +4,7 @@ use hashbrown::HashMap;
 use crate::Float;
 
 ///
+#[derive(Debug, Clone)]
 pub struct UnigramLM {
     word2probs: HashMap<String, Float>,
 }
