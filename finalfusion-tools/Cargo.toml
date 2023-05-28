@@ -16,3 +16,7 @@ path = "src/unique_glove.rs"
 [[bin]]
 name = "compile_glove"
 path = "src/compile_glove.rs"
+
+[[bin]]
+name = "compile_fasttext"
+path = "src/compile_fasttext.rs"
