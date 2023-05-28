@@ -83,6 +83,11 @@ where
         self
     }
 
+    /// Checks if the common component is retained by [`Self::embeddings_mut()`].
+    pub fn is_common_component_retained(&self) -> bool {
+        self.common_component.is_some()
+    }
+
     /// Computes embeddings for input sentences,
     /// returning a 2D-array of shape `(n_sentences, embedding_size)`, where
     ///
@@ -102,6 +107,9 @@ where
         S: AsRef<str>,
     {
         let sent_embeddings = self.weighted_average_embeddings(sentences);
+        if sent_embeddings.is_empty() {
+            return sent_embeddings;
+        }
         let sent_embeddings = if let Some(common_component) = self.common_component.as_ref() {
             Self::subtract_common_components(sent_embeddings, common_component)
         } else {
@@ -119,12 +127,18 @@ where
     ///
     /// It also retains the common component `c_0` from the input sentences,
     /// allowing for its reuse in [`Self::embeddings()`].
+    ///
+    /// If the input is empty, the common component will be cleared.
     pub fn embeddings_mut<I, S>(&mut self, sentences: I) -> Array2<Float>
     where
         I: IntoIterator<Item = S>,
         S: AsRef<str>,
     {
         let sent_embeddings = self.weighted_average_embeddings(sentences);
+        if sent_embeddings.is_empty() {
+            self.common_component = None;
+            return sent_embeddings;
+        }
         let common_component = util::principal_component(&sent_embeddings, N_COMPONENTS);
         let sent_embeddings = Self::subtract_common_components(sent_embeddings, &common_component);
         self.common_component = Some(common_component);
@@ -180,11 +194,12 @@ mod tests {
 
     use std::io::BufReader;
 
+    use approx::assert_relative_eq;
     use finalfusion::compat::text::ReadText;
     use finalfusion::embeddings::Embeddings;
 
     #[test]
-    fn test_sif_basic() {
+    fn test_embeddings() {
         let model = "A 0.0 1.0 2.0\nBB -3.0 -4.0 -5.0\nCCC 6.0 -7.0 8.0\nDDDD -9.0 10.0 -11.0\n";
         let mut reader = BufReader::new(model.as_bytes());
         let word_embeddings = Embeddings::read_text(&mut reader).unwrap();
@@ -193,8 +208,45 @@ mod tests {
         let unigram_lm = UnigramLM::new(word_weights);
 
         let sif = Sif::new(&word_embeddings, &unigram_lm);
-        let se = sif.embeddings(["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""]);
 
-        assert_eq!(se.shape(), &[5, 3]);
+        let sent_embeddings = sif.embeddings(["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""]);
+        assert_eq!(sent_embeddings.shape(), &[5, 3]);
+
+        let sent_embeddings = sif.embeddings(Vec::<&str>::new());
+        assert_eq!(sent_embeddings.shape(), &[0, 3]);
+
+        let sent_embeddings = sif.embeddings(["", ""]);
+        assert_eq!(sent_embeddings.shape(), &[2, 3]);
+
+        assert!(!sif.is_common_component_retained());
+    }
+
+    #[test]
+    fn test_embeddings_mut() {
+        let model = "A 0.0 1.0 2.0\nBB -3.0 -4.0 -5.0\nCCC 6.0 -7.0 8.0\nDDDD -9.0 10.0 -11.0\n";
+        let mut reader = BufReader::new(model.as_bytes());
+        let word_embeddings = Embeddings::read_text(&mut reader).unwrap();
+
+        let word_weights = [("A", 1.), ("BB", 2.), ("CCC", 3.), ("DDDD", 4.)];
+        let unigram_lm = UnigramLM::new(word_weights);
+
+        let mut sif = Sif::new(&word_embeddings, &unigram_lm);
+
+        let sent_embeddings = sif.embeddings_mut(["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""]);
+        assert_eq!(sent_embeddings.shape(), &[5, 3]);
+        assert!(sif.is_common_component_retained());
+
+        let other_embeddings = sif.embeddings(["A BB CCC DDDD", "BB CCC"]);
+        assert_relative_eq!(
+            sent_embeddings.slice(ndarray::s![0..2, ..]),
+            other_embeddings
+        );
+
+        let cloned_sif = sif.clone().clear_common_component();
+        assert!(!cloned_sif.is_common_component_retained());
+
+        let sent_embeddings = sif.embeddings_mut(Vec::<&str>::new());
+        assert_eq!(sent_embeddings.shape(), &[0, 3]);
+        assert!(!sif.is_common_component_retained());
     }
 }
