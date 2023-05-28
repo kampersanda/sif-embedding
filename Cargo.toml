@@ -69,5 +69,4 @@ approx = "0.5.1"
 no-default-features = true
 
 [workspace]
-members = ["finalfusion-tools"]
-exclude = ["evaluations"]
+members = ["finalfusion-tools", "evaluations/semeval"]

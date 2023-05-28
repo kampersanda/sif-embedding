@@ -4,54 +4,46 @@ use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
 
 use clap::Parser;
+use finalfusion::prelude::*;
 use ndarray::Array2;
 use ndarray_stats::CorrelationExt;
 
 use sif_embedding::util;
-use sif_embedding::{Float, Lexicon, Sif, WordEmbeddings};
+use sif_embedding::{Float, Sif, UnigramLM};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    #[arg(short = 'e', long)]
-    word_embedding: PathBuf,
+    #[arg(short = 'f', long)]
+    input_fifu: PathBuf,
 
     #[arg(short = 'w', long)]
-    word_weights: PathBuf,
+    input_weights: PathBuf,
 
     #[arg(short = 'c', long)]
     corpora_dir: PathBuf,
-
-    #[arg(long)]
-    oov: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
-    let mut word_embeddings = {
-        let reader = BufReader::new(File::open(&args.word_embedding)?);
-        WordEmbeddings::from_text(reader)?
+    let word_embeddings = {
+        let mut reader = BufReader::new(File::open(&args.input_fifu)?);
+        Embeddings::<VocabWrap, StorageWrap>::read_embeddings(&mut reader)?
     };
-    let word_weights = {
-        let reader = BufReader::new(File::open(&args.word_weights)?);
-        util::word_weights_from_text(reader)?
+    let unigram_lm = {
+        let reader = BufReader::new(File::open(&args.input_weights)?);
+        let word_weights = util::word_weights_from_text(reader)?;
+        UnigramLM::new(word_weights)
     };
 
     eprintln!("word_embeddings.len() = {}", word_embeddings.len());
     eprintln!(
         "word_embeddings.embedding_size() = {}",
-        word_embeddings.embedding_size()
+        word_embeddings.dims()
     );
-    eprintln!("word_weights.len() = {}", word_weights.len());
 
-    if args.oov {
-        eprintln!("Build averaged word embedding for OOVs.");
-        word_embeddings = word_embeddings.build_oov_embedding();
-    }
-
-    let lexicon = Lexicon::new(word_embeddings, word_weights);
-    let sif = Sif::new(lexicon);
+    let sif = Sif::new(&word_embeddings, &unigram_lm);
 
     let corpora_dir = args.corpora_dir;
     let corpora = vec![
@@ -116,7 +108,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn simeval(sif: &Sif, curpus_path: &Path) -> Result<Float, Box<dyn Error>> {
+fn simeval(sif: &Sif<VocabWrap, StorageWrap>, curpus_path: &Path) -> Result<Float, Box<dyn Error>> {
     eprintln!("[{curpus_path:?}]");
 
     let mut gold_scores = vec![];
@@ -144,7 +136,7 @@ fn simeval(sif: &Sif, curpus_path: &Path) -> Result<Float, Box<dyn Error>> {
     eprintln!("n_examples = {}", n_examples);
 
     // NOTE(kampersanda): Should we split the corpus into cols[1] and cols[2]?
-    let (sent_embeddings, _) = sif.clone().embeddings(&sentences);
+    let sent_embeddings = sif.embeddings(&sentences);
     let mut pred_scores = Vec::with_capacity(n_examples);
 
     for i in 0..n_examples {

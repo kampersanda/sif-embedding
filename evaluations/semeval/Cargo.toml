@@ -1,27 +1,28 @@
 [package]
 name = "semeval"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = []
+default = ["openblas"]
 
 # One of these features must always be specified.
 # See https://github.com/rust-ndarray/ndarray-linalg/tree/ndarray-linalg-v0.16.0.
 openblas = ["sif-embedding/openblas"]
-netlib = ["sif-embedding/netlib"]
-intel-mkl = ["sif-embedding/intel-mkl"]
 openblas-static = ["sif-embedding/openblas-static"]
 openblas-system = ["sif-embedding/openblas-system"]
+netlib = ["sif-embedding/netlib"]
 netlib-static = ["sif-embedding/netlib-static"]
 netlib-system = ["sif-embedding/netlib-system"]
+intel-mkl = ["sif-embedding/intel-mkl"]
 intel-mkl-static = ["sif-embedding/intel-mkl-static"]
 intel-mkl-system = ["sif-embedding/intel-mkl-system"]
 
 [dependencies]
 clap = { version = "4.2.7", features = ["derive"] }
+finalfusion = "0.17.2"
 ndarray = "0.15.6"
 ndarray-stats = "0.5.1"
-sif-embedding = { version = "=0.1.2", default-features = false }
+sif-embedding = { version = "=0.2.0", default-features = false }
