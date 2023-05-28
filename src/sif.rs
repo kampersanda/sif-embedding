@@ -1,10 +1,12 @@
 //! Smooth Inverse Frequency (SIF).
+use finalfusion::embeddings::Embeddings;
 use finalfusion::storage::Storage;
 use finalfusion::vocab::Vocab;
 use ndarray::{Array1, Array2};
 
-use crate::util;
-use crate::{Float, Lexicon};
+use crate::{util, Float, UnigramLM};
+
+const N_COMPONENTS: usize = 1;
 
 /// An implementation of *Smooth Inverse Frequency (SIF)* that is a simple but pewerful
 /// embedding technique for sentences, described in the paper:
@@ -21,162 +23,134 @@ use crate::{Float, Lexicon};
 /// use finalfusion::compat::text::ReadText;
 /// use finalfusion::embeddings::Embeddings;
 ///
-/// use sif_embedding::{Lexicon, Sif};
+/// use sif_embedding::{Sif, UnigramLM};
 ///
 /// // Load word embeddings from a pretrained model.
 /// let word_model = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
 /// let mut reader = BufReader::new(word_model.as_bytes());
 /// let word_embeddings = Embeddings::read_text(&mut reader).unwrap();
 ///
-/// // Prepare word-frequency pairs.
+/// // Create a unigram language model.
 /// let word_weights = [("las", 10.), ("vegas", 20.)];
+/// let unigram_lm = UnigramLM::new(word_weights);
 ///
-/// // Create a lexicon instance.
-/// let lexicon = Lexicon::new(word_embeddings, word_weights);
-///
-/// // Embed sentences using the lexicon.
-/// let (sent_embeddings, freezed_model) = Sif::new(lexicon).embeddings(["go to las vegas", "mega vegas"]);
+/// // Compute sentence embeddings.
+/// let sif = Sif::new(&word_embeddings, &unigram_lm);
+/// let sent_embeddings = sif.embeddings(["go to las vegas", "mega vegas"]);
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
-///
-/// // freezed_model is a model compiled using the first input sentences.
-/// let other_embeddings = freezed_model.embeddings(["vegas pro"]);
-/// assert_eq!(other_embeddings.shape(), &[1, 3]);
-/// assert_eq!(freezed_model.embedding_size(), 3);
 /// ```
-///
-/// See [`FreezedSif`] for more details on `freezed_model`.
 #[derive(Debug, Clone)]
-pub struct Sif<V, T> {
-    inner: InnerSif<V, T>,
+pub struct Sif<'w, 'u, V, T> {
+    separator: char,
+    param_a: Float,
+    common_component: Option<Array2<Float>>,
+    word_embeddings: &'w Embeddings<V, T>,
+    unigram_lm: &'u UnigramLM,
 }
 
-impl<V, T> Sif<V, T>
+impl<'w, 'u, V, T> Sif<'w, 'u, V, T>
 where
     V: Vocab,
     T: Storage,
 {
-    /// Creates an instance from a lexicon.
-    pub const fn new(lexicon: Lexicon<V, T>) -> Self {
-        let inner = InnerSif {
-            lexicon,
+    /// Creates a new instance.
+    pub const fn new(word_embeddings: &'w Embeddings<V, T>, unigram_lm: &'u UnigramLM) -> Self {
+        Self {
             separator: ' ',
             param_a: 1e-3,
-            n_components: 1,
-        };
-        Self { inner }
+            common_component: None,
+            word_embeddings,
+            unigram_lm,
+        }
     }
 
-    /// Sets a separator for sentence segmentation (default: the ASCII whitespace ` `).
+    /// Sets a separator for sentence segmentation (default: ASCII whitespace).
     pub const fn separator(mut self, separator: char) -> Self {
-        self.inner.separator = separator;
+        self.separator = separator;
         self
     }
 
-    /// Sets a weighting parameter `a` (default: `1e-3`).
-    pub const fn param_a(mut self, param_a: Float) -> Self {
-        self.inner.param_a = param_a;
+    /// Sets a SIF-weighting parameter `a` (default: `1e-3`).
+    #[allow(clippy::missing_const_for_fn)]
+    pub fn param_a(mut self, param_a: Float) -> Self {
+        self.param_a = param_a;
+        self.common_component = None;
         self
     }
 
-    /// Sets the number of principal components to estimate a common discourse vector `c_0` (default: `1`).
-    ///
-    /// # Notes
-    ///
-    /// The original idea uses only the first principal component.
-    /// This parameter is for experimental purposes and will not need to be changed.
-    pub const fn n_components(mut self, n_components: usize) -> Self {
-        self.inner.n_components = n_components;
+    /// Clears the common component retained by [`Self::embeddings_mut()`].
+    #[allow(clippy::missing_const_for_fn)]
+    pub fn clear_common_component(mut self) -> Self {
+        self.common_component = None;
         self
     }
 
-    /// Computes embeddings for the input sentences,
-    /// returning a 2D-array of shape `(n_sentences, embedding_size)`
-    /// as the first item, where
-    ///
-    /// - `n_sentences` is the number of input sentences, and
-    /// - `embedding_size` is [`Self::embedding_size()`].
-    ///
-    /// This function consumes itself and, as the second item,
-    /// returns a compiled model [`FreezedSif`] for subsequent embeddings.
-    pub fn embeddings<I, S>(self, sentences: I) -> (Array2<Float>, FreezedSif<V, T>)
-    where
-        I: IntoIterator<Item = S>,
-        S: AsRef<str>,
-    {
-        let sent_embeddings = self.inner.weighted_average_embeddings(sentences);
-        // principal_components has shape (embedding_size(), embedding_size())
-        let principal_component =
-            util::principal_component(&sent_embeddings, self.inner.n_components);
-        let sent_embeddings =
-            InnerSif::<V, T>::subtract_principal_components(sent_embeddings, &principal_component);
-        let freezed_model = FreezedSif {
-            inner: self.inner,
-            principal_component,
-        };
-        (sent_embeddings, freezed_model)
+    /// Checks if the common component is retained by [`Self::embeddings_mut()`].
+    pub const fn is_common_component_retained(&self) -> bool {
+        self.common_component.is_some()
     }
 
-    /// Returns the number of dimensions for sentence embeddings,
-    /// which is equivalent to that of the input word embedding, i.e., [`Lexicon::embedding_size()`].
-    pub fn embedding_size(&self) -> usize {
-        self.inner.embedding_size()
-    }
-}
-
-/// A compiled model of [`Sif`] that maintains the common discourse vector
-/// (`c_0` in the paper) estimated from the input sentences of [`Sif::embeddings()`].
-///
-/// # Notes
-///
-/// I do not know if the SIF algorithm assumes that a common discourse vector from
-/// one corpus will be used for other corpora.
-#[derive(Debug, Clone)]
-pub struct FreezedSif<V, T> {
-    inner: InnerSif<V, T>,
-    principal_component: Array2<Float>,
-}
-
-impl<V, T> FreezedSif<V, T>
-where
-    V: Vocab,
-    T: Storage,
-{
-    /// Computes embeddings for the input sentences,
+    /// Computes embeddings for input sentences,
     /// returning a 2D-array of shape `(n_sentences, embedding_size)`, where
     ///
     /// - `n_sentences` is the number of input sentences, and
     /// - `embedding_size` is [`Self::embedding_size()`].
+    ///
+    /// # Behaviors depending on the internal state
+    ///
+    /// The behavior of this method varies depending on the internal state of the instance:
+    ///
+    /// - If the common component `c_0` is retained by [`Self::embeddings_mut()`],
+    ///   this method uses it to compute embeddings;
+    /// - Otherwise, it computes `c_0` from the input sentences and uses it to compute embeddings.
     pub fn embeddings<I, S>(&self, sentences: I) -> Array2<Float>
     where
         I: IntoIterator<Item = S>,
         S: AsRef<str>,
     {
-        let sent_embeddings = self.inner.weighted_average_embeddings(sentences);
-        InnerSif::<V, T>::subtract_principal_components(sent_embeddings, &self.principal_component)
+        let sent_embeddings = self.weighted_average_embeddings(sentences);
+        if sent_embeddings.is_empty() {
+            return sent_embeddings;
+        }
+        let sent_embeddings = if let Some(common_component) = self.common_component.as_ref() {
+            Self::subtract_common_components(sent_embeddings, common_component)
+        } else {
+            let common_component = util::principal_component(&sent_embeddings, N_COMPONENTS);
+            Self::subtract_common_components(sent_embeddings, &common_component)
+        };
+        sent_embeddings
+    }
+
+    /// Computes embeddings for input sentences,
+    /// returning a 2D-array of shape `(n_sentences, embedding_size)`, where
+    ///
+    /// - `n_sentences` is the number of input sentences, and
+    /// - `embedding_size` is [`Self::embedding_size()`].
+    ///
+    /// It also retains the common component `c_0` from the input sentences,
+    /// allowing for its reuse in [`Self::embeddings()`].
+    ///
+    /// If the input is empty, the common component will be cleared.
+    pub fn embeddings_mut<I, S>(&mut self, sentences: I) -> Array2<Float>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        let sent_embeddings = self.weighted_average_embeddings(sentences);
+        if sent_embeddings.is_empty() {
+            self.common_component = None;
+            return sent_embeddings;
+        }
+        let common_component = util::principal_component(&sent_embeddings, N_COMPONENTS);
+        let sent_embeddings = Self::subtract_common_components(sent_embeddings, &common_component);
+        self.common_component = Some(common_component);
+        sent_embeddings
     }
 
     /// Returns the number of dimensions for sentence embeddings,
-    /// which is equivalent to that of the input word embedding, i.e., [`Lexicon::embedding_size()`].
+    /// which is equivalent to that of the input word embeddings.
     pub fn embedding_size(&self) -> usize {
-        self.inner.embedding_size()
-    }
-}
-
-#[derive(Debug, Clone)]
-struct InnerSif<V, T> {
-    lexicon: Lexicon<V, T>,
-    separator: char,
-    param_a: Float,
-    n_components: usize,
-}
-
-impl<V, T> InnerSif<V, T>
-where
-    V: Vocab,
-    T: Storage,
-{
-    fn embedding_size(&self) -> usize {
-        self.lexicon.embedding_size()
+        self.word_embeddings.dims()
     }
 
     /// Lines 1--3
@@ -190,10 +164,10 @@ where
         for sent in sentences {
             let sent = sent.as_ref();
             let mut n_words = 0;
-            let mut sent_embedding = Array1::zeros(self.lexicon.embedding_size());
+            let mut sent_embedding = Array1::zeros(self.embedding_size());
             for word in sent.split(self.separator) {
-                if let Some(word_embedding) = self.lexicon.embedding(word) {
-                    let weight = self.param_a / (self.param_a + self.lexicon.probability(word));
+                if let Some(word_embedding) = self.word_embeddings.embedding(word) {
+                    let weight = self.param_a / (self.param_a + self.unigram_lm.probability(word));
                     sent_embedding += &(word_embedding.to_owned() * weight);
                     n_words += 1;
                 }
@@ -204,19 +178,15 @@ where
             sent_embeddings.extend(sent_embedding.iter());
             n_sentences += 1;
         }
-        Array2::from_shape_vec(
-            (n_sentences, self.lexicon.embedding_size()),
-            sent_embeddings,
-        )
-        .unwrap()
+        Array2::from_shape_vec((n_sentences, self.embedding_size()), sent_embeddings).unwrap()
     }
 
     /// Lines 5--7
-    fn subtract_principal_components(
+    fn subtract_common_components(
         sent_embeddings: Array2<Float>,
-        principal_component: &Array2<Float>,
+        common_component: &Array2<Float>,
     ) -> Array2<Float> {
-        sent_embeddings.to_owned() - &(sent_embeddings.dot(principal_component))
+        sent_embeddings.to_owned() - &(sent_embeddings.dot(common_component))
     }
 }
 
@@ -226,19 +196,59 @@ mod tests {
 
     use std::io::BufReader;
 
+    use approx::assert_relative_eq;
     use finalfusion::compat::text::ReadText;
     use finalfusion::embeddings::Embeddings;
 
     #[test]
-    fn test_sif_basic() {
+    fn test_embeddings() {
         let model = "A 0.0 1.0 2.0\nBB -3.0 -4.0 -5.0\nCCC 6.0 -7.0 8.0\nDDDD -9.0 10.0 -11.0\n";
         let mut reader = BufReader::new(model.as_bytes());
+        let word_embeddings = Embeddings::read_text(&mut reader).unwrap();
 
-        let embeddings = Embeddings::read_text(&mut reader).unwrap();
         let word_weights = [("A", 1.), ("BB", 2.), ("CCC", 3.), ("DDDD", 4.)];
+        let unigram_lm = UnigramLM::new(word_weights);
 
-        let lexicon = Lexicon::new(embeddings, word_weights);
-        let (se, _) = Sif::new(lexicon).embeddings(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""]);
-        assert_eq!(se.shape(), &[5, 3]);
+        let sif = Sif::new(&word_embeddings, &unigram_lm);
+
+        let sent_embeddings = sif.embeddings(["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""]);
+        assert_eq!(sent_embeddings.shape(), &[5, 3]);
+
+        let sent_embeddings = sif.embeddings(Vec::<&str>::new());
+        assert_eq!(sent_embeddings.shape(), &[0, 3]);
+
+        let sent_embeddings = sif.embeddings(["", ""]);
+        assert_eq!(sent_embeddings.shape(), &[2, 3]);
+
+        assert!(!sif.is_common_component_retained());
+    }
+
+    #[test]
+    fn test_embeddings_mut() {
+        let model = "A 0.0 1.0 2.0\nBB -3.0 -4.0 -5.0\nCCC 6.0 -7.0 8.0\nDDDD -9.0 10.0 -11.0\n";
+        let mut reader = BufReader::new(model.as_bytes());
+        let word_embeddings = Embeddings::read_text(&mut reader).unwrap();
+
+        let word_weights = [("A", 1.), ("BB", 2.), ("CCC", 3.), ("DDDD", 4.)];
+        let unigram_lm = UnigramLM::new(word_weights);
+
+        let mut sif = Sif::new(&word_embeddings, &unigram_lm);
+
+        let sent_embeddings = sif.embeddings_mut(["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""]);
+        assert_eq!(sent_embeddings.shape(), &[5, 3]);
+        assert!(sif.is_common_component_retained());
+
+        let other_embeddings = sif.embeddings(["A BB CCC DDDD", "BB CCC"]);
+        assert_relative_eq!(
+            sent_embeddings.slice(ndarray::s![0..2, ..]),
+            other_embeddings
+        );
+
+        let cloned_sif = sif.clone().clear_common_component();
+        assert!(!cloned_sif.is_common_component_retained());
+
+        let sent_embeddings = sif.embeddings_mut(Vec::<&str>::new());
+        assert_eq!(sent_embeddings.shape(), &[0, 3]);
+        assert!(!sif.is_common_component_retained());
     }
 }
