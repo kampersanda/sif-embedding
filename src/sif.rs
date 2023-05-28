@@ -1,4 +1,6 @@
 //! Smooth Inverse Frequency (SIF).
+use finalfusion::storage::Storage;
+use finalfusion::vocab::Vocab;
 use ndarray::{Array1, Array2};
 
 use crate::util;
@@ -38,13 +40,17 @@ use crate::{Float, Lexicon};
 ///
 /// See [`FreezedSif`] for more details on `freezed_model`.
 #[derive(Debug, Clone)]
-pub struct Sif {
-    inner: InnerSif,
+pub struct Sif<V, T> {
+    inner: InnerSif<V, T>,
 }
 
-impl Sif {
+impl<V, T> Sif<V, T>
+where
+    V: Vocab,
+    T: Storage,
+{
     /// Creates an instance from a lexicon.
-    pub const fn new(lexicon: Lexicon) -> Self {
+    pub const fn new(lexicon: Lexicon<V, T>) -> Self {
         let inner = InnerSif {
             lexicon,
             separator: ' ',
@@ -86,7 +92,7 @@ impl Sif {
     ///
     /// This function consumes itself and, as the second item,
     /// returns a compiled model [`FreezedSif`] for subsequent embeddings.
-    pub fn embeddings<I, S>(self, sentences: I) -> (Array2<Float>, FreezedSif)
+    pub fn embeddings<I, S>(self, sentences: I) -> (Array2<Float>, FreezedSif<V, T>)
     where
         I: IntoIterator<Item = S>,
         S: AsRef<str>,
@@ -96,7 +102,7 @@ impl Sif {
         let principal_component =
             util::principal_component(&sent_embeddings, self.inner.n_components);
         let sent_embeddings =
-            InnerSif::subtract_principal_components(sent_embeddings, &principal_component);
+            InnerSif::<V, T>::subtract_principal_components(sent_embeddings, &principal_component);
         let freezed_model = FreezedSif {
             inner: self.inner,
             principal_component,
@@ -119,12 +125,16 @@ impl Sif {
 /// I do not know if the SIF algorithm assumes that a common discourse vector from
 /// one corpus will be used for other corpora.
 #[derive(Debug, Clone)]
-pub struct FreezedSif {
-    inner: InnerSif,
+pub struct FreezedSif<V, T> {
+    inner: InnerSif<V, T>,
     principal_component: Array2<Float>,
 }
 
-impl FreezedSif {
+impl<V, T> FreezedSif<V, T>
+where
+    V: Vocab,
+    T: Storage,
+{
     /// Computes embeddings for the input sentences,
     /// returning a 2D-array of shape `(n_sentences, embedding_size)`, where
     ///
@@ -136,7 +146,7 @@ impl FreezedSif {
         S: AsRef<str>,
     {
         let sent_embeddings = self.inner.weighted_average_embeddings(sentences);
-        InnerSif::subtract_principal_components(sent_embeddings, &self.principal_component)
+        InnerSif::<V, T>::subtract_principal_components(sent_embeddings, &self.principal_component)
     }
 
     /// Returns the number of dimensions for sentence embeddings,
@@ -147,14 +157,18 @@ impl FreezedSif {
 }
 
 #[derive(Debug, Clone)]
-struct InnerSif {
-    lexicon: Lexicon,
+struct InnerSif<V, T> {
+    lexicon: Lexicon<V, T>,
     separator: char,
     param_a: Float,
     n_components: usize,
 }
 
-impl InnerSif {
+impl<V, T> InnerSif<V, T>
+where
+    V: Vocab,
+    T: Storage,
+{
     fn embedding_size(&self) -> usize {
         self.lexicon.embedding_size()
     }
@@ -204,12 +218,17 @@ impl InnerSif {
 mod tests {
     use super::*;
 
-    use crate::WordEmbeddings;
+    use std::io::BufReader;
+
+    use finalfusion::compat::text::ReadText;
+    use finalfusion::embeddings::Embeddings;
 
     #[test]
     fn test_sif_basic() {
         let model = "A 0.0 1.0 2.0\nBB -3.0 -4.0 -5.0\nCCC 6.0 -7.0 8.0\nDDDD -9.0 10.0 -11.0\n";
-        let embeddings = WordEmbeddings::from_text(model.as_bytes()).unwrap();
+        let mut reader = BufReader::new(model.as_bytes());
+
+        let embeddings = Embeddings::read_text(&mut reader).unwrap();
         let word_weights = [("A", 1.), ("BB", 2.), ("CCC", 3.), ("DDDD", 4.)];
 
         let lexicon = Lexicon::new(embeddings, word_weights);
