@@ -52,7 +52,7 @@ where
     V: Vocab,
     T: Storage,
 {
-    ///
+    /// Creates a new instance.
     pub fn new(word_embeddings: &'w Embeddings<V, T>, unigram_lm: &'u UnigramLM) -> Self {
         Self {
             separator: ' ',
@@ -69,15 +69,15 @@ where
         self
     }
 
-    /// Sets a weighting parameter `a` (default: `1e-3`).
-    pub fn parameters(mut self, param_a: Float, common_component: Option<Array2<Float>>) -> Self {
+    /// Sets a SIF-weighting parameter `a` (default: `1e-3`).
+    pub fn param_a(mut self, param_a: Float) -> Self {
         self.param_a = param_a;
-        self.common_component = common_component;
+        self.common_component = None;
         self
     }
 
-    ///
-    pub fn reset_common_component(mut self) -> Self {
+    /// Clears the common component.
+    pub fn clear_common_component(mut self) -> Self {
         self.common_component = None;
         self
     }

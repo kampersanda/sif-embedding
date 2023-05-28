@@ -30,7 +30,7 @@
 #![deny(missing_docs)]
 
 // These declarations are required so that finalfusion recognizes the backend.
-// https://github.com/finalfusion/finalfusion-utils
+// c.f. https://github.com/finalfusion/finalfusion-utils
 #[cfg(any(
     feature = "intel-mkl",
     feature = "intel-mkl-static",
