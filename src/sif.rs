@@ -121,6 +121,12 @@ where
         sent_embeddings
     }
 
+    /// Returns the number of dimensions for sentence embeddings,
+    /// which is equivalent to that of the input word embedding, i.e., [`Lexicon::embedding_size()`].
+    pub fn embedding_size(&self) -> usize {
+        self.word_embeddings.dims()
+    }
+
     /// Lines 1--3
     fn weighted_average_embeddings<I, S>(&self, sentences: I) -> Array2<Float>
     where
@@ -155,12 +161,6 @@ where
         common_component: &Array2<Float>,
     ) -> Array2<Float> {
         sent_embeddings.to_owned() - &(sent_embeddings.dot(common_component))
-    }
-
-    /// Returns the number of dimensions for sentence embeddings,
-    /// which is equivalent to that of the input word embedding, i.e., [`Lexicon::embedding_size()`].
-    pub fn embedding_size(&self) -> usize {
-        self.word_embeddings.dims()
     }
 }
 
