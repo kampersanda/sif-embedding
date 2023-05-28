@@ -31,7 +31,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let word_embeddings = {
         let mut reader = BufReader::new(File::open(&args.input_fifu)?);
-        Embeddings::<VocabWrap, StorageWrap>::read_embeddings(&mut reader)?
+        Embeddings::<VocabWrap, StorageWrap>::mmap_embeddings(&mut reader)?
     };
     let unigram_lm = {
         let reader = BufReader::new(File::open(&args.input_weights)?);
