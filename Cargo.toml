@@ -16,7 +16,7 @@ rust-version = "1.61.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = []
+default = ["openblas"]
 
 # One of these features must always be specified.
 # See https://github.com/rust-ndarray/ndarray-linalg/tree/ndarray-linalg-v0.16.0.
@@ -63,6 +63,10 @@ default-features = false
 
 [dev-dependencies]
 approx = "0.5.1"
+
+[package.metadata.docs.rs]
+# Required to avoid timeout errors due to openblas compilation.
+no-default-features = true
 
 [workspace]
 exclude = ["evaluations"]
