@@ -20,21 +20,46 @@ default = []
 
 # One of these features must always be specified.
 # See https://github.com/rust-ndarray/ndarray-linalg/tree/ndarray-linalg-v0.16.0.
-openblas = ["ndarray-linalg/openblas"]
-netlib = ["ndarray-linalg/netlib"]
-intel-mkl = ["ndarray-linalg/intel-mkl"]
-openblas-static = ["ndarray-linalg/openblas-static"]
-openblas-system = ["ndarray-linalg/openblas-system"]
-netlib-static = ["ndarray-linalg/netlib-static"]
-netlib-system = ["ndarray-linalg/netlib-system"]
-intel-mkl-static = ["ndarray-linalg/intel-mkl-static"]
-intel-mkl-system = ["ndarray-linalg/intel-mkl-system"]
+openblas = ["ndarray-linalg/openblas", "openblas-src"]
+openblas-static = ["ndarray-linalg/openblas-static", "openblas-src"]
+openblas-system = ["ndarray-linalg/openblas-system", "openblas-src"]
+netlib = ["ndarray-linalg/netlib", "netlib-src"]
+netlib-static = ["ndarray-linalg/netlib-static", "netlib-src"]
+netlib-system = ["ndarray-linalg/netlib-system", "netlib-src"]
+intel-mkl = ["ndarray-linalg/intel-mkl", "intel-mkl-src"]
+intel-mkl-static = ["ndarray-linalg/intel-mkl-static", "intel-mkl-src"]
+intel-mkl-system = ["ndarray-linalg/intel-mkl-system", "intel-mkl-src"]
 
 [dependencies]
 anyhow = "1.0"
+finalfusion = "0.17.2"
 hashbrown = "0.13.2"
-ndarray = { version = "0.15.6", features = ["approx-0_5"] }
-ndarray-linalg = { version = "0.16.0", default-features = false }
+
+[dependencies.ndarray]
+version = "0.15.6"
+features = ["approx-0_5", "blas", "std"]
+default-features = false
+
+[dependencies.ndarray-linalg]
+version = "0.16.0"
+default-features = false
+
+[dependencies.openblas-src]
+version = "0.10.4"
+optional = true
+default-features = false
+features = ["cblas"]
+
+[dependencies.netlib-src]
+version = "0.8.0"
+optional = true
+default-features = false
+features = ["cblas"]
+
+[dependencies.intel-mkl-src]
+version = "0.8.1"
+optional = true
+default-features = false
 
 [dev-dependencies]
 approx = "0.5.1"

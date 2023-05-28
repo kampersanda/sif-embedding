@@ -29,15 +29,34 @@
 //! See the document of [`Sif`].
 #![deny(missing_docs)]
 
+// These declarations are required so that finalfusion recognizes the backend.
+// https://github.com/finalfusion/finalfusion-utils
+#[cfg(any(
+    feature = "intel-mkl",
+    feature = "intel-mkl-static",
+    feature = "intel-mkl-system"
+))]
+extern crate intel_mkl_src;
+#[cfg(any(
+    feature = "netlib",
+    feature = "netlib-static",
+    feature = "netlib-system"
+))]
+extern crate netlib_src;
+#[cfg(any(
+    feature = "openblas",
+    feature = "openblas-static",
+    feature = "openblas-system"
+))]
+extern crate openblas_src;
+
 pub mod lexicon;
 pub mod sif;
 pub mod util;
-pub mod word_embeddings;
 
 pub use lexicon::Lexicon;
 pub use sif::FreezedSif;
 pub use sif::Sif;
-pub use word_embeddings::WordEmbeddings;
 
 /// Common type of floating numbers.
 pub type Float = f32;

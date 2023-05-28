@@ -1,22 +1,29 @@
 //! Handlers for vocabulary.
+use finalfusion::embeddings::Embeddings;
+use finalfusion::storage::Storage;
+use finalfusion::vocab::Vocab;
 use hashbrown::HashMap;
 use ndarray::{CowArray, Ix1};
 
-use crate::{Float, WordEmbeddings};
+use crate::Float;
 
 /// Lexicon that handles embeddings and unigram probabilities of words.
 #[derive(Debug, Clone)]
-pub struct Lexicon {
-    embeddings: WordEmbeddings,
+pub struct Lexicon<V, S> {
+    embeddings: Embeddings<V, S>,
     word2probs: HashMap<String, Float>,
 }
 
-impl Lexicon {
+impl<V, S> Lexicon<V, S>
+where
+    V: Vocab,
+    S: Storage,
+{
     /// Creates an instance from word embeddings and weights.
     ///
     /// `word_weights` is used to estimate unigram probabilities of words.
     /// It should be pairs of a word and its frequency (or probability) obtained from a curpus.
-    pub fn new<I, W>(embeddings: WordEmbeddings, word_weights: I) -> Self
+    pub fn new<I, W>(embeddings: Embeddings<V, S>, word_weights: I) -> Self
     where
         I: IntoIterator<Item = (W, Float)>,
         W: AsRef<str>,
@@ -41,10 +48,7 @@ impl Lexicon {
     where
         W: AsRef<str>,
     {
-        if let Some(embedding) = self.embeddings.lookup(word.as_ref()) {
-            return Some(embedding);
-        }
-        None
+        self.embeddings.embedding(word.as_ref())
     }
 
     /// Returns the unigram probability for the input word.
@@ -57,6 +61,6 @@ impl Lexicon {
 
     /// Returns the number of dimensions for word embeddings.
     pub fn embedding_size(&self) -> usize {
-        self.embeddings.embedding_size()
+        self.embeddings.dims()
     }
 }
