@@ -51,7 +51,7 @@ impl UnigramLM {
 
         let mut keyset = word2probs
             .iter()
-            .map(|(w, &p)| (w, unsafe { std::mem::transmute::<Float, u32>(p) }))
+            .map(|(w, &p)| (w, p.to_bits()))
             .collect::<Vec<_>>();
         keyset.sort_unstable();
 
@@ -67,13 +67,11 @@ impl UnigramLM {
         W: AsRef<str>,
     {
         if self.data.is_empty() {
-            return 0.;
-        }
-        let da = yada::DoubleArray::new(self.data.as_slice());
-        if let Some(v) = da.exact_match_search(word.as_ref().as_bytes()) {
-            unsafe { std::mem::transmute::<u32, Float>(v) }
-        } else {
             0.
+        } else {
+            let da = yada::DoubleArray::new(self.data.as_slice());
+            da.exact_match_search(word.as_ref())
+                .map_or(0., f32::from_bits)
         }
     }
 }
