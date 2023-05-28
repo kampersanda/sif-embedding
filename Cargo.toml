@@ -65,7 +65,7 @@ default-features = false
 approx = "0.5.1"
 
 [package.metadata.docs.rs]
-# This is required to avoid a timeout error in docs.rs due to openblas compilation.
+# Required to avoid timeout errors due to openblas compilation.
 no-default-features = true
 
 [workspace]
