@@ -33,7 +33,7 @@ intel-mkl-system = ["ndarray-linalg/intel-mkl-system", "intel-mkl-src"]
 [dependencies]
 anyhow = "1.0"
 finalfusion = "0.17.2"
-hashbrown = "0.13.2"
+yada = "0.4.1"
 
 [dependencies.ndarray]
 version = "0.15.6"
