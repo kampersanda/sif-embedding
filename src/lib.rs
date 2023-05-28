@@ -50,12 +50,10 @@ extern crate netlib_src;
 ))]
 extern crate openblas_src;
 
-pub mod lexicon;
 pub mod sif;
 pub mod unigram;
 pub mod util;
 
-pub use lexicon::Lexicon;
 pub use sif::Sif;
 pub use unigram::UnigramLM;
 
