@@ -27,9 +27,10 @@ jobs:
         run: |
           rustup toolchain install ${{ matrix.rust }} --profile minimal --component rustfmt,clippy
           rustup default ${{ matrix.rust }}
+
       - name: Run cargo check
         continue-on-error: ${{ matrix.rust == 'nightly' }}
-        run: cargo check
+        run: cargo check --no-default-features
 
       - name: Run cargo fmt
         continue-on-error: ${{ matrix.rust == 'nightly' }}
@@ -38,13 +39,13 @@ jobs:
       - name: Run cargo clippy
         # Run clippy only on stable to ignore unreasonable old warnings.
         continue-on-error: ${{ matrix.rust != 'stable' }}
-        run: cargo clippy -- -D warnings -W clippy::nursery
+        run: cargo clippy --no-default-features -- -D warnings -W clippy::nursery
 
       - name: Run cargo test
         continue-on-error: ${{ matrix.rust == 'nightly' }}
         # It may become faster if installing openblas and specifying openblas-system.
-        run: cargo test --release --features openblas
+        run: cargo test --release --no-default-features --features openblas
 
       - name: Run cargo doc
         continue-on-error: ${{ matrix.rust == 'nightly' }}
-        run: cargo doc --no-deps
+        run: cargo doc --no-deps --no-default-features
