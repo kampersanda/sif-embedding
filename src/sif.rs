@@ -2,12 +2,9 @@
 use finalfusion::embeddings::Embeddings;
 use finalfusion::storage::Storage;
 use finalfusion::vocab::Vocab;
-use ndarray::Array1;
-use ndarray::Array2;
+use ndarray::{Array1, Array2};
 
-use crate::util;
-use crate::Float;
-use crate::UnigramLM;
+use crate::{util, Float, UnigramLM};
 
 const N_COMPONENTS: usize = 1;
 
@@ -41,15 +38,13 @@ const N_COMPONENTS: usize = 1;
 /// let sent_embeddings = sif.embeddings(["go to las vegas", "mega vegas"]);
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
 /// ```
-///
-/// See [`FreezedSif`] for more details on `freezed_model`.
 #[derive(Debug, Clone)]
 pub struct Sif<'w, 'u, V, T> {
     separator: char,
     param_a: Float,
+    common_component: Option<Array2<Float>>,
     word_embeddings: &'w Embeddings<V, T>,
     unigram_lm: &'u UnigramLM,
-    common_component: Option<Array2<Float>>,
 }
 
 impl<'w, 'u, V, T> Sif<'w, 'u, V, T>
@@ -62,9 +57,9 @@ where
         Self {
             separator: ' ',
             param_a: 1e-3,
+            common_component: None,
             word_embeddings,
             unigram_lm,
-            common_component: None,
         }
     }
 
@@ -75,8 +70,14 @@ where
     }
 
     /// Sets a weighting parameter `a` (default: `1e-3`).
-    pub fn param_a(mut self, param_a: Float) -> Self {
+    pub fn parameters(mut self, param_a: Float, common_component: Option<Array2<Float>>) -> Self {
         self.param_a = param_a;
+        self.common_component = common_component;
+        self
+    }
+
+    ///
+    pub fn reset_common_component(mut self) -> Self {
         self.common_component = None;
         self
     }
