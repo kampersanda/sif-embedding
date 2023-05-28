@@ -32,12 +32,10 @@
 pub mod lexicon;
 pub mod sif;
 pub mod util;
-// pub mod word_embeddings;
 
 pub use lexicon::Lexicon;
 pub use sif::FreezedSif;
 pub use sif::Sif;
-// pub use word_embeddings::WordEmbeddings;
 
 /// Common type of floating numbers.
 pub type Float = f32;

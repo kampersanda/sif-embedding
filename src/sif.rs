@@ -16,11 +16,17 @@ use crate::{Float, Lexicon};
 /// # Examples
 ///
 /// ```
-/// use sif_embedding::{Lexicon, Sif, WordEmbeddings};
+/// use std::io::BufReader;
+///
+/// use finalfusion::compat::text::ReadText;
+/// use finalfusion::embeddings::Embeddings;
+///
+/// use sif_embedding::{Lexicon, Sif};
 ///
 /// // Load word embeddings from a pretrained model.
 /// let word_model = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
-/// let word_embeddings = WordEmbeddings::from_text(word_model.as_bytes()).unwrap();
+/// let mut reader = BufReader::new(word_model.as_bytes());
+/// let word_embeddings = Embeddings::read_text(&mut reader).unwrap();
 ///
 /// // Prepare word-frequency pairs.
 /// let word_weights = [("las", 10.), ("vegas", 20.)];
