@@ -8,21 +8,22 @@ edition = "2021"
 [features]
 default = ["openblas"]
 
-# One of these features must always be specified.
-# See https://github.com/rust-ndarray/ndarray-linalg/tree/ndarray-linalg-v0.16.0.
 openblas = ["sif-embedding/openblas"]
 openblas-static = ["sif-embedding/openblas-static"]
 openblas-system = ["sif-embedding/openblas-system"]
-netlib = ["sif-embedding/netlib"]
-netlib-static = ["sif-embedding/netlib-static"]
-netlib-system = ["sif-embedding/netlib-system"]
-intel-mkl = ["sif-embedding/intel-mkl"]
-intel-mkl-static = ["sif-embedding/intel-mkl-static"]
-intel-mkl-system = ["sif-embedding/intel-mkl-system"]
 
 [dependencies]
 clap = { version = "4.2.7", features = ["derive"] }
 finalfusion = "0.17.2"
-ndarray = "0.15.6"
 ndarray-stats = "0.5.1"
 sif-embedding = { version = "=0.2.0", default-features = false }
+
+[dependencies.ndarray]
+version = "0.15.6"
+features = ["approx-0_5", "blas", "std"]
+default-features = false
+
+[dependencies.openblas-src]
+version = "0.10.4"
+default-features = false
+features = ["cblas"]
