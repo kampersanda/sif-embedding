@@ -54,7 +54,7 @@ where
     T: Storage,
 {
     /// Creates a new instance.
-    pub fn new(word_embeddings: &'w Embeddings<V, T>, unigram_lm: &'u UnigramLM) -> Self {
+    pub const fn new(word_embeddings: &'w Embeddings<V, T>, unigram_lm: &'u UnigramLM) -> Self {
         Self {
             separator: ' ',
             param_a: 1e-3,
@@ -71,6 +71,7 @@ where
     }
 
     /// Sets a SIF-weighting parameter `a` (default: `1e-3`).
+    #[allow(clippy::missing_const_for_fn)]
     pub fn param_a(mut self, param_a: Float) -> Self {
         self.param_a = param_a;
         self.common_component = None;
@@ -78,13 +79,14 @@ where
     }
 
     /// Clears the common component retained by [`Self::embeddings_mut()`].
+    #[allow(clippy::missing_const_for_fn)]
     pub fn clear_common_component(mut self) -> Self {
         self.common_component = None;
         self
     }
 
     /// Checks if the common component is retained by [`Self::embeddings_mut()`].
-    pub fn is_common_component_retained(&self) -> bool {
+    pub const fn is_common_component_retained(&self) -> bool {
         self.common_component.is_some()
     }
 
