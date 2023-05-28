@@ -30,10 +30,11 @@ const N_COMPONENTS: usize = 1;
 /// let mut reader = BufReader::new(word_model.as_bytes());
 /// let word_embeddings = Embeddings::read_text(&mut reader).unwrap();
 ///
-/// // Prepare word-frequency pairs.
+/// // Create a unigram language model.
 /// let word_weights = [("las", 10.), ("vegas", 20.)];
 /// let unigram_lm = UnigramLM::new(word_weights);
 ///
+/// // Compute sentence embeddings.
 /// let sif = Sif::new(&word_embeddings, &unigram_lm);
 /// let sent_embeddings = sif.embeddings(["go to las vegas", "mega vegas"]);
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
@@ -63,7 +64,7 @@ where
         }
     }
 
-    /// Sets a separator for sentence segmentation (default: the ASCII whitespace ` `).
+    /// Sets a separator for sentence segmentation (default: ASCII whitespace).
     pub const fn separator(mut self, separator: char) -> Self {
         self.separator = separator;
         self
@@ -76,17 +77,25 @@ where
         self
     }
 
-    /// Clears the common component.
+    /// Clears the common component retained by [`Self::embeddings_mut()`].
     pub fn clear_common_component(mut self) -> Self {
         self.common_component = None;
         self
     }
 
-    /// Computes embeddings for the input sentences,
+    /// Computes embeddings for input sentences,
     /// returning a 2D-array of shape `(n_sentences, embedding_size)`, where
     ///
     /// - `n_sentences` is the number of input sentences, and
     /// - `embedding_size` is [`Self::embedding_size()`].
+    ///
+    /// # Behaviors depending on the internal state
+    ///
+    /// The behavior of this method varies depending on the internal state of the instance:
+    ///
+    /// - If the common component `c_0` is retained by [`Self::embeddings_mut()`],
+    ///   this method uses it to compute embeddings;
+    /// - Otherwise, it computes `c_0` from the input sentences and uses it to compute embeddings.
     pub fn embeddings<I, S>(&self, sentences: I) -> Array2<Float>
     where
         I: IntoIterator<Item = S>,
@@ -102,27 +111,28 @@ where
         sent_embeddings
     }
 
-    /// Computes embeddings for the input sentences,
+    /// Computes embeddings for input sentences,
     /// returning a 2D-array of shape `(n_sentences, embedding_size)`, where
     ///
     /// - `n_sentences` is the number of input sentences, and
     /// - `embedding_size` is [`Self::embedding_size()`].
+    ///
+    /// It also retains the common component `c_0` from the input sentences,
+    /// allowing for its reuse in [`Self::embeddings()`].
     pub fn embeddings_mut<I, S>(&mut self, sentences: I) -> Array2<Float>
     where
         I: IntoIterator<Item = S>,
         S: AsRef<str>,
     {
         let sent_embeddings = self.weighted_average_embeddings(sentences);
-        self.common_component = Some(util::principal_component(&sent_embeddings, N_COMPONENTS));
-        let sent_embeddings = Self::subtract_common_components(
-            sent_embeddings,
-            self.common_component.as_ref().unwrap(),
-        );
+        let common_component = util::principal_component(&sent_embeddings, N_COMPONENTS);
+        let sent_embeddings = Self::subtract_common_components(sent_embeddings, &common_component);
+        self.common_component = Some(common_component);
         sent_embeddings
     }
 
     /// Returns the number of dimensions for sentence embeddings,
-    /// which is equivalent to that of the input word embedding, i.e., [`Lexicon::embedding_size()`].
+    /// which is equivalent to that of the input word embeddings.
     pub fn embedding_size(&self) -> usize {
         self.word_embeddings.dims()
     }
