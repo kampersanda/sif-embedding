@@ -5,3 +5,4 @@ semeval-sts
 semeval-sts-clean
 semeval-sts-clean-wo-stopwords
 scores.txt
+scores/

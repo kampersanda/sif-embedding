@@ -4,8 +4,6 @@
 [![Documentation](https://docs.rs/sif-embedding/badge.svg)](https://docs.rs/sif-embedding)
 [![Crates.io](https://img.shields.io/crates/v/sif-embedding.svg)](https://crates.io/crates/sif-embedding)
 
-**This is currently a prototype version.**
-
 This is a Rust implementation of *smooth inverse frequency (SIF)* that is a simple but powerful embedding technique for sentences, described in the paper:
 
 > Sanjeev Arora, Yingyu Liang, and Tengyu Ma,
@@ -23,6 +21,11 @@ https://docs.rs/sif-embedding/
 - [ ] Support serialization/deserialization of models.
 - [ ] Provide Python binding
 - [ ] Conduct more evaluations.
+
+## Tools for preparing word embeddings
+
+sif-embedding employs [finalfusion](https://docs.rs/finalfusion/) to handle different types of word embeddings, such as Glove and fastText.
+[`finalfusion-tools`](./finalfusion-tools) provides tools to convert word embeddings to finalfusion format.
 
 ## Evaluations
 

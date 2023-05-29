@@ -39,14 +39,12 @@ $ ls -1 semeval-sts-clean/all
 ...
 ```
 
-### 3. Download pretrained word embeddings
+### 3. Prepare pretrained word embeddings
 
-Download a [GloVe](https://nlp.stanford.edu/projects/glove/) model of pretrained word embeddings.
+You need to prepare pretrained word embeddings in [finalfusion](https://docs.rs/finalfusion/) format.
+Prepare a model following [finalfusion-tools/README.md](../../finalfusion-tools/README.md).
 
-```shell
-$ wget https://nlp.stanford.edu/data/glove.840B.300d.zip
-$ unzip glove.840B.300d.zip
-```
+Here, we assume that you have `glove.42B.300d.fifu` in the current directory.
 
 ### 4. Conduct evaluation
 
@@ -55,49 +53,50 @@ The SIF algorithm requires unigram probabilities.
 You can use `auxiliary_data/enwiki_vocab_min200.txt` that has word frequencies (copied from [the authors' repository](https://github.com/PrincetonML/SIF)).
 
 ```shell
-$ cargo run --release --features openblas -- -e glove.840B.300d.txt -w auxiliary_data/enwiki_vocab_min200.txt -c semeval-sts-clean/all > scores.txt
+$ cargo run --release -- -f glove.42B.300d.fifu -w auxiliary_data/enwiki_vocab_min200.txt -c semeval-sts-clean/all -c semeval-sts-clean/all > scores.txt
 ```
 
 This will report the Pearson correlation coefficient between estimated similarities
 (i.e., cosine similarity between sentence embeddings) and gold scores, following the evaluation metric of the task.
-
-Note that it can consume a large working memory according to the size of input word embeddings.
-For example, the above procedure consumed ~5.4 GiB of memory in my environment.
 
 ## Experimental results
 
 The following table shows the actual results obtained from the above procedure.
 The original results by the authors are also shown as a baseline, from Table 5 (GloVe+WR) in [ICLR 2017](https://openreview.net/forum?id=SyK00v5xx).
 
-| Dataset                    | GloVe+WR | `sif_embedding::Sif` |
-| -------------------------- | -------- | -------------------- |
-| 2012                       |          |                      |
-| MSRpar.test.tsv            | 35.6%    | 21.9%                |
-| OnWN.test.tsv              | 66.2%    | 66.2%                |
-| SMTeuroparl.test.tsv       | 49.9%    | 50.3%                |
-| SMTnews.test.tsv           | 45.6%    | 48.7%                |
-| 2013                       |          |                      |
-| FNWN.test.tsv              | 39.4%    | 40.5%                |
-| headlines.test.tsv         | 69.2%    | 70.4%                |
-| OnWN.test.tsv              | 82.8%    | 80.1%                |
-| 2014                       |          |                      |
-| deft-forum.test.tsv        | 41.2%    | 41.1%                |
-| deft-news.test.tsv         | 69.4%    | 69.3%                |
-| headlines.test.tsv         | 64.7%    | 65.5%                |
-| images.test.tsv            | 82.6%    | 82.9%                |
-| OnWN.test.tsv              | 82.8%    | 83.1%                |
-| 2015                       |          |                      |
-| answers-forums.test.tsv    | 63.9%    | 63.9%                |
-| answers-students.test.tsv  | 70.4%    | 70.7%                |
-| belief.test.tsv            | 71.8%    | 72.5%                |
-| headlines.test.tsv         | 70.7%    | 73.5%                |
-| images.test.tsv            | 81.5%    | 81.5%                |
-| 2016                       |          |                      |
-| answer-answer.test.tsv     | NA       | 51.9%                |
-| headlines.test.tsv         | NA       | 69.7%                |
-| plagiarism.test.tsv        | NA       | 79.4%                |
-| postediting.test.tsv       | NA       | 79.4%                |
-| question-question.test.tsv | NA       | 69.6%                |
+|                            | ICLR 2017 | sif_embedding | sif_embedding |
+|----------------------------|----------:|--------------:|--------------:|
+| 2012                       |  GloVe+WR |      GloVe+WR |   fastText+WR |
+| MSRpar.test.tsv            |     35.6% |         25.6% |         25.3% |
+| OnWN.test.tsv              |     66.2% |         67.3% |         66.3% |
+| SMTeuroparl.test.tsv       |     49.9% |         49.7% |         52.3% |
+| SMTnews.test.tsv           |     45.6% |         47.5% |         46.1% |
+|                            |           |               |               |
+| 2013                       |  GloVe+WR |      GloVe+WR |   fastText+WR |
+| FNWN.test.tsv              |     39.4% |         42.8% |         46.7% |
+| headlines.test.tsv         |     69.2% |         72.0% |         69.0% |
+| OnWN.test.tsv              |     82.8% |         79.7% |         79.2% |
+|                            |           |               |               |
+| 2014                       |  GloVe+WR |      GloVe+WR |   fastText+WR |
+| deft-forum.test.tsv        |     41.2% |         40.1% |         39.9% |
+| deft-news.test.tsv         |     69.4% |         72.1% |         69.5% |
+| headlines.test.tsv         |     64.7% |         66.7% |         64.6% |
+| images.test.tsv            |     82.6% |         82.2% |         82.7% |
+| OnWN.test.tsv              |     82.8% |         82.6% |         81.6% |
+|                            |           |               |               |
+| 2015                       |  GloVe+WR |      GloVe+WR |   fastText+WR |
+| answers-forums.test.tsv    |     63.9% |         64.5% |         63.9% |
+| answers-students.test.tsv  |     70.4% |         72.3% |         72.6% |
+| belief.test.tsv            |     71.8% |         73.3% |         70.7% |
+| headlines.test.tsv         |     70.7% |         73.6% |         71.4% |
+| images.test.tsv            |     81.5% |         82.0% |         80.8% |
+|                            |           |               |               |
+| 2016                       |           |      GloVe+WR |   fastText+WR |
+| answer-answer.test.tsv     |           |         51.3% |         54.0% |
+| headlines.test.tsv         |           |         70.5% |         70.7% |
+| plagiarism.test.tsv        |           |         79.8% |         80.2% |
+| postediting.test.tsv       |           |         81.1% |         81.4% |
+| question-question.test.tsv |           |         69.0% |         69.7% |
 
 This library is not an exact port of the original code, and the experimental results do not exactly match.
 However, similar results were obtained (except for `2012.MSRpar.test.tsv`).

@@ -1,5 +1,5 @@
 //! Unigram language models.
-use std::collections::HashMap;
+use hashbrown::HashMap;
 
 use crate::Float;
 
@@ -20,7 +20,7 @@ use crate::Float;
 /// ```
 #[derive(Debug, Clone)]
 pub struct UnigramLM {
-    data: Vec<u8>,
+    word2probs: HashMap<String, Float>,
 }
 
 impl UnigramLM {
@@ -43,22 +43,11 @@ impl UnigramLM {
             .map(|(word, weight)| (word.as_ref().to_string(), weight))
             .collect();
         if word2probs.is_empty() {
-            return Self { data: vec![] };
+            return Self { word2probs };
         }
-
         let sum_weight = word2probs.values().fold(0., |acc, w| acc + w);
         word2probs.values_mut().for_each(|w| *w /= sum_weight);
-
-        let mut keyset = word2probs
-            .iter()
-            .map(|(w, &p)| (w, p.to_bits()))
-            .collect::<Vec<_>>();
-        keyset.sort_unstable();
-
-        // It should be safe to unwrap here because the input is not empty and sorted.
-        let data = yada::builder::DoubleArrayBuilder::build(&keyset).unwrap();
-
-        Self { data }
+        Self { word2probs }
     }
 
     /// Returns the probability for an input word.
@@ -66,13 +55,7 @@ impl UnigramLM {
     where
         W: AsRef<str>,
     {
-        if self.data.is_empty() {
-            0.
-        } else {
-            let da = yada::DoubleArray::new(self.data.as_slice());
-            da.exact_match_search(word.as_ref())
-                .map_or(0., f32::from_bits)
-        }
+        self.word2probs.get(word.as_ref()).cloned().unwrap_or(0.)
     }
 }
 
