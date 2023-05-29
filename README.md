@@ -4,8 +4,6 @@
 [![Documentation](https://docs.rs/sif-embedding/badge.svg)](https://docs.rs/sif-embedding)
 [![Crates.io](https://img.shields.io/crates/v/sif-embedding.svg)](https://crates.io/crates/sif-embedding)
 
-**This is currently a prototype version.**
-
 This is a Rust implementation of *smooth inverse frequency (SIF)* that is a simple but powerful embedding technique for sentences, described in the paper:
 
 > Sanjeev Arora, Yingyu Liang, and Tengyu Ma,
