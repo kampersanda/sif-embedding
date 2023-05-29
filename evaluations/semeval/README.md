@@ -42,7 +42,7 @@ $ ls -1 semeval-sts-clean/all
 ### 3. Prepare pretrained word embeddings
 
 You need to prepare pretrained word embeddings in [finalfusion](https://docs.rs/finalfusion/) format.
-Prepare a model following [finalfusion-tools/README.md](../finalfusion-tools/README.md).
+Prepare a model following [finalfusion-tools/README.md](../../finalfusion-tools/README.md).
 
 Here, we assume that you have `glove.42B.300d.fifu` in the current directory.
 
@@ -72,26 +72,26 @@ The original results by the authors are also shown as a baseline, from Table 5 (
 | SMTeuroparl.test.tsv       |     49.9% |         49.7% |         52.3% |
 | SMTnews.test.tsv           |     45.6% |         47.5% |         46.1% |
 |                            |           |               |               |
-| 2013                       |           |               |               |
+| 2013                       |  GloVe+WR |      GloVe+WR |   fastText+WR |
 | FNWN.test.tsv              |     39.4% |         42.8% |         46.7% |
 | headlines.test.tsv         |     69.2% |         72.0% |         69.0% |
 | OnWN.test.tsv              |     82.8% |         79.7% |         79.2% |
 |                            |           |               |               |
-| 2014                       |           |               |               |
+| 2014                       |  GloVe+WR |      GloVe+WR |   fastText+WR |
 | deft-forum.test.tsv        |     41.2% |         40.1% |         39.9% |
 | deft-news.test.tsv         |     69.4% |         72.1% |         69.5% |
 | headlines.test.tsv         |     64.7% |         66.7% |         64.6% |
 | images.test.tsv            |     82.6% |         82.2% |         82.7% |
 | OnWN.test.tsv              |     82.8% |         82.6% |         81.6% |
 |                            |           |               |               |
-| 2015                       |           |               |               |
+| 2015                       |  GloVe+WR |      GloVe+WR |   fastText+WR |
 | answers-forums.test.tsv    |     63.9% |         64.5% |         63.9% |
 | answers-students.test.tsv  |     70.4% |         72.3% |         72.6% |
 | belief.test.tsv            |     71.8% |         73.3% |         70.7% |
 | headlines.test.tsv         |     70.7% |         73.6% |         71.4% |
 | images.test.tsv            |     81.5% |         82.0% |         80.8% |
 |                            |           |               |               |
-| 2016                       |           |               |               |
+| 2016                       |           |      GloVe+WR |   fastText+WR |
 | answer-answer.test.tsv     |           |         51.3% |         54.0% |
 | headlines.test.tsv         |           |         70.5% |         70.7% |
 | plagiarism.test.tsv        |           |         79.8% |         80.2% |
