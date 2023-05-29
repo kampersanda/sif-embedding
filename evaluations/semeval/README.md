@@ -61,8 +61,8 @@ This will report the Pearson correlation coefficient between estimated similarit
 
 ## Experimental results
 
-The following table shows the actual results obtained from the above procedure.
-The original results by the authors are also shown as a baseline, from Table 5 (GloVe+WR) in [ICLR 2017](https://openreview.net/forum?id=SyK00v5xx).
+The following table shows the actual results obtained from the above procedure using `glove.42B.300d.fifu` (GloVe+WR) or `cc.en.300.fifu` (fastText+WR).
+The original results by the authors are also shown as a baseline, from Table 5 in [ICLR 2017](https://openreview.net/forum?id=SyK00v5xx).
 
 |                            | ICLR 2017 | sif_embedding | sif_embedding |
 |----------------------------|----------:|--------------:|--------------:|
