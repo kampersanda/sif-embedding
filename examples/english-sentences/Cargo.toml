@@ -1,0 +1,45 @@
+[package]
+name = "english-sentences"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = ["openblas"]
+
+openblas = ["sif-embedding/openblas", "openblas-src"]
+openblas-static = ["sif-embedding/openblas-static", "openblas-src"]
+openblas-system = ["sif-embedding/openblas-system", "openblas-src"]
+netlib = ["sif-embedding/netlib", "netlib-src"]
+netlib-static = ["sif-embedding/netlib-static", "netlib-src"]
+netlib-system = ["sif-embedding/netlib-system", "netlib-src"]
+intel-mkl = ["sif-embedding/intel-mkl", "intel-mkl-src"]
+intel-mkl-static = ["sif-embedding/intel-mkl-static", "intel-mkl-src"]
+intel-mkl-system = ["sif-embedding/intel-mkl-system", "intel-mkl-src"]
+
+[dependencies]
+finalfusion = "0.17.2"
+sif-embedding = { path = "../../", default-features = false }
+
+[dependencies.ndarray]
+version = "0.15.6"
+features = ["approx-0_5", "blas", "std"]
+default-features = false
+
+[dependencies.openblas-src]
+version = "0.10.4"
+optional = true
+default-features = false
+features = ["cblas"]
+
+[dependencies.netlib-src]
+version = "0.8.0"
+optional = true
+default-features = false
+features = ["cblas"]
+
+[dependencies.intel-mkl-src]
+version = "0.8.1"
+optional = true
+default-features = false
