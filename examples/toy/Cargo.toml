@@ -1,5 +1,5 @@
 [package]
-name = "english-sentences"
+name = "toy"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,15 +8,21 @@ edition = "2021"
 [features]
 default = ["openblas"]
 
-openblas = ["sif-embedding/openblas", "openblas-src"]
-openblas-static = ["sif-embedding/openblas-static", "openblas-src"]
-openblas-system = ["sif-embedding/openblas-system", "openblas-src"]
-netlib = ["sif-embedding/netlib", "netlib-src"]
-netlib-static = ["sif-embedding/netlib-static", "netlib-src"]
-netlib-system = ["sif-embedding/netlib-system", "netlib-src"]
-intel-mkl = ["sif-embedding/intel-mkl", "intel-mkl-src"]
-intel-mkl-static = ["sif-embedding/intel-mkl-static", "intel-mkl-src"]
-intel-mkl-system = ["sif-embedding/intel-mkl-system", "intel-mkl-src"]
+openblas = ["openblas-static"]
+openblas-static = ["sif-embedding/openblas-static", "openblas-src/static"]
+openblas-system = ["sif-embedding/openblas-system", "openblas-src/system"]
+netlib = ["netlib-static"]
+netlib-static = ["sif-embedding/netlib-static", "netlib-src/static"]
+netlib-system = ["sif-embedding/netlib-system", "netlib-src/system"]
+intel-mkl = ["intel-mkl-static"]
+intel-mkl-static = [
+    "sif-embedding/intel-mkl-static",
+    "intel-mkl-src/mkl-static-lp64-seq",
+]
+intel-mkl-system = [
+    "sif-embedding/intel-mkl-system",
+    "intel-mkl-src/mkl-dynamic-lp64-seq",
+]
 
 [dependencies]
 finalfusion = "0.17.2"

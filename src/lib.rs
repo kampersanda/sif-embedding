@@ -22,25 +22,13 @@
 //! If you are having problems compiling this library due to the backend, [my tips](https://github.com/kampersanda/sif-embedding/wiki/Trouble-shooting) may help.
 #![deny(missing_docs)]
 
-// These declarations are required so that finalfusion recognizes the backend.
-// c.f. https://github.com/finalfusion/finalfusion-utils
-#[cfg(any(
-    feature = "intel-mkl",
-    feature = "intel-mkl-static",
-    feature = "intel-mkl-system"
-))]
+// These declarations are required to recognize the backend.
+// https://github.com/rust-ndarray/ndarray-linalg/blob/ndarray-linalg-v0.16.0/lax/src/lib.rs
+#[cfg(any(feature = "intel-mkl-static", feature = "intel-mkl-system"))]
 extern crate intel_mkl_src;
-#[cfg(any(
-    feature = "netlib",
-    feature = "netlib-static",
-    feature = "netlib-system"
-))]
+#[cfg(any(feature = "netlib-static", feature = "netlib-system"))]
 extern crate netlib_src;
-#[cfg(any(
-    feature = "openblas",
-    feature = "openblas-static",
-    feature = "openblas-system"
-))]
+#[cfg(any(feature = "openblas-static", feature = "openblas-system"))]
 extern crate openblas_src;
 
 pub mod sif;
