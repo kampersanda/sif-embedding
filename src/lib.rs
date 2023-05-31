@@ -25,11 +25,11 @@
 // These declarations are required to recognize the backend.
 // https://github.com/rust-ndarray/ndarray-linalg/blob/ndarray-linalg-v0.16.0/lax/src/lib.rs
 #[cfg(any(feature = "intel-mkl-static", feature = "intel-mkl-system"))]
-extern crate intel_mkl_src;
+extern crate intel_mkl_src as _src;
 #[cfg(any(feature = "netlib-static", feature = "netlib-system"))]
-extern crate netlib_src;
+extern crate netlib_src as _src;
 #[cfg(any(feature = "openblas-static", feature = "openblas-system"))]
-extern crate openblas_src;
+extern crate openblas_src as _src;
 
 pub mod sif;
 pub mod unigram;

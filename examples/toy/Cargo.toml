@@ -28,11 +28,6 @@ intel-mkl-system = [
 finalfusion = "0.17.2"
 sif-embedding = { path = "../../", default-features = false }
 
-[dependencies.ndarray]
-version = "0.15.6"
-features = ["approx-0_5", "blas", "std"]
-default-features = false
-
 [dependencies.openblas-src]
 version = "0.10.4"
 optional = true
