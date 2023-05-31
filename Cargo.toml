@@ -1,5 +1,6 @@
 [package]
 name = "sif-embedding"
+# NOTE(kampersanda): Do not forget to update the version number in documentation of `lib.rs`.
 version = "0.2.1"
 authors = ["Shunsuke Kanda (kampersanda) <shnsk.knd@gmail.com>"]
 description = "Smooth inverse frequency (SIF), a simple but powerful embedding technique for sentences"
@@ -16,6 +17,7 @@ rust-version = "1.61.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
+# TODO(kampersanda): Remove the default feature.
 default = ["openblas"]
 
 # One of these features must always be specified.
