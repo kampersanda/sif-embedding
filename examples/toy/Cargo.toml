@@ -8,6 +8,10 @@ edition = "2021"
 [features]
 default = ["openblas"]
 
+# One of these features must always be specified.
+# e.g.,
+#  - `cargo run`
+#  - `cargo run --features intel-mkl --no-default-features`
 openblas = ["openblas-static"]
 openblas-static = ["sif-embedding/openblas-static", "openblas-src/static"]
 openblas-system = ["sif-embedding/openblas-system", "openblas-src/system"]
