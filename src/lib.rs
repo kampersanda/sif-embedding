@@ -7,11 +7,11 @@
 //! > [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
 //! > ICLR 2017.
 //!
-//! ## Basic usage
+//! ## Examples
 //!
 //! See the document of [`Sif`].
 //!
-//! ## Backend specifications
+//! ## Instructions
 //!
 //! This crate depends on [ndarray-linalg](https://github.com/rust-ndarray/ndarray-linalg) and
 //! allows you to specify any backend supported by ndarray-linalg through `features`.
@@ -19,29 +19,48 @@
 //! The default is `openblas` and uses the [OpenBLAS](https://www.openblas.net/) backend.
 //! **Note that you must specify one backend.**
 //!
-//! If you are having problems compiling this library due to the backend, [my tips](https://github.com/kampersanda/sif-embedding/wiki/Trouble-shooting) may help.
+//! For example, if you want to use the [OpenBLAS](https://www.openblas.net/) backend with static linking,
+//! specify the dependencies as follows:
+//!
+//! ```toml
+//! # Cargo.toml
+//!
+//! [features]
+//! default = ["openblas-static"]
+//! openblas-static = ["sif-embedding/openblas-static", "openblas-src/static"]
+//!
+//! [dependencies]
+//! sif-embedding = { version = "0.2", default-features = false }
+//!
+//! [dependencies.openblas-src]
+//! version = "0.10.4"
+//! optional = true
+//! default-features = false
+//! features = ["cblas"]
+//! ```
+//!
+//! In addition, declare `openblas-src` at the root of your crate as follows:
+//!
+//! ```
+//! // main.rs / lib.rs
+//! #[cfg(feature = "openblas-static")]
+//! extern crate openblas_src as _src;
+//! ```
+//!
+//! ### Tips
+//!
+//! If you are having problems compiling this library due to the backend,
+//! [my tips](https://github.com/kampersanda/sif-embedding/wiki/Trouble-shooting) may help.
 #![deny(missing_docs)]
 
-// These declarations are required so that finalfusion recognizes the backend.
-// c.f. https://github.com/finalfusion/finalfusion-utils
-#[cfg(any(
-    feature = "intel-mkl",
-    feature = "intel-mkl-static",
-    feature = "intel-mkl-system"
-))]
-extern crate intel_mkl_src;
-#[cfg(any(
-    feature = "netlib",
-    feature = "netlib-static",
-    feature = "netlib-system"
-))]
-extern crate netlib_src;
-#[cfg(any(
-    feature = "openblas",
-    feature = "openblas-static",
-    feature = "openblas-system"
-))]
-extern crate openblas_src;
+// These declarations are required to recognize the backend.
+// https://github.com/rust-ndarray/ndarray-linalg/blob/ndarray-linalg-v0.16.0/lax/src/lib.rs
+#[cfg(any(feature = "intel-mkl-static", feature = "intel-mkl-system"))]
+extern crate intel_mkl_src as _src;
+#[cfg(any(feature = "netlib-static", feature = "netlib-system"))]
+extern crate netlib_src as _src;
+#[cfg(any(feature = "openblas-static", feature = "openblas-system"))]
+extern crate openblas_src as _src;
 
 pub mod sif;
 pub mod unigram;

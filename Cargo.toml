@@ -1,5 +1,6 @@
 [package]
 name = "sif-embedding"
+# NOTE(kampersanda): Do not forget to update the version number in documentation of `lib.rs`.
 version = "0.2.1"
 authors = ["Shunsuke Kanda (kampersanda) <shnsk.knd@gmail.com>"]
 description = "Smooth inverse frequency (SIF), a simple but powerful embedding technique for sentences"
@@ -16,19 +17,26 @@ rust-version = "1.61.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
+# TODO(kampersanda): Remove the default feature.
 default = ["openblas"]
 
 # One of these features must always be specified.
 # See https://github.com/rust-ndarray/ndarray-linalg/tree/ndarray-linalg-v0.16.0.
-openblas = ["ndarray-linalg/openblas", "openblas-src"]
-openblas-static = ["ndarray-linalg/openblas-static", "openblas-src"]
-openblas-system = ["ndarray-linalg/openblas-system", "openblas-src"]
-netlib = ["ndarray-linalg/netlib", "netlib-src"]
-netlib-static = ["ndarray-linalg/netlib-static", "netlib-src"]
-netlib-system = ["ndarray-linalg/netlib-system", "netlib-src"]
-intel-mkl = ["ndarray-linalg/intel-mkl", "intel-mkl-src"]
-intel-mkl-static = ["ndarray-linalg/intel-mkl-static", "intel-mkl-src"]
-intel-mkl-system = ["ndarray-linalg/intel-mkl-system", "intel-mkl-src"]
+openblas = ["openblas-static"]
+openblas-static = ["ndarray-linalg/openblas-static", "openblas-src/static"]
+openblas-system = ["ndarray-linalg/openblas-system", "openblas-src/system"]
+netlib = ["netlib-static"]
+netlib-static = ["ndarray-linalg/netlib-static", "netlib-src/static"]
+netlib-system = ["ndarray-linalg/netlib-system", "netlib-src/system"]
+intel-mkl = ["intel-mkl-static"]
+intel-mkl-static = [
+    "ndarray-linalg/intel-mkl-static",
+    "intel-mkl-src/mkl-static-lp64-seq",
+]
+intel-mkl-system = [
+    "ndarray-linalg/intel-mkl-system",
+    "intel-mkl-src/mkl-dynamic-lp64-seq",
+]
 
 [dependencies]
 anyhow = "1.0"
@@ -69,4 +77,4 @@ approx = "0.5.1"
 no-default-features = true
 
 [workspace]
-members = ["finalfusion-tools", "evaluations/semeval"]
+members = ["finalfusion-tools", "evaluations/semeval", "examples/toy"]

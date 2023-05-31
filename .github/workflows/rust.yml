@@ -41,10 +41,17 @@ jobs:
         continue-on-error: ${{ matrix.rust != 'stable' }}
         run: cargo clippy --no-default-features -- -D warnings -W clippy::nursery
 
-      - name: Run cargo test
+      - name: Run cargo test (openblas)
         continue-on-error: ${{ matrix.rust == 'nightly' }}
-        # It may become faster if installing openblas and specifying openblas-system.
         run: cargo test --release --no-default-features --features openblas
+
+      - name: Run cargo test (netlib)
+        continue-on-error: ${{ matrix.rust == 'nightly' }}
+        run: cargo test --release --no-default-features --features netlib
+
+      - name: Run cargo test (intel-mkl)
+        continue-on-error: ${{ matrix.rust == 'nightly' }}
+        run: cargo test --release --no-default-features --features intel-mkl
 
       - name: Run cargo doc
         continue-on-error: ${{ matrix.rust == 'nightly' }}
