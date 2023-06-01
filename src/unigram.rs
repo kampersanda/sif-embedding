@@ -71,25 +71,24 @@ impl UnigramLM {
     where
         W: AsRef<str>,
     {
-        if let Some(trie) = self.trie.as_ref() {
+        self.trie.as_ref().map_or(0., |trie| {
             trie.exact_match(word.as_ref().chars())
                 .map(Float::from_bits)
                 .unwrap_or(0.)
-        } else {
-            0.
-        }
+        })
     }
 
     /// Serializes the data structure into a [`Vec`].
     pub fn serialize_to_vec(&self) -> Vec<u8> {
-        if let Some(trie) = self.trie.as_ref() {
-            let mut dest = Vec::with_capacity(1 + trie.io_bytes());
-            dest.push(1);
-            dest.extend(trie.serialize_to_vec());
-            dest
-        } else {
-            vec![0]
-        }
+        self.trie.as_ref().map_or_else(
+            || vec![0],
+            |trie| {
+                let mut dest = Vec::with_capacity(1 + trie.io_bytes());
+                dest.push(1);
+                dest.extend(trie.serialize_to_vec());
+                dest
+            },
+        )
     }
 
     /// Deserializes the data structure from a given byte slice.
