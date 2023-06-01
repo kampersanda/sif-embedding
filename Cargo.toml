@@ -1,6 +1,6 @@
 [package]
 name = "sif-embedding"
-# NOTE(kampersanda): Do not forget to update the version number in documentation of `lib.rs`.
+# NOTE(kampersanda): Do not forget to update the version number in `lib.rs` as well.
 version = "0.2.1"
 authors = ["Shunsuke Kanda (kampersanda) <shnsk.knd@gmail.com>"]
 description = "Smooth inverse frequency (SIF), a simple but powerful embedding technique for sentences"
@@ -17,8 +17,7 @@ rust-version = "1.61.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-# TODO(kampersanda): Remove the default feature.
-default = ["openblas"]
+default = []
 
 # One of these features must always be specified.
 # See https://github.com/rust-ndarray/ndarray-linalg/tree/ndarray-linalg-v0.16.0.
@@ -49,6 +48,7 @@ features = ["approx-0_5", "blas", "std"]
 default-features = false
 
 [dependencies.ndarray-linalg]
+# NOTE(kampersanda): Do not forget to update the version number in `lib.rs` as well.
 version = "0.16.0"
 default-features = false
 
