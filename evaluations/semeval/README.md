@@ -53,7 +53,7 @@ The SIF algorithm requires unigram probabilities.
 You can use `auxiliary_data/enwiki_vocab_min200.txt` that has word frequencies (copied from [the authors' repository](https://github.com/PrincetonML/SIF)).
 
 ```shell
-$ cargo run --release -- -f glove.42B.300d.fifu -w auxiliary_data/enwiki_vocab_min200.txt -c semeval-sts-clean/all -c semeval-sts-clean/all > scores.txt
+$ cargo run --release -- -f glove.42B.300d.fifu -w auxiliary_data/enwiki_vocab_min200.txt -c semeval-sts-clean/all > scores.txt
 ```
 
 This will report the Pearson correlation coefficient between estimated similarities
