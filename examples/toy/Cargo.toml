@@ -30,7 +30,7 @@ intel-mkl-system = [
 
 [dependencies]
 finalfusion = "0.17.2"
-sif-embedding = { path = "../../", default-features = false }
+sif-embedding = { path = "../../" }
 
 [dependencies.openblas-src]
 version = "0.10.4"

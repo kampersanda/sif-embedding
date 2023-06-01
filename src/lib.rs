@@ -39,7 +39,7 @@
 //! openblas-static = ["sif-embedding/openblas-static", "openblas-src/static"]
 //!
 //! [dependencies]
-//! sif-embedding = { version = "0.2", default-features = false }
+//! sif-embedding = "0.3"
 //!
 //! [dependencies.openblas-src]
 //! version = "0.10.4"
