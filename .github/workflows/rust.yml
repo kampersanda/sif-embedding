@@ -32,6 +32,11 @@ jobs:
         continue-on-error: ${{ matrix.rust == 'nightly' }}
         run: cargo check
 
+      - name: Run cargo check (all)
+        # MSRV should be ignored for sub-crates.
+        continue-on-error: ${{ matrix.rust != 'stable' }}
+        run: cargo check --all
+
       - name: Run cargo fmt
         continue-on-error: ${{ matrix.rust == 'nightly' }}
         run: cargo fmt --all -- --check
@@ -39,7 +44,7 @@ jobs:
       - name: Run cargo clippy
         # Run clippy only on stable to ignore unreasonable old warnings.
         continue-on-error: ${{ matrix.rust != 'stable' }}
-        run: cargo clippy -- -D warnings -W clippy::nursery
+        run: cargo clippy --all -- -D warnings -W clippy::nursery
 
       - name: Run cargo test (openblas)
         continue-on-error: ${{ matrix.rust == 'nightly' }}

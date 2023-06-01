@@ -5,8 +5,9 @@ use std::io::BufRead;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut word2idx = HashMap::new();
-
     let lines = std::io::stdin().lock().lines();
+
+    #[allow(clippy::significant_drop_in_scrutinee)]
     for (idx, line) in lines.enumerate() {
         let line = line?;
         let cols: Vec<_> = line.split_ascii_whitespace().collect();
