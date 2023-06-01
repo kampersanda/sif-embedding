@@ -14,10 +14,19 @@
 //! ## Instructions
 //!
 //! This crate depends on [ndarray-linalg](https://github.com/rust-ndarray/ndarray-linalg) and
-//! allows you to specify any backend supported by ndarray-linalg through `features`.
-//! The feature names in sif-embedding are the same as those in [ndarray-linalg v0.16.0](https://github.com/rust-ndarray/ndarray-linalg/tree/ndarray-linalg-v0.16.0).
-//! The default is `openblas` and uses the [OpenBLAS](https://www.openblas.net/) backend.
-//! **Note that you must specify one backend.**
+//! allows you to specify any backend supported by ndarray-linalg.
+//! **You must always specify one of the features** from:
+//!
+//! - `openblas-static` (or alias `openblas`)
+//! - `openblas-system`
+//! - `netlib-static` (or alias `netlib`)
+//! - `netlib-system`
+//! - `intel-mkl-static` (or alias `intel-mkl`)
+//! - `intel-mkl-system`
+//!
+//! The feature names correspond to those of ndarray-linalg (v0.16.0).
+//! Refer to [the documentation](https://github.com/rust-ndarray/ndarray-linalg/tree/ndarray-linalg-v0.16.0)
+//! for the specifications.
 //!
 //! For example, if you want to use the [OpenBLAS](https://www.openblas.net/) backend with static linking,
 //! specify the dependencies as follows:
@@ -46,6 +55,8 @@
 //! #[cfg(feature = "openblas-static")]
 //! extern crate openblas_src as _src;
 //! ```
+//!
+//! See [`examples/toy`](https://github.com/kampersanda/sif-embedding/tree/main/examples/toy) for a complete example.
 //!
 //! ### Tips
 //!
