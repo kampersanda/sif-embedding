@@ -1,6 +1,7 @@
 //! Unigram language models.
 use std::collections::BTreeMap;
 
+use anyhow::{anyhow, Result};
 use crawdad::Trie;
 
 use crate::Float;
@@ -16,9 +17,18 @@ use crate::Float;
 /// let word_weights = [("las", 10.), ("vegas", 30.)];
 /// let unigram_lm = UnigramLM::new(word_weights);
 ///
+/// // Querying
 /// assert_relative_eq!(unigram_lm.probability("las"), 0.25);
 /// assert_relative_eq!(unigram_lm.probability("vegas"), 0.75);
 /// assert_relative_eq!(unigram_lm.probability("Las"), 0.00);
+///
+/// // Serialization/deserialization
+/// let bytes = unigram_lm.serialize_to_vec();
+/// let (other, rest) = UnigramLM::deserialize_from_slice(&bytes).unwrap();
+/// assert_relative_eq!(other.probability("las"), 0.25);
+/// assert_relative_eq!(other.probability("vegas"), 0.75);
+/// assert_relative_eq!(other.probability("Las"), 0.00);
+/// assert!(rest.is_empty());
 /// ```
 pub struct UnigramLM {
     trie: Option<Trie>,
@@ -67,6 +77,38 @@ impl UnigramLM {
                 .unwrap_or(0.)
         } else {
             0.
+        }
+    }
+
+    /// Serializes the data structure into a [`Vec`].
+    pub fn serialize_to_vec(&self) -> Vec<u8> {
+        if let Some(trie) = self.trie.as_ref() {
+            let mut dest = Vec::with_capacity(1 + trie.io_bytes());
+            dest.push(1);
+            dest.extend(trie.serialize_to_vec());
+            dest
+        } else {
+            vec![0]
+        }
+    }
+
+    /// Deserializes the data structure from a given byte slice.
+    ///
+    /// # Arguments
+    ///
+    /// - `source`: Source slice of bytes.
+    ///
+    /// # Returns
+    ///
+    /// A tuple of the data structure and the slice not used for the deserialization.
+    pub fn deserialize_from_slice(source: &[u8]) -> Result<(Self, &[u8])> {
+        if source[0] == 1 {
+            let (trie, source) = Trie::deserialize_from_slice(&source[1..]);
+            Ok((Self { trie: Some(trie) }, source))
+        } else if source[0] == 0 {
+            Ok((Self { trie: None }, &source[1..]))
+        } else {
+            Err(anyhow!("Invalid model format of UnigramLM."))
         }
     }
 }
