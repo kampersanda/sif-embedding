@@ -127,6 +127,15 @@ mod tests {
         assert_relative_eq!(unigram_lm.probability("las"), 0.00);
         assert_relative_eq!(unigram_lm.probability("vegas"), 0.00);
         assert_relative_eq!(unigram_lm.probability("Las"), 0.00);
+
+        let bytes = unigram_lm.serialize_to_vec();
+        assert_eq!(bytes, vec![0]);
+
+        let (other, rest) = UnigramLM::deserialize_from_slice(&bytes).unwrap();
+        assert_relative_eq!(other.probability("las"), 0.00);
+        assert_relative_eq!(other.probability("vegas"), 0.00);
+        assert_relative_eq!(other.probability("Las"), 0.00);
+        assert!(rest.is_empty());
     }
 
     #[test]
