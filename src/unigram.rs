@@ -1,5 +1,8 @@
 //! Unigram language models.
-use hashbrown::HashMap;
+use std::collections::BTreeMap;
+
+use anyhow::{anyhow, Result};
+use crawdad::Trie;
 
 use crate::Float;
 
@@ -14,13 +17,21 @@ use crate::Float;
 /// let word_weights = [("las", 10.), ("vegas", 30.)];
 /// let unigram_lm = UnigramLM::new(word_weights);
 ///
+/// // Querying
 /// assert_relative_eq!(unigram_lm.probability("las"), 0.25);
 /// assert_relative_eq!(unigram_lm.probability("vegas"), 0.75);
 /// assert_relative_eq!(unigram_lm.probability("Las"), 0.00);
+///
+/// // Serialization/deserialization
+/// let bytes = unigram_lm.serialize_to_vec();
+/// let (other, rest) = UnigramLM::deserialize_from_slice(&bytes).unwrap();
+/// assert_relative_eq!(other.probability("las"), 0.25);
+/// assert_relative_eq!(other.probability("vegas"), 0.75);
+/// assert_relative_eq!(other.probability("Las"), 0.00);
+/// assert!(rest.is_empty());
 /// ```
-#[derive(Debug, Clone)]
 pub struct UnigramLM {
-    word2probs: HashMap<String, Float>,
+    trie: Option<Trie>,
 }
 
 impl UnigramLM {
@@ -38,16 +49,21 @@ impl UnigramLM {
         I: IntoIterator<Item = (W, Float)>,
         W: AsRef<str>,
     {
-        let mut word2probs: HashMap<_, _> = word_weights
+        let mut word2probs: BTreeMap<_, _> = word_weights
             .into_iter()
             .map(|(word, weight)| (word.as_ref().to_string(), weight))
             .collect();
+
         if word2probs.is_empty() {
-            return Self { word2probs };
+            return Self { trie: None };
         }
+
         let sum_weight = word2probs.values().fold(0., |acc, w| acc + w);
         word2probs.values_mut().for_each(|w| *w /= sum_weight);
-        Self { word2probs }
+
+        let trie =
+            Trie::from_records(word2probs.into_iter().map(|(w, p)| (w, p.to_bits()))).unwrap();
+        Self { trie: Some(trie) }
     }
 
     /// Returns the probability for an input word.
@@ -55,7 +71,44 @@ impl UnigramLM {
     where
         W: AsRef<str>,
     {
-        self.word2probs.get(word.as_ref()).cloned().unwrap_or(0.)
+        self.trie.as_ref().map_or(0., |trie| {
+            trie.exact_match(word.as_ref().chars())
+                .map(Float::from_bits)
+                .unwrap_or(0.)
+        })
+    }
+
+    /// Serializes the data structure into a [`Vec`].
+    pub fn serialize_to_vec(&self) -> Vec<u8> {
+        self.trie.as_ref().map_or_else(
+            || vec![0],
+            |trie| {
+                let mut dest = Vec::with_capacity(1 + trie.io_bytes());
+                dest.push(1);
+                dest.extend(trie.serialize_to_vec());
+                dest
+            },
+        )
+    }
+
+    /// Deserializes the data structure from a given byte slice.
+    ///
+    /// # Arguments
+    ///
+    /// - `source`: Source slice of bytes.
+    ///
+    /// # Returns
+    ///
+    /// A tuple of the data structure and the slice not used for the deserialization.
+    pub fn deserialize_from_slice(source: &[u8]) -> Result<(Self, &[u8])> {
+        if source[0] == 1 {
+            let (trie, source) = Trie::deserialize_from_slice(&source[1..]);
+            Ok((Self { trie: Some(trie) }, source))
+        } else if source[0] == 0 {
+            Ok((Self { trie: None }, &source[1..]))
+        } else {
+            Err(anyhow!("Invalid model format of UnigramLM."))
+        }
     }
 }
 
@@ -73,6 +126,15 @@ mod tests {
         assert_relative_eq!(unigram_lm.probability("las"), 0.00);
         assert_relative_eq!(unigram_lm.probability("vegas"), 0.00);
         assert_relative_eq!(unigram_lm.probability("Las"), 0.00);
+
+        let bytes = unigram_lm.serialize_to_vec();
+        assert_eq!(bytes, vec![0]);
+
+        let (other, rest) = UnigramLM::deserialize_from_slice(&bytes).unwrap();
+        assert_relative_eq!(other.probability("las"), 0.00);
+        assert_relative_eq!(other.probability("vegas"), 0.00);
+        assert_relative_eq!(other.probability("Las"), 0.00);
+        assert!(rest.is_empty());
     }
 
     #[test]

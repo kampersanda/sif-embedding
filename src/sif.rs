@@ -39,7 +39,7 @@ const N_COMPONENTS: usize = 1;
 /// let sent_embeddings = sif.embeddings(["go to las vegas", "mega vegas"]);
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Sif<'w, 'u, V, T> {
     separator: char,
     param_a: Float,
