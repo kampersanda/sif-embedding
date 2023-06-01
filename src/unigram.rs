@@ -1,5 +1,7 @@
 //! Unigram language models.
-use hashbrown::HashMap;
+use std::collections::BTreeMap;
+
+use crawdad::Trie;
 
 use crate::Float;
 
@@ -18,9 +20,8 @@ use crate::Float;
 /// assert_relative_eq!(unigram_lm.probability("vegas"), 0.75);
 /// assert_relative_eq!(unigram_lm.probability("Las"), 0.00);
 /// ```
-#[derive(Debug, Clone)]
 pub struct UnigramLM {
-    word2probs: HashMap<String, Float>,
+    trie: Option<Trie>,
 }
 
 impl UnigramLM {
@@ -38,16 +39,21 @@ impl UnigramLM {
         I: IntoIterator<Item = (W, Float)>,
         W: AsRef<str>,
     {
-        let mut word2probs: HashMap<_, _> = word_weights
+        let mut word2probs: BTreeMap<_, _> = word_weights
             .into_iter()
             .map(|(word, weight)| (word.as_ref().to_string(), weight))
             .collect();
+
         if word2probs.is_empty() {
-            return Self { word2probs };
+            return Self { trie: None };
         }
+
         let sum_weight = word2probs.values().fold(0., |acc, w| acc + w);
         word2probs.values_mut().for_each(|w| *w /= sum_weight);
-        Self { word2probs }
+
+        let trie =
+            Trie::from_records(word2probs.into_iter().map(|(w, p)| (w, p.to_bits()))).unwrap();
+        Self { trie: Some(trie) }
     }
 
     /// Returns the probability for an input word.
@@ -55,7 +61,13 @@ impl UnigramLM {
     where
         W: AsRef<str>,
     {
-        self.word2probs.get(word.as_ref()).cloned().unwrap_or(0.)
+        if let Some(trie) = self.trie.as_ref() {
+            trie.exact_match(word.as_ref().chars())
+                .map(Float::from_bits)
+                .unwrap_or(0.)
+        } else {
+            0.
+        }
     }
 }
 
