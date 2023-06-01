@@ -30,6 +30,11 @@ jobs:
 
       - name: Run cargo check
         continue-on-error: ${{ matrix.rust == 'nightly' }}
+        run: cargo check
+
+      - name: Run cargo check (all)
+        # MSRV should be ignored for sub-crates.
+        continue-on-error: ${{ matrix.rust != 'stable' }}
         run: cargo check --all
 
       - name: Run cargo fmt
