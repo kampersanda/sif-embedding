@@ -18,13 +18,13 @@ $ git clone https://github.com/brmson/dataset-sts.git
 $ ln -s dataset-sts/data/sts/semeval-sts
 ```
 
-### 2. Proprocess datasets
+### 2. Preprocess datasets
 
 `scripts/clean_semeval_sts.py` is a script to preprocess sentences (such as tokenization, or lowercasing), referencing [the authors' code](https://github.com/PrincetonML/SIF).
 
 ```shell
 $ python -m venv venv
-$ . ./venv/bin/activate
+$ source ./venv/bin/activate
 $ pip install -r scripts/requirements.txt
 $ python scripts/clean_semeval_sts.py
 ```
