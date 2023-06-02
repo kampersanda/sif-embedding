@@ -77,5 +77,6 @@ members = [
     "finalfusion-tools",
     "evaluations/semeval",
     "examples/toy",
+    "sif-tools",
     "wordfreq-tools",
 ]
