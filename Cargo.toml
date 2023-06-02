@@ -73,4 +73,9 @@ default-features = false
 approx = "0.5.1"
 
 [workspace]
-members = ["finalfusion-tools", "evaluations/semeval", "examples/toy"]
+members = [
+    "finalfusion-tools",
+    "evaluations/semeval",
+    "examples/toy",
+    "wordfreq-tools",
+]

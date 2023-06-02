@@ -1,0 +1,22 @@
+[package]
+name = "wordfreq-tools"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = ["openblas"]
+
+openblas = ["sif-embedding/openblas"]
+openblas-static = ["sif-embedding/openblas-static"]
+openblas-system = ["sif-embedding/openblas-system"]
+
+[dependencies]
+clap = { version = "4.2.7", features = ["derive"] }
+sif-embedding = { path = "../", default-features = false }
+
+[dependencies.openblas-src]
+version = "0.10.4"
+default-features = false
+features = ["cblas"]
