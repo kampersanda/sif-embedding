@@ -7,8 +7,8 @@ This directory provides an easy tool to perform sentence embedding using sif-emb
 sif-embedding, or the SIF algorithm, requires (pre-trained) word embeddings and unigram probabilities.
 You first need to prepare them.
 
-For word embeddings, [finalfusion-tools](../finalfusion-tools) provides instructions to download and compile well-known pre-trained word embeddings such as GloVe or fastText.
-For unigram probabilities, [wordfreq-tools](../wordfreq-tools) provides instructions to download and compile unigram probabilities from data provided in wordfreq.
+For word embeddings, [finalfusion-tools](../../finalfusion-tools) provides instructions to download and compile well-known pre-trained word embeddings such as GloVe or fastText.
+For unigram probabilities, [wordfreq-tools](../../wordfreq-tools) provides instructions to download and compile unigram probabilities from data provided in wordfreq.
 
 ## Sentence embedding
 
