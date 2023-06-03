@@ -76,7 +76,6 @@ approx = "0.5.1"
 members = [
     "finalfusion-tools",
     "evaluations/semeval",
-    "examples/embeddings",
-    "examples/toy",
+    "examples/tutorial",
     "wordfreq-tools",
 ]

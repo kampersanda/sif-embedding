@@ -7,10 +7,6 @@
 //! > [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
 //! > ICLR 2017.
 //!
-//! ## Examples
-//!
-//! See the document of [`Sif`].
-//!
 //! ## Instructions
 //!
 //! This crate depends on [ndarray-linalg](https://github.com/rust-ndarray/ndarray-linalg) and
@@ -52,16 +48,14 @@
 //!
 //! ```
 //! // main.rs / lib.rs
+//!
 //! #[cfg(feature = "openblas-static")]
 //! extern crate openblas_src as _src;
 //! ```
 //!
-//! See [`examples/toy`](https://github.com/kampersanda/sif-embedding/tree/main/examples/toy) for a complete example.
+//! ## Getting started
 //!
-//! ### Tips
-//!
-//! If you are having problems compiling this library due to the backend,
-//! [my tips](https://github.com/kampersanda/sif-embedding/wiki/Trouble-shooting) may help.
+//! See [the tutorial](https://github.com/kampersanda/sif-embedding/tree/main/examples/tutorial).
 #![deny(missing_docs)]
 
 // These declarations are required to recognize the backend.
