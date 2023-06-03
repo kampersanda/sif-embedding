@@ -34,12 +34,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mut reader = BufReader::new(File::open(&args.input_fifu)?);
         Embeddings::<VocabWrap, StorageWrap>::mmap_embeddings(&mut reader)?
     };
+
     let unigram_lm = {
         let mut reader = BufReader::new(File::open(&args.input_unigram)?);
         let mut data = vec![];
         reader.read_to_end(&mut data)?;
-        let (unigram_lm, _) = UnigramLM::deserialize_from_slice(&data[..])?;
-        unigram_lm
+        UnigramLM::deserialize_from_slice(&data[..])?
     };
 
     let sif = Sif::new(&word_embeddings, &unigram_lm);

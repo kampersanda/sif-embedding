@@ -24,11 +24,10 @@ use crate::Float;
 ///
 /// // Serialization/deserialization
 /// let bytes = unigram_lm.serialize_to_vec();
-/// let (other, rest) = UnigramLM::deserialize_from_slice(&bytes).unwrap();
+/// let other = UnigramLM::deserialize_from_slice(&bytes).unwrap();
 /// assert_relative_eq!(other.probability("las"), 0.25);
 /// assert_relative_eq!(other.probability("vegas"), 0.75);
 /// assert_relative_eq!(other.probability("Las"), 0.00);
-/// assert!(rest.is_empty());
 /// ```
 pub struct UnigramLM {
     trie: Option<Trie>,
@@ -96,16 +95,12 @@ impl UnigramLM {
     /// # Arguments
     ///
     /// - `source`: Source slice of bytes.
-    ///
-    /// # Returns
-    ///
-    /// A tuple of the data structure and the slice not used for the deserialization.
-    pub fn deserialize_from_slice(source: &[u8]) -> Result<(Self, &[u8])> {
+    pub fn deserialize_from_slice(source: &[u8]) -> Result<Self> {
         if source[0] == 1 {
-            let (trie, source) = Trie::deserialize_from_slice(&source[1..]);
-            Ok((Self { trie: Some(trie) }, source))
+            let (trie, _) = Trie::deserialize_from_slice(&source[1..]);
+            Ok(Self { trie: Some(trie) })
         } else if source[0] == 0 {
-            Ok((Self { trie: None }, &source[1..]))
+            Ok(Self { trie: None })
         } else {
             Err(anyhow!("Invalid model format of UnigramLM."))
         }
@@ -130,11 +125,10 @@ mod tests {
         let bytes = unigram_lm.serialize_to_vec();
         assert_eq!(bytes, vec![0]);
 
-        let (other, rest) = UnigramLM::deserialize_from_slice(&bytes).unwrap();
+        let other = UnigramLM::deserialize_from_slice(&bytes).unwrap();
         assert_relative_eq!(other.probability("las"), 0.00);
         assert_relative_eq!(other.probability("vegas"), 0.00);
         assert_relative_eq!(other.probability("Las"), 0.00);
-        assert!(rest.is_empty());
     }
 
     #[test]
