@@ -26,11 +26,6 @@ See [`examples/tutorial`](./examples/tutorial).
 - [ ] Provide Python binding
 - [ ] Conduct more evaluations.
 
-## Tools for preparing word embeddings
-
-sif-embedding employs [finalfusion](https://docs.rs/finalfusion/) to handle different types of word embeddings, such as Glove and fastText.
-[`finalfusion-tools`](./finalfusion-tools) provides tools to convert word embeddings to finalfusion format.
-
 ## Evaluations
 
 [`evaluations/semeval`](./evaluations/semeval) provides tools to evaluate sif-embedding on SemEval STS Task.
