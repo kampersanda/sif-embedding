@@ -16,19 +16,20 @@ https://docs.rs/sif-embedding/
 
 ## Getting started
 
-See [`examples/tutorial`](./examples/tutorial).
+See [examples/tutorial](./examples/tutorial).
 
 ## TODO
 
 - [ ] Add the unsupervised SIF described in [the paper](https://aclanthology.org/W18-3012/).
 - [x] Support [fastText](https://fasttext.cc/) models for word embeddings.
-- [x] Support serialization/deserialization of models.
+- [x] Provide pre-compiled unigram language models.
+- [ ] Provide serialization options for trained parameters.
 - [ ] Provide Python binding
 - [ ] Conduct more evaluations.
 
 ## Evaluations
 
-[`evaluations/semeval`](./evaluations/semeval) provides tools to evaluate sif-embedding on SemEval STS Task.
+[evaluations/semeval](./evaluations/semeval) provides tools to evaluate sif-embedding on SemEval STS Task.
 
 ## Wiki
 

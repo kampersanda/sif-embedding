@@ -1,7 +1,7 @@
 # sif-embedding/wordfreq-tools
 
 sif-embedding, or the SIF algorithm, requires unigram probabilities.
-This directory provides tools to create unigram language models\
+This directory provides tools to create unigram language models
 from data provided in [wordfreq](https://github.com/rspeer/wordfreq).
 
 ## 1. Download wordfreq data
