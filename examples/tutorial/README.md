@@ -29,3 +29,8 @@ $ echo "hello i am\ngood morning" | cargo run --release -- -f path/to/glove.42B.
 ```
 
 [The source code](./src/main.rs) will be a good example to understand how to handle the models and compute sentence embeddings.
+
+## Tips
+
+If you are having problems compiling this library due to the backend,
+[my tips](https://github.com/kampersanda/sif-embedding/wiki/Trouble-shooting) may help.
