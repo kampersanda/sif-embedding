@@ -3,7 +3,7 @@ use std::io::BufRead;
 
 use anyhow::{anyhow, Result};
 use ndarray::{self, Array2, ArrayBase, Data, Ix1, Ix2};
-use ndarray_linalg::SVD;
+use ndarray_linalg::{lobpcg::TruncatedOrder, TruncatedSvd};
 
 use crate::Float;
 
@@ -72,9 +72,11 @@ fn right_singular_vectors<S>(x: &ArrayBase<S, Ix2>, k: usize) -> Array2<Float>
 where
     S: Data<Elem = Float>,
 {
-    let (_, _, vt) = x.svd(false, true).unwrap();
-    let vt = vt.unwrap();
-    vt.slice(ndarray::s![..k, ..]).to_owned()
+    let svd = TruncatedSvd::new(x.to_owned(), TruncatedOrder::Largest)
+        .decompose(k)
+        .unwrap();
+    let (_, _, vt) = svd.values_vectors();
+    vt
 }
 
 /// Computes the principal components of the input data `x`,
@@ -90,6 +92,11 @@ pub(crate) fn principal_component<S>(x: &ArrayBase<S, Ix2>, k: usize) -> Array2<
 where
     S: Data<Elem = Float>,
 {
+    assert_ne!(k, 0);
+
+    // NOTE(kampersanda): The description why the principal components are the right singular vectors can be found in the following article.
+    // https://towardsdatascience.com/singular-value-decomposition-and-its-applications-in-principal-component-analysis-5b7a5f08d0bd
+
     // u of shape (k, m)
     let u = right_singular_vectors(x, k);
     // NOTE(kampersanda): Algorithm 1 says uu^T for a column vector u, not a row vector.
