@@ -16,7 +16,7 @@ https://docs.rs/sif-embedding/
 
 ## Getting started
 
-See [`examples/tutorial`](./examples/tutorial).
+See [examples/tutorial](./examples/tutorial).
 
 ## TODO
 
@@ -28,7 +28,7 @@ See [`examples/tutorial`](./examples/tutorial).
 
 ## Evaluations
 
-[`evaluations/semeval`](./evaluations/semeval) provides tools to evaluate sif-embedding on SemEval STS Task.
+[evaluations/semeval](./evaluations/semeval) provides tools to evaluate sif-embedding on SemEval STS Task.
 
 ## Wiki
 

@@ -6,7 +6,7 @@ but some parts (such as pre-processing) have not been fully reproduced.
 
 ## Evaluation steps
 
-We show steps to run the evaluation, assuming you are at directory `sif-embedding/evaluations/semeval`.
+We show steps to run the evaluation, assuming you are at this directory.
 
 ### 1. Download SemEval STS datasets
 
@@ -48,7 +48,7 @@ Here, we assume that you have `glove.42B.300d.fifu` in the current directory.
 
 ### 4. Conduct evaluation
 
-`cli/semeval_sts` is a command line tool that evaluates `sif_embedding::Sif` using the SemEval STS datasets.
+The executable evaluates `sif_embedding::Sif` using the SemEval STS datasets.
 The SIF algorithm requires unigram probabilities.
 You can use `auxiliary_data/enwiki_vocab_min200.txt` that has word frequencies (copied from [the authors' repository](https://github.com/PrincetonML/SIF)).
 

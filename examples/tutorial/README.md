@@ -11,7 +11,7 @@ This repository provides useful tools for this purpose.
 ### Word embeddings
 
 sif-embedding employs [finalfusion](https://docs.rs/finalfusion/) to handle different types of word embeddings, such as Glove and fastText.
-[`finalfusion-tools`](../../finalfusion-tools) provides instructions to download and compile those pre-trained word embeddings.
+[finalfusion-tools](../../finalfusion-tools) provides instructions to download and compile those pre-trained word embeddings.
 
 ### Unigram language models
 
