@@ -12,7 +12,7 @@ For unigram probabilities, [wordfreq-tools](../wordfreq-tools) provides instruct
 
 ## Sentence embedding
 
-Sentence embeddings can be performed using the models prepared in the above steps.
+Sentence embeddings can be performed for input lines using the models prepared in the above steps.
 
 ```
 $ echo "hello i am\ngood morning" | cargo run --release -- -f path/to/glove.42B.300d.fifu -u path/to/large_en.unigram
