@@ -1,10 +1,13 @@
 //! Unigram language models.
 use std::collections::BTreeMap;
+use std::io::{Read, Write};
 
 use anyhow::{anyhow, Result};
 use crawdad::Trie;
 
 use crate::Float;
+
+const MODEL_MAGIC: &[u8] = b"sif-embedding::UnigramLM 0.3.1\n";
 
 /// Unigram language model.
 ///
@@ -22,9 +25,13 @@ use crate::Float;
 /// assert_relative_eq!(unigram_lm.probability("vegas"), 0.75);
 /// assert_relative_eq!(unigram_lm.probability("Las"), 0.00);
 ///
-/// // Serialization/deserialization
-/// let bytes = unigram_lm.serialize_to_vec();
-/// let other = UnigramLM::deserialize_from_slice(&bytes).unwrap();
+/// // Serializing the model.
+/// let mut model = vec![];
+/// let size = unigram_lm.write(&mut model).unwrap();
+/// assert_eq!(size, model.len());
+///
+/// // Deserializing the model.
+/// let other = UnigramLM::read(&model[..]).unwrap();
 /// assert_relative_eq!(other.probability("las"), 0.25);
 /// assert_relative_eq!(other.probability("vegas"), 0.75);
 /// assert_relative_eq!(other.probability("Las"), 0.00);
@@ -77,9 +84,13 @@ impl UnigramLM {
         })
     }
 
-    /// Serializes the data structure into a [`Vec`].
-    pub fn serialize_to_vec(&self) -> Vec<u8> {
-        self.trie.as_ref().map_or_else(
+    /// Exports the model data, returning the number of bytes written.
+    pub fn write<W>(&self, mut wtr: W) -> Result<usize>
+    where
+        W: Write,
+    {
+        wtr.write_all(MODEL_MAGIC)?;
+        let bytes = self.trie.as_ref().map_or_else(
             || vec![0],
             |trie| {
                 let mut dest = Vec::with_capacity(1 + trie.io_bytes());
@@ -87,22 +98,35 @@ impl UnigramLM {
                 dest.extend(trie.serialize_to_vec());
                 dest
             },
-        )
+        );
+        let n_bytes = u32::try_from(bytes.len())?;
+        wtr.write_all(&n_bytes.to_le_bytes())?;
+        wtr.write_all(&bytes)?;
+        Ok(MODEL_MAGIC.len() + std::mem::size_of::<u32>() + bytes.len())
     }
 
-    /// Deserializes the data structure from a given byte slice.
-    ///
-    /// # Arguments
-    ///
-    /// - `source`: Source slice of bytes.
-    pub fn deserialize_from_slice(source: &[u8]) -> Result<Self> {
+    /// Read the model data.
+    pub fn read<R>(mut rdr: R) -> Result<Self>
+    where
+        R: Read,
+    {
+        let mut magic = [0; MODEL_MAGIC.len()];
+        rdr.read_exact(&mut magic)?;
+        if magic != MODEL_MAGIC {
+            return Err(anyhow!("The magic number of the input model mismatches."));
+        }
+        let mut n_bytes = [0; std::mem::size_of::<u32>()];
+        rdr.read_exact(&mut n_bytes)?;
+        let n_bytes = u32::from_le_bytes(n_bytes) as usize;
+        let mut source = vec![0; n_bytes];
+        rdr.read_exact(&mut source)?;
         if source[0] == 1 {
             let (trie, _) = Trie::deserialize_from_slice(&source[1..]);
             Ok(Self { trie: Some(trie) })
         } else if source[0] == 0 {
             Ok(Self { trie: None })
         } else {
-            Err(anyhow!("Invalid model format of UnigramLM."))
+            Err(anyhow!("Invalid UnigramLM model format."))
         }
     }
 }
@@ -122,10 +146,11 @@ mod tests {
         assert_relative_eq!(unigram_lm.probability("vegas"), 0.00);
         assert_relative_eq!(unigram_lm.probability("Las"), 0.00);
 
-        let bytes = unigram_lm.serialize_to_vec();
-        assert_eq!(bytes, vec![0]);
+        let mut model = vec![];
+        let size = unigram_lm.write(&mut model).unwrap();
+        assert_eq!(size, model.len());
 
-        let other = UnigramLM::deserialize_from_slice(&bytes).unwrap();
+        let other = UnigramLM::read(&model[..]).unwrap();
         assert_relative_eq!(other.probability("las"), 0.00);
         assert_relative_eq!(other.probability("vegas"), 0.00);
         assert_relative_eq!(other.probability("Las"), 0.00);

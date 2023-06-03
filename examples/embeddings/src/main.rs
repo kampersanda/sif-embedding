@@ -9,7 +9,7 @@ extern crate openblas_src as _src;
 
 use std::error::Error;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Read};
+use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 
 use clap::Parser;
@@ -36,10 +36,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
 
     let unigram_lm = {
-        let mut reader = BufReader::new(File::open(&args.input_unigram)?);
-        let mut data = vec![];
-        reader.read_to_end(&mut data)?;
-        UnigramLM::deserialize_from_slice(&data[..])?
+        let reader = BufReader::new(File::open(&args.input_unigram)?);
+        UnigramLM::read(reader)?
     };
 
     let sif = Sif::new(&word_embeddings, &unigram_lm);
