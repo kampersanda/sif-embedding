@@ -2,7 +2,7 @@ extern crate openblas_src;
 
 use std::error::Error;
 use std::fs::File;
-use std::io::{BufReader, Write};
+use std::io::{BufReader, BufWriter};
 use std::path::PathBuf;
 
 use clap::Parser;
@@ -29,9 +29,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         UnigramLM::new(word_weights)
     };
 
-    let bytes = unigram_lm.serialize_to_vec();
-    let mut file = File::create(&args.output_model)?;
-    file.write_all(&bytes)?;
+    {
+        let mut writter = BufWriter::new(File::create(&args.output_model)?);
+        unigram_lm.write(&mut writter)?;
+    }
 
     Ok(())
 }
