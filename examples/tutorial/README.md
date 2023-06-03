@@ -1,4 +1,4 @@
-# sif-embedding/examples/embeddings
+# Tutorial on sif-embedding
 
 This directory provides an easy tool to perform sentence embedding using sif-embedding.
 

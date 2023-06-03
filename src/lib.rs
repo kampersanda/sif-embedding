@@ -52,11 +52,12 @@
 //!
 //! ```
 //! // main.rs / lib.rs
+//!
 //! #[cfg(feature = "openblas-static")]
 //! extern crate openblas_src as _src;
 //! ```
 //!
-//! See [`examples/toy`](https://github.com/kampersanda/sif-embedding/tree/main/examples/toy) for a complete example.
+//! See [the tutorial](https://github.com/kampersanda/sif-embedding/tree/main/examples/tutorial) for a complete example.
 //!
 //! ### Tips
 //!
