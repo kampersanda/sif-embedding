@@ -105,7 +105,7 @@ impl UnigramLM {
         Ok(MODEL_MAGIC.len() + std::mem::size_of::<u32>() + bytes.len())
     }
 
-    /// Read the model data.
+    /// Read the model data, which is exported by [`UnigramLM::write()`].
     pub fn read<R>(mut rdr: R) -> Result<Self>
     where
         R: Read,
