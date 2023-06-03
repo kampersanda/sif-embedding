@@ -15,7 +15,15 @@ sif-embedding employs [finalfusion](https://docs.rs/finalfusion/) to handle diff
 
 ### Unigram language models
 
-[`wordfreq-tools`](../../wordfreq-tools) provides instructions to download and compile unigram language models from data provided in [wordfreq](https://github.com/rspeer/wordfreq).
+Pre-compiled unigram language models are available in [the release page](https://github.com/kampersanda/sif-embedding/releases/tag/v0.3.1).
+(The models are distributed on the release page of a specific version, but are valid for later versions as well.)
+Download an appropriate model for your language, as follows:
+
+```
+$ wget https://github.com/kampersanda/sif-embedding/releases/download/v0.3.1/large_en.unigram
+```
+
+Or, you can download and compile unigram language models manually, following the instructions in [wordfreq-tools](../../wordfreq-tools).
 
 ## Sentence embedding
 
