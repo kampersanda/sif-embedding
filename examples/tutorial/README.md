@@ -5,7 +5,8 @@ This directory provides a tutorial for getting started with sif-embedding.
 ## Preparation
 
 sif-embedding, or the SIF algorithm, requires pre-trained word embeddings and unigram language models.
-You first need to prepare them.
+First, you need to prepare them.
+This repository provides useful tools for this purpose.
 
 ### Word embeddings
 
@@ -18,10 +19,13 @@ sif-embedding employs [finalfusion](https://docs.rs/finalfusion/) to handle diff
 
 ## Sentence embedding
 
-Sentence embeddings can be performed for input lines using the models prepared in the above steps.
+Assume that you have prepared word embedding model `glove.42B.300d.fifu` and unigram language model `large_en.unigram` through the above steps.
+Sentence embeddings can be performed for input lines as follows:
 
 ```
 $ echo "hello i am\ngood morning" | cargo run --release -- -f path/to/glove.42B.300d.fifu -u path/to/large_en.unigram
 0.0037920314 -0.018138476 0.010073537 ... -0.002471894
 -0.0029124343 0.013930968 -0.0077368026 ... 0.001898489
 ```
+
+[The source code](./src/main.rs) will be a good example to understand how to handle the models and compute sentence embeddings.
