@@ -73,7 +73,9 @@ where
     S: Data<Elem = Float>,
 {
     let svd = TruncatedSvd::new(x.to_owned(), TruncatedOrder::Largest)
-        .maxiter(7) // from https://github.com/oborchers/Fast_Sentence_Embeddings/blob/master/fse/models/utils.py.
+        // NOTE(kampersanda): The default value of maxiter will take a long time to converge.
+        // So, we set a small value, following https://github.com/oborchers/Fast_Sentence_Embeddings/blob/master/fse/models/utils.py.
+        .maxiter(7)
         .decompose(k)
         .unwrap();
     let (_, _, vt) = svd.values_vectors();
