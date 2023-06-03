@@ -22,7 +22,8 @@ See [examples/tutorial](./examples/tutorial).
 
 - [ ] Add the unsupervised SIF described in [the paper](https://aclanthology.org/W18-3012/).
 - [x] Support [fastText](https://fasttext.cc/) models for word embeddings.
-- [x] Support serialization/deserialization of models.
+- [x] Provide pre-compiled unigram language models.
+- [ ] Provide serialization options for trained parameters.
 - [ ] Provide Python binding
 - [ ] Conduct more evaluations.
 
