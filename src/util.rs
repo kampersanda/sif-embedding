@@ -73,6 +73,7 @@ where
     S: Data<Elem = Float>,
 {
     let svd = TruncatedSvd::new(x.to_owned(), TruncatedOrder::Largest)
+        .maxiter(7) // from https://github.com/oborchers/Fast_Sentence_Embeddings/blob/master/fse/models/utils.py.
         .decompose(k)
         .unwrap();
     let (_, _, vt) = svd.values_vectors();
@@ -94,7 +95,7 @@ where
 {
     assert_ne!(k, 0);
 
-    // NOTE(kampersanda): The description why the principal components are the right singular vectors can be found in the following article.
+    // NOTE(kampersanda): The description why the principal components are the right singular vectors can be found in
     // https://towardsdatascience.com/singular-value-decomposition-and-its-applications-in-principal-component-analysis-5b7a5f08d0bd
 
     // u of shape (k, m)
