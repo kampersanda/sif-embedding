@@ -23,8 +23,9 @@ const N_COMPONENTS: usize = 1;
 ///
 /// use finalfusion::compat::text::ReadText;
 /// use finalfusion::embeddings::Embeddings;
+/// use wordfreq::WordFreq;
 ///
-/// use sif_embedding::{Sif, WordFreq};
+/// use sif_embedding::Sif;
 ///
 /// // Load word embeddings from a pretrained model.
 /// let word_model = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
