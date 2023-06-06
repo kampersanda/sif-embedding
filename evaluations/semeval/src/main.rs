@@ -9,9 +9,10 @@ use clap::Parser;
 use finalfusion::prelude::*;
 use ndarray::Array2;
 use ndarray_stats::CorrelationExt;
+use wordfreq::{self, WordFreq};
 
 use sif_embedding::util;
-use sif_embedding::{Float, Sif, UnigramLM};
+use sif_embedding::{Float, Sif};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -33,10 +34,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mut reader = BufReader::new(File::open(&args.input_fifu)?);
         Embeddings::<VocabWrap, StorageWrap>::mmap_embeddings(&mut reader)?
     };
-    let unigram_lm = {
+    let word_freq = {
         let reader = BufReader::new(File::open(&args.input_weights)?);
-        let word_weights = util::word_weights_from_text(reader)?;
-        UnigramLM::new(word_weights)
+        let word_weights = wordfreq::word_weights_from_text(reader)?;
+        WordFreq::new(word_weights)
     };
 
     eprintln!("word_embeddings.len() = {}", word_embeddings.len());
@@ -45,7 +46,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         word_embeddings.dims()
     );
 
-    let sif = Sif::new(&word_embeddings, &unigram_lm);
+    let sif = Sif::new(&word_embeddings, &word_freq);
 
     let corpora_dir = args.corpora_dir;
     let corpora = vec![

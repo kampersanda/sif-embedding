@@ -14,17 +14,15 @@ use std::path::PathBuf;
 
 use clap::Parser;
 use finalfusion::prelude::*;
+use wordfreq_model::{self, ModelKind};
 
-use sif_embedding::{Sif, UnigramLM};
+use sif_embedding::Sif;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
     #[arg(short = 'f', long)]
     input_fifu: PathBuf,
-
-    #[arg(short = 'u', long)]
-    input_unigram: PathBuf,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -35,12 +33,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         Embeddings::<VocabWrap, StorageWrap>::mmap_embeddings(&mut reader)?
     };
 
-    let unigram_lm = {
-        let reader = BufReader::new(File::open(&args.input_unigram)?);
-        UnigramLM::read(reader)?
-    };
+    let word_freq = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
 
-    let sif = Sif::new(&word_embeddings, &unigram_lm);
+    let sif = Sif::new(&word_embeddings, &word_freq);
     let sent_embeddings = sif.embeddings(std::io::stdin().lock().lines().map(|l| l.unwrap()));
     for sent_embedding in sent_embeddings.rows() {
         let row = sent_embedding
