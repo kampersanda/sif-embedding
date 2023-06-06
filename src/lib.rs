@@ -68,11 +68,9 @@ extern crate netlib_src as _src;
 extern crate openblas_src as _src;
 
 pub mod sif;
-pub mod unigram;
 pub mod util;
 
 pub use sif::Sif;
-pub use unigram::UnigramLM;
 
 /// Common type of floating numbers.
 pub type Float = f32;

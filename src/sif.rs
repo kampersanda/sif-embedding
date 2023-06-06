@@ -3,8 +3,9 @@ use finalfusion::embeddings::Embeddings;
 use finalfusion::storage::Storage;
 use finalfusion::vocab::Vocab;
 use ndarray::{Array1, Array2};
+use wordfreq::WordFreq;
 
-use crate::{util, Float, UnigramLM};
+use crate::{util, Float};
 
 const N_COMPONENTS: usize = 1;
 
@@ -22,8 +23,9 @@ const N_COMPONENTS: usize = 1;
 ///
 /// use finalfusion::compat::text::ReadText;
 /// use finalfusion::embeddings::Embeddings;
+/// use wordfreq::WordFreq;
 ///
-/// use sif_embedding::{Sif, UnigramLM};
+/// use sif_embedding::Sif;
 ///
 /// // Load word embeddings from a pretrained model.
 /// let word_model = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
@@ -32,10 +34,10 @@ const N_COMPONENTS: usize = 1;
 ///
 /// // Create a unigram language model.
 /// let word_weights = [("las", 10.), ("vegas", 20.)];
-/// let unigram_lm = UnigramLM::new(word_weights);
+/// let word_freq = WordFreq::new(word_weights);
 ///
 /// // Compute sentence embeddings.
-/// let sif = Sif::new(&word_embeddings, &unigram_lm);
+/// let sif = Sif::new(&word_embeddings, &word_freq);
 /// let sent_embeddings = sif.embeddings(["go to las vegas", "mega vegas"]);
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
 /// ```
@@ -44,7 +46,7 @@ pub struct Sif<'w, 'u, V, T> {
     separator: char,
     param_a: Float,
     word_embeddings: &'w Embeddings<V, T>,
-    unigram_lm: &'u UnigramLM,
+    word_freq: &'u WordFreq,
 }
 
 impl<'w, 'u, V, T> Sif<'w, 'u, V, T>
@@ -53,12 +55,12 @@ where
     T: Storage,
 {
     /// Creates a new instance.
-    pub const fn new(word_embeddings: &'w Embeddings<V, T>, unigram_lm: &'u UnigramLM) -> Self {
+    pub const fn new(word_embeddings: &'w Embeddings<V, T>, word_freq: &'u WordFreq) -> Self {
         Self {
             separator: ' ',
             param_a: 1e-3,
             word_embeddings,
-            unigram_lm,
+            word_freq,
         }
     }
 
@@ -112,7 +114,8 @@ where
             let mut sent_embedding = Array1::zeros(self.embedding_size());
             for word in sent.split(self.separator) {
                 if let Some(word_embedding) = self.word_embeddings.embedding(word) {
-                    let weight = self.param_a / (self.param_a + self.unigram_lm.probability(word));
+                    let weight =
+                        self.param_a / (self.param_a + self.word_freq.word_frequency(word));
                     sent_embedding += &(word_embedding.to_owned() * weight);
                     n_words += 1;
                 }
@@ -150,10 +153,11 @@ mod tests {
         let mut reader = BufReader::new(model.as_bytes());
         let word_embeddings = Embeddings::read_text(&mut reader).unwrap();
 
-        let word_weights = [("A", 1.), ("BB", 2.), ("CCC", 3.), ("DDDD", 4.)];
-        let unigram_lm = UnigramLM::new(word_weights);
+        let word_weights: [(&str, wordfreq::Float); 4] =
+            [("A", 1.), ("BB", 2.), ("CCC", 3.), ("DDDD", 4.)];
+        let word_freq = WordFreq::new(word_weights);
 
-        let sif = Sif::new(&word_embeddings, &unigram_lm);
+        let sif = Sif::new(&word_embeddings, &word_freq);
 
         let sent_embeddings = sif.embeddings(["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""]);
         assert_eq!(sent_embeddings.shape(), &[5, 3]);
