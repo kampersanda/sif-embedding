@@ -4,34 +4,32 @@ This directory provides a tutorial for getting started with sif-embedding.
 
 ## Preparation
 
-sif-embedding, or the SIF algorithm, requires pre-trained word embeddings and unigram language models.
-First, you need to prepare them.
-This repository provides useful tools for this purpose.
+sif-embedding, or the SIF algorithm, requires the following two components as input:
+
+1. Word embeddings
+2. Unigram language models
+
+This library employs [finalfusion](https://docs.rs/finalfusion/) and [wordfreq](https://docs.rs/wordfreq/latest/wordfreq/) for these components, respectively.
+You can prepare pretrained models as follows.
 
 ### Word embeddings
 
-sif-embedding employs [finalfusion](https://docs.rs/finalfusion/) to handle different types of word embeddings, such as Glove and fastText.
+[finalfusion](https://docs.rs/finalfusion/) is a library to handle different types of word embeddings such as Glove and fastText.
 [finalfusion-tools](../../finalfusion-tools) provides instructions to download and compile those pre-trained word embeddings.
 
 ### Unigram language models
 
-Pre-compiled unigram language models are available in [the release page](https://github.com/kampersanda/sif-embedding/releases/tag/v0.3.1).
-(The models are distributed on the release page of a specific version, but are valid for later versions as well.)
-Download an appropriate model for your language, as follows:
-
-```
-$ wget https://github.com/kampersanda/sif-embedding/releases/download/v0.3.1/large_en.unigram
-```
-
-Or, you can download and compile unigram language models manually, following the instructions in [wordfreq-tools](../../wordfreq-tools).
+[wordfreq](https://docs.rs/wordfreq/latest/wordfreq/) is a library to look up the frequencies of words.
+[wordfreq-model](https://docs.rs/wordfreq-model/) allows you to load pre-compiled models in many languages trained from various resources.
+See the [documentation](https://docs.rs/wordfreq-model/) for getting started.
 
 ## Sentence embedding
 
-Assume that you have prepared word embedding model `glove.42B.300d.fifu` and unigram language model `large_en.unigram` through the above steps.
-Sentence embeddings can be performed for input lines as follows:
+Assuming that you have prepared word embedding model `glove.42B.300d.fifu` and specified `features = ["large-en"]`  in wordfreq-model,
+sentence embeddings can be performed for input lines as follows:
 
 ```
-$ echo "hello i am\ngood morning" | cargo run --release -- -f path/to/glove.42B.300d.fifu -u path/to/large_en.unigram
+$ echo "hello i am\ngood morning" | cargo run --release -- -f path/to/glove.42B.300d.fifu
 0.0037920314 -0.018138476 0.010073537 ... -0.002471894
 -0.0029124343 0.013930968 -0.0077368026 ... 0.001898489
 ```
