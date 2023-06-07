@@ -16,7 +16,7 @@ openblas-system = ["sif-embedding/openblas-system"]
 clap = { version = "4.2.7", features = ["derive"] }
 finalfusion = "0.17.2"
 ndarray-stats = "0.5.1"
-sif-embedding = { path = "../../", default-features = false }
+sif-embedding = { path = "../../", features = ["finalfusion", "wordfreq"] }
 wordfreq = "0.1"
 
 [dependencies.ndarray]

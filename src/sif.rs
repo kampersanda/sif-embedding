@@ -1,7 +1,11 @@
 //! Smooth Inverse Frequency (SIF).
-use ndarray::{Array1, Array2};
+use ndarray::Array1;
+use ndarray::Array2;
 
-use crate::{util, Float, UnigramLanguageModel, WordEmbeddings};
+use crate::util;
+use crate::Float;
+use crate::UnigramLanguageModel;
+use crate::WordEmbeddings;
 
 const N_COMPONENTS: usize = 1;
 

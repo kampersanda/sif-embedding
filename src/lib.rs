@@ -67,9 +67,12 @@ extern crate netlib_src as _src;
 #[cfg(any(feature = "openblas-static", feature = "openblas-system"))]
 extern crate openblas_src as _src;
 
-pub mod finalfusion;
 pub mod sif;
 pub mod util;
+
+#[cfg(feature = "finalfusion")]
+pub mod finalfusion;
+#[cfg(feature = "wordfreq")]
 pub mod wordfreq;
 
 pub use sif::Sif;

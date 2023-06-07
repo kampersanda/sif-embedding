@@ -37,10 +37,13 @@ intel-mkl-system = [
     "intel-mkl-src/mkl-dynamic-lp64-seq",
 ]
 
+docs = ["finalfusion", "wordfreq"]
+test = ["finalfusion", "wordfreq", "openblas-system"]
+
 [dependencies]
 anyhow = "1.0"
-finalfusion = "0.17.2"
-wordfreq = "0.1"
+finalfusion = { version = "0.17", optional = true }
+wordfreq = { version = "0.1", optional = true }
 
 [dependencies.ndarray]
 version = "0.15.6"
@@ -74,3 +77,6 @@ approx = "0.5.1"
 
 [workspace]
 members = ["finalfusion-tools", "evaluations/semeval", "examples/tutorial"]
+
+[package.metadata.docs.rs]
+features = ["docs"]
