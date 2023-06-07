@@ -39,8 +39,6 @@ intel-mkl-system = [
 
 [dependencies]
 anyhow = "1.0"
-# NOTE(kampersanda): Do not forget to update the magic number in `unigram.rs` as well.
-crawdad = "0.4.0"
 finalfusion = "0.17.2"
 wordfreq = "0.1"
 
