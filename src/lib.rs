@@ -67,10 +67,29 @@ extern crate netlib_src as _src;
 #[cfg(any(feature = "openblas-static", feature = "openblas-system"))]
 extern crate openblas_src as _src;
 
+pub mod finalfusion;
 pub mod sif;
 pub mod util;
+pub mod wordfreq;
 
 pub use sif::Sif;
 
 /// Common type of floating numbers.
 pub type Float = f32;
+
+use ndarray::{CowArray, Ix1};
+
+/// Word embeddings.
+pub trait WordEmbeddings {
+    /// Returns the embedding of a word.
+    fn embedding(&self, word: &str) -> Option<CowArray<Float, Ix1>>;
+
+    /// Returns the number of dimension of the word embeddings.
+    fn embedding_size(&self) -> usize;
+}
+
+/// Unigram language model.
+pub trait UnigramLanguageModel {
+    /// Returns the probability of a word.
+    fn probability(&self, word: &str) -> Float;
+}
