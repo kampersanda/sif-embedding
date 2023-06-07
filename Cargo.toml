@@ -17,7 +17,7 @@ rust-version = "1.61.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = []
+default = ["finalfusion", "wordfreq"]
 
 # One of these features must always be specified.
 # See https://github.com/rust-ndarray/ndarray-linalg/tree/ndarray-linalg-v0.16.0.
@@ -38,7 +38,6 @@ intel-mkl-system = [
 ]
 
 docs = ["finalfusion", "wordfreq"]
-test = ["finalfusion", "wordfreq", "openblas-system"]
 
 [dependencies]
 anyhow = "1.0"
@@ -80,3 +79,4 @@ members = ["finalfusion-tools", "evaluations/semeval", "examples/tutorial"]
 
 [package.metadata.docs.rs]
 features = ["docs"]
+default-features = false
