@@ -2,6 +2,9 @@
 
 This directory provides a tutorial for getting started with sif-embedding.
 
+This tutorial focuses on how to prepare input models and providing a simple example code of sentence embeddings.
+See the [documentation](https://docs.rs/sif-embedding/) for the specifications in `Cargo.toml`.
+
 ## Preparation
 
 sif-embedding, or the SIF algorithm, requires the following two components as input:
@@ -9,8 +12,8 @@ sif-embedding, or the SIF algorithm, requires the following two components as in
 1. Word embeddings
 2. Unigram language models
 
-This library employs [finalfusion](https://docs.rs/finalfusion/) and [wordfreq](https://docs.rs/wordfreq/latest/wordfreq/) for these components, respectively.
-You can prepare pretrained models as follows.
+Here, we describe how to use [finalfusion](https://docs.rs/finalfusion/) and [wordfreq](https://docs.rs/wordfreq/latest/wordfreq/) for these components, respectively.
+You can prepare the pre-trained models as follows.
 
 ### Word embeddings
 
@@ -34,7 +37,7 @@ $ echo "hello i am\ngood morning" | cargo run --release -- -f path/to/glove.42B.
 -0.0029124343 0.013930968 -0.0077368026 ... 0.001898489
 ```
 
-[The source code](./src/main.rs) will be a good example to understand how to handle the models and compute sentence embeddings.
+[src/main.rs](./src/main.rs) will be a good example to understand how to handle the models and compute sentence embeddings.
 
 ## Tips
 
