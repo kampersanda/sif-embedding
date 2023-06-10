@@ -41,7 +41,7 @@ intel-mkl-system = [
 docs = ["finalfusion", "wordfreq"]
 
 # For easing test command `cargo test --features test`.
-test = ["finalfusion", "wordfreq", "openblas"]
+test = ["finalfusion", "wordfreq", "openblas-system"]
 
 [dependencies]
 anyhow = "1.0"
