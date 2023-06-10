@@ -45,7 +45,9 @@ test = ["finalfusion", "wordfreq", "openblas"]
 
 [dependencies]
 anyhow = "1.0"
+# NOTE(kampersanda): Do not forget to update the version number in `lib.rs` as well.
 finalfusion = { version = "0.17", optional = true }
+# NOTE(kampersanda): Do not forget to update the version number in `lib.rs` as well.
 wordfreq = { version = "0.1", optional = true }
 
 [dependencies.ndarray]
