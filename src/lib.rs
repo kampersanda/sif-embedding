@@ -74,7 +74,7 @@
 //! openblas-static = ["sif-embedding/openblas-static", "openblas-src/static"]
 //!
 //! [dependencies.sif-embedding]
-//! version = "0.3"
+//! version = "0.4"
 //!
 //! [dependencies.openblas-src]
 //! version = "0.10.4"
@@ -112,7 +112,7 @@
 //! # Cargo.toml
 //!
 //! [dependencies.sif-embedding]
-//! version = "0.3"
+//! version = "0.4"
 //! features = ["finalfusion", "wordfreq"]
 //! ```
 //!
