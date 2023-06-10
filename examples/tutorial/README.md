@@ -2,7 +2,7 @@
 
 This directory provides a tutorial for getting started with sif-embedding.
 
-This tutorial focuses on how to prepare input models and providing a simple example code of sentence embeddings.
+This tutorial focuses on preparing input models and providing a simple example code of sentence embeddings.
 See the [documentation](https://docs.rs/sif-embedding/) for the specifications in `Cargo.toml`.
 
 ## Preparation
