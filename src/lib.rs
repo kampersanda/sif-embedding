@@ -104,7 +104,7 @@
 //! This crate already implements the traits for the two external libraries:
 //!
 //! - [finalfusion (v0.17)](https://docs.rs/finalfusion/): Library to handle different types of word embeddings such as Glove and fastText.
-//! - [wordfreq (v0.1)](https://docs.rs/wordfreq/): Library to look up the frequencies of words in many languages.
+//! - [wordfreq (v0.2)](https://docs.rs/wordfreq/): Library to look up the frequencies of words in many languages.
 //!
 //! To enable the features, specify the dependencies as follows:
 //!
