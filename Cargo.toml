@@ -40,7 +40,7 @@ intel-mkl-system = [
 # For docs.rs
 docs = ["finalfusion", "wordfreq"]
 
-# For test command `cargo test --features test`.
+# For easing test command `cargo test --features test`.
 test = ["finalfusion", "wordfreq", "openblas"]
 
 [dependencies]
