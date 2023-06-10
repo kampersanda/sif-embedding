@@ -12,7 +12,7 @@ use ndarray_stats::CorrelationExt;
 use wordfreq::{self, WordFreq};
 
 use sif_embedding::util;
-use sif_embedding::{Float, Sif};
+use sif_embedding::{Float, Sif, UnigramLanguageModel, WordEmbeddings};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -111,7 +111,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn simeval(sif: &Sif<VocabWrap, StorageWrap>, curpus_path: &Path) -> Result<Float, Box<dyn Error>> {
+fn simeval<W, U>(sif: &Sif<W, U>, curpus_path: &Path) -> Result<Float, Box<dyn Error>>
+where
+    W: WordEmbeddings,
+    U: UnigramLanguageModel,
+{
     eprintln!("[{curpus_path:?}]");
 
     let mut gold_scores = vec![];

@@ -33,9 +33,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         Embeddings::<VocabWrap, StorageWrap>::mmap_embeddings(&mut reader)?
     };
 
-    let word_freq = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
+    let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
 
-    let sif = Sif::new(&word_embeddings, &word_freq);
+    let sif = Sif::new(&word_embeddings, &unigram_lm);
     let sent_embeddings = sif.embeddings(std::io::stdin().lock().lines().map(|l| l.unwrap()));
     for sent_embedding in sent_embeddings.rows() {
         let row = sent_embedding
