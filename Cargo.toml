@@ -17,7 +17,7 @@ rust-version = "1.61.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["finalfusion", "wordfreq"]
+default = []
 
 # One of these features must always be specified.
 # See https://github.com/rust-ndarray/ndarray-linalg/tree/ndarray-linalg-v0.16.0.
@@ -37,7 +37,11 @@ intel-mkl-system = [
     "intel-mkl-src/mkl-dynamic-lp64-seq",
 ]
 
+# For docs.rs
 docs = ["finalfusion", "wordfreq"]
+
+# For test command `cargo test --features test`.
+test = ["finalfusion", "wordfreq", "openblas"]
 
 [dependencies]
 anyhow = "1.0"
