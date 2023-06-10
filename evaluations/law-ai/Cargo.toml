@@ -1,0 +1,35 @@
+[package]
+name = "law-ai"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = ["openblas"]
+
+openblas = ["sif-embedding/openblas"]
+openblas-static = ["sif-embedding/openblas-static"]
+openblas-system = ["sif-embedding/openblas-system"]
+
+[dependencies]
+clap = { version = "4.2.7", features = ["derive"] }
+finalfusion = "0.17.2"
+instant-segment = "0.10.1"
+ndarray-stats = "0.5.1"
+wordfreq = "0.2"
+
+[dependencies.sif-embedding]
+path = "../../"
+features = ["finalfusion", "wordfreq"]
+default-features = false
+
+[dependencies.ndarray]
+version = "0.15.6"
+features = ["approx-0_5", "blas", "std"]
+default-features = false
+
+[dependencies.openblas-src]
+version = "0.10.4"
+default-features = false
+features = ["cblas"]
