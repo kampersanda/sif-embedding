@@ -18,29 +18,7 @@ const N_COMPONENTS: usize = 1;
 ///
 /// # Examples
 ///
-/// ```
-/// use std::io::BufReader;
-///
-/// use finalfusion::compat::text::ReadText;
-/// use finalfusion::embeddings::Embeddings;
-/// use wordfreq::WordFreq;
-///
-/// use sif_embedding::Sif;
-///
-/// // Load word embeddings from a pretrained model.
-/// let word_model = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
-/// let mut reader = BufReader::new(word_model.as_bytes());
-/// let word_embeddings = Embeddings::read_text(&mut reader).unwrap();
-///
-/// // Create a unigram language model.
-/// let word_weights = [("las", 10.), ("vegas", 20.)];
-/// let unigram_lm = WordFreq::new(word_weights);
-///
-/// // Compute sentence embeddings.
-/// let sif = Sif::new(&word_embeddings, &unigram_lm);
-/// let sent_embeddings = sif.embeddings(["go to las vegas", "mega vegas"]);
-/// assert_eq!(sent_embeddings.shape(), &[2, 3]);
-/// ```
+/// See [the top page](crate).
 #[derive(Clone)]
 pub struct Sif<'w, 'u, W, U> {
     separator: char,

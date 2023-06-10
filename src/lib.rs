@@ -7,7 +7,46 @@
 //! > [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
 //! > ICLR 2017.
 //!
-//! ## Instructions
+//! ## Getting started
+//!
+//! Given word embeddings and a unigram language model,
+//! sif-embedding can immediately compute sentence embeddings.
+//!
+//! This crate does not have any dependency limitations on using the input models;
+//! however, using [finalfusion](https://docs.rs/finalfusion/) and [wordfreq](https://docs.rs/wordfreq/)
+//! would be the easiest and most reasonable way
+//! because these libraries can handle various pre-trained models and are pluged into this crate.
+//! See [the instructions](#instructions-pre-trained-models) to install the libraries in this crate.
+//!
+//! [`Sif`] is the class for sentence embeddings.
+//! The following code shows an example to compute sentence embeddings using finalfusion and wordfreq.
+//!
+//! ```
+//! use std::io::BufReader;
+//!
+//! use finalfusion::compat::text::ReadText;
+//! use finalfusion::embeddings::Embeddings;
+//! use wordfreq::WordFreq;
+//!
+//! use sif_embedding::Sif;
+//!
+//! // Creates word embeddings from a pretrained model.
+//! let word_model = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
+//! let mut reader = BufReader::new(word_model.as_bytes());
+//! let word_embeddings = Embeddings::read_text(&mut reader).unwrap();
+//!
+//! // Creates a unigram language model.
+//! let word_weights = [("las", 10.), ("vegas", 20.)];
+//! let unigram_lm = WordFreq::new(word_weights);
+//!
+//! // Computes sentence embeddings in shape (n, m),
+//! // where n is the number of sentences and m is the number of dimensions.
+//! let sif = Sif::new(&word_embeddings, &unigram_lm);
+//! let sent_embeddings = sif.embeddings(["go to las vegas", "mega vegas"]);
+//! assert_eq!(sent_embeddings.shape(), &[2, 3]);
+//! ```
+//!
+//! ## Instructions: Backend
 //!
 //! This crate depends on [ndarray-linalg](https://github.com/rust-ndarray/ndarray-linalg) and
 //! allows you to specify any backend supported by ndarray-linalg.
@@ -34,8 +73,8 @@
 //! default = ["openblas-static"]
 //! openblas-static = ["sif-embedding/openblas-static", "openblas-src/static"]
 //!
-//! [dependencies]
-//! sif-embedding = "0.3"
+//! [dependencies.sif-embedding]
+//! version = "0.3"
 //!
 //! [dependencies.openblas-src]
 //! version = "0.10.4"
@@ -53,9 +92,32 @@
 //! extern crate openblas_src as _src;
 //! ```
 //!
-//! ## Getting started
+//! ## Instructions: Pre-trained models
 //!
-//! See [the tutorial](https://github.com/kampersanda/sif-embedding/tree/main/examples/tutorial).
+//! sif-embedding, or the SIF algorithm, requires two pre-trained models as input:
+//!
+//! - Word embeddings
+//! - Unigram language models
+//!
+//! You can use arbitrary models in this crate through the [`WordEmbeddings`] and [`UnigramLanguageModel`] traits.
+//!
+//! This crate already implements the traits for the two external libraries:
+//!
+//! - [finalfusion (v0.17)](https://docs.rs/finalfusion/): Library to handle different types of word embeddings such as Glove and fastText.
+//! - [wordfreq (v0.1)](https://docs.rs/wordfreq/): Library to look up the frequencies of words in many languages.
+//!
+//! To enable the features, specify the dependencies as follows:
+//!
+//! ```toml
+//! # Cargo.toml
+//!
+//! [dependencies.sif-embedding]
+//! version = "0.3"
+//! features = ["finalfusion", "wordfreq"]
+//! ```
+//!
+//! A tutorial to learn how to use external pre-trained models in finalfusion and wordfreq can be found
+//! [here](https://github.com/kampersanda/sif-embedding/tree/main/examples/tutorial).
 #![deny(missing_docs)]
 
 // These declarations are required to recognize the backend.
