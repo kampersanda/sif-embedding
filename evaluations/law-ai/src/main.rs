@@ -1,4 +1,9 @@
-extern crate openblas_src;
+#[cfg(any(feature = "intel-mkl-static", feature = "intel-mkl-system"))]
+extern crate intel_mkl_src as _src;
+#[cfg(any(feature = "netlib-static", feature = "netlib-system"))]
+extern crate netlib_src as _src;
+#[cfg(any(feature = "openblas-static", feature = "openblas-system"))]
+extern crate openblas_src as _src;
 
 use std::collections::HashMap;
 use std::error::Error;
