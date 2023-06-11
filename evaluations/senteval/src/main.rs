@@ -181,7 +181,7 @@ where
         let score = util::cosine_similarity(e1, e2).unwrap_or(0.); // ok?
         pred_scores.push(score);
     }
-    Ok(pearson_correlation(&pred_scores, &gold_scores))
+    Ok(pearson_correlation(&pred_scores, gold_scores))
 }
 
 fn pearson_correlation(s1: &[Float], s2: &[Float]) -> Float {
