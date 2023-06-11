@@ -24,20 +24,22 @@ struct Args {
     data_dir: PathBuf,
 }
 
-struct EnglishAnalyzer {
+struct Preprocessor {
     analyzer: tantivy::tokenizer::TextAnalyzer,
 }
 
-impl EnglishAnalyzer {
+impl Preprocessor {
     fn new() -> Self {
-        let en_stem = TextAnalyzer::builder(SimpleTokenizer::default())
+        let analyzer = TextAnalyzer::builder(SimpleTokenizer::default())
             .filter(RemoveLongFilter::limit(40))
             .filter(LowerCaser)
+            .filter(StopWordFilter::new(Language::English).unwrap())
+            .filter(Stemmer::new(Language::English))
             .build();
-        Self { analyzer: en_stem }
+        Self { analyzer }
     }
 
-    fn analyze(&mut self, text: &str) -> String {
+    fn apply(&mut self, text: &str) -> String {
         let mut tokens = self.analyzer.token_stream(text);
         let mut token_texts = Vec::new();
         while let Some(tok) = tokens.next() {
@@ -97,12 +99,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
     let sif = Sif::new(&word_embeddings, &unigram_lm);
 
-    let mut analyzer = EnglishAnalyzer::new();
+    let mut analyzer = Preprocessor::new();
     let sent_embeddings = sif.embeddings(dataset.document_files.iter().map(|file| {
         let mut reader = BufReader::new(File::open(file).unwrap());
         let mut text = String::new();
         reader.read_to_string(&mut text).unwrap();
-        analyzer.analyze(&text)
+        analyzer.apply(&text)
     }));
 
     let mut pred_scores = vec![];
@@ -119,6 +121,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let r = pearson_correlation(&pred_scores, &gold_scores);
     println!("Pearson correlation: {}", r);
+    let mse = mean_squared_error(&pred_scores, &gold_scores);
+    println!("Mean squared error: {}", mse);
+    let f1 = f_score(&pred_scores, &gold_scores);
+    println!("F1 score: {}", f1);
 
     Ok(())
 }
@@ -129,4 +135,50 @@ fn pearson_correlation(s1: &[f32], s2: &[f32]) -> f32 {
     let scores = Array2::from_shape_vec((2, s1.len()), concat).unwrap();
     let corr = scores.pearson_correlation().unwrap();
     corr[[0, 1]]
+}
+
+fn mean_squared_error(s1: &[f32], s2: &[f32]) -> f32 {
+    assert_eq!(s1.len(), s2.len());
+    let mut sum = 0.;
+    for (x, y) in s1.iter().zip(s2.iter()) {
+        sum += (x - y).powi(2);
+    }
+    sum / s1.len() as f32
+}
+
+fn f_score(pred_scores: &[f32], gold_scores: &[f32]) -> f32 {
+    assert_eq!(pred_scores.len(), gold_scores.len());
+    let mut true_positives = 0.;
+    let mut false_positives = 0.0;
+    let mut false_negatives = 0.0;
+
+    for (&pred, &gold) in pred_scores.iter().zip(gold_scores) {
+        let pred_label = pred > 0.5;
+        let gold_label = gold > 0.5;
+        if pred_label && gold_label {
+            true_positives += 1.0;
+        } else if pred_label && !gold_label {
+            false_positives += 1.0;
+        } else if !pred_label && gold_label {
+            false_negatives += 1.0;
+        }
+    }
+
+    let precision = if true_positives + false_positives != 0.0 {
+        true_positives / (true_positives + false_positives)
+    } else {
+        0.0
+    };
+
+    let recall = if true_positives + false_negatives != 0.0 {
+        true_positives / (true_positives + false_negatives)
+    } else {
+        0.0
+    };
+
+    if precision + recall != 0.0 {
+        2.0 * (precision * recall) / (precision + recall)
+    } else {
+        0.0
+    }
 }
