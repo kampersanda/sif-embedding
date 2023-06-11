@@ -1,4 +1,4 @@
-# SemEval on sif-embedding
+# SemEval STS Task
 
 Here, we provide a tool to evaluate this library on [SemEval STS Task](https://aclanthology.org/S16-1081/).
 We aim to reproduce the experiments at [ICLR 2017](https://openreview.net/forum?id=SyK00v5xx),
@@ -46,7 +46,7 @@ Prepare a model following [finalfusion-tools/README.md](../../finalfusion-tools/
 
 Here, we assume that you have `glove.42B.300d.fifu` in the current directory.
 
-### 4. Conduct evaluation
+### 4. Evaluate
 
 The executable evaluates `sif_embedding::Sif` using the SemEval STS datasets.
 The SIF algorithm requires unigram probabilities.
