@@ -13,7 +13,7 @@ use clap::Parser;
 use finalfusion::prelude::*;
 use ndarray::Array2;
 use ndarray_stats::CorrelationExt;
-use wordfreq::{self, WordFreq};
+use wordfreq_model::{self, ModelKind};
 
 use sif_embedding::util;
 use sif_embedding::{Float, Sif, UnigramLanguageModel, WordEmbeddings};
@@ -23,9 +23,6 @@ use sif_embedding::{Float, Sif, UnigramLanguageModel, WordEmbeddings};
 struct Args {
     #[arg(short = 'f', long)]
     input_fifu: String,
-
-    #[arg(short = 'w', long)]
-    input_weights: String,
 
     #[arg(short = 'c', long)]
     corpora_dir: String,
@@ -38,16 +35,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mut reader = BufReader::new(File::open(&args.input_fifu)?);
         Embeddings::<VocabWrap, StorageWrap>::mmap_embeddings(&mut reader)?
     };
-    let word_freq = {
-        let reader = BufReader::new(File::open(&args.input_weights)?);
-        let word_weights = wordfreq::word_weights_from_text(reader)?;
-        WordFreq::new(word_weights)
-    };
-
     eprintln!("word_embeddings.len() = {}", word_embeddings.len());
     eprintln!("word_embeddings.dims() = {}", word_embeddings.dims());
 
-    let sif = Sif::new(&word_embeddings, &word_freq);
+    let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
+    let sif = Sif::new(&word_embeddings, &unigram_lm);
 
     let corpora_dir = args.corpora_dir;
     let corpora = vec![
