@@ -8,6 +8,8 @@ use std::path::{Path, PathBuf};
 
 use clap::Parser;
 use finalfusion::prelude::*;
+use ndarray::Array2;
+use ndarray_stats::CorrelationExt;
 use sif_embedding::Sif;
 use tantivy::tokenizer::*;
 use wordfreq_model::{self, ModelKind};
@@ -103,12 +105,28 @@ fn main() -> Result<(), Box<dyn Error>> {
         analyzer.analyze(&text)
     }));
 
+    let mut pred_scores = vec![];
+    let mut gold_scores = vec![];
+
     for &(file_id_1, file_id_2, gold_score) in &dataset.gold_scores {
         let e1 = &sent_embeddings.row(file_id_1);
         let e2 = &sent_embeddings.row(file_id_2);
-        let score = sif_embedding::util::cosine_similarity(e1, e2).unwrap_or(0.);
-        println!("{},{},{},{}", file_id_1, file_id_2, score, gold_score);
+        let pred_score = sif_embedding::util::cosine_similarity(e1, e2).unwrap_or(0.);
+        let pred_score = (pred_score + 1.) / 2.; // normalized to [0,1]
+        pred_scores.push(pred_score);
+        gold_scores.push(gold_score);
     }
 
+    let r = pearson_correlation(&pred_scores, &gold_scores);
+    println!("Pearson correlation: {}", r);
+
     Ok(())
+}
+
+fn pearson_correlation(s1: &[f32], s2: &[f32]) -> f32 {
+    assert_eq!(s1.len(), s2.len());
+    let concat = [s1, s2].concat();
+    let scores = Array2::from_shape_vec((2, s1.len()), concat).unwrap();
+    let corr = scores.pearson_correlation().unwrap();
+    corr[[0, 1]]
 }
