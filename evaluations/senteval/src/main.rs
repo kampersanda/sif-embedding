@@ -127,7 +127,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             println!("{file}\t{corr}");
         }
         let mean = corrs.iter().sum::<Float>() / corrs.len() as Float;
-        println!("mean\t{mean}");
+        println!("Avg.\t{mean}");
         println!();
     }
 
