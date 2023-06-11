@@ -1,4 +1,4 @@
-# SemEval on sif-embedding
+# SemEval STS Task
 
 Here, we provide a tool to evaluate this library on [SemEval STS Task](https://aclanthology.org/S16-1081/).
 We aim to reproduce the experiments at [ICLR 2017](https://openreview.net/forum?id=SyK00v5xx),
@@ -46,14 +46,14 @@ Prepare a model following [finalfusion-tools/README.md](../../finalfusion-tools/
 
 Here, we assume that you have `glove.42B.300d.fifu` in the current directory.
 
-### 4. Conduct evaluation
+### 4. Evaluate
 
 The executable evaluates `sif_embedding::Sif` using the SemEval STS datasets.
 The SIF algorithm requires unigram probabilities.
 You can use `auxiliary_data/enwiki_vocab_min200.txt` that has word frequencies (copied from [the authors' repository](https://github.com/PrincetonML/SIF)).
 
 ```shell
-$ cargo run --release -- -f glove.42B.300d.fifu -w auxiliary_data/enwiki_vocab_min200.txt -c semeval-sts-clean/all > scores.txt
+$ cargo run --release --features openblas -- -f glove.42B.300d.fifu -w auxiliary_data/enwiki_vocab_min200.txt -c semeval-sts-clean/all > scores.txt
 ```
 
 This will report the Pearson correlation coefficient between estimated similarities
@@ -65,7 +65,7 @@ The following table shows the actual results obtained from the above procedure u
 The original results by the authors are also shown as a baseline, from Table 5 in [ICLR 2017](https://openreview.net/forum?id=SyK00v5xx).
 
 |                            | ICLR 2017 | sif_embedding | sif_embedding |
-|----------------------------|----------:|--------------:|--------------:|
+| -------------------------- | --------: | ------------: | ------------: |
 | 2012                       |  GloVe+WR |      GloVe+WR |   fastText+WR |
 | MSRpar.test.tsv            |     35.6% |         25.6% |         25.3% |
 | OnWN.test.tsv              |     66.2% |         67.3% |         66.3% |

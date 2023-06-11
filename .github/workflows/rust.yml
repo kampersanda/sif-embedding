@@ -48,16 +48,16 @@ jobs:
 
       - name: Run cargo test (openblas)
         continue-on-error: ${{ matrix.rust == 'nightly' }}
-        run: cargo test --release --features openblas,finalfusion,wordfreq
+        run: cargo test --release --features openblas,finalfusion,wordfreq --no-default-features
 
       - name: Run cargo test (netlib)
         continue-on-error: ${{ matrix.rust == 'nightly' }}
-        run: cargo test --release --features netlib,finalfusion,wordfreq
+        run: cargo test --release --features netlib,finalfusion,wordfreq --no-default-features
 
       - name: Run cargo test (intel-mkl)
         continue-on-error: ${{ matrix.rust == 'nightly' }}
-        run: cargo test --release --features intel-mkl,finalfusion,wordfreq
+        run: cargo test --release --features intel-mkl,finalfusion,wordfreq --no-default-features
 
       - name: Run cargo doc
         continue-on-error: ${{ matrix.rust == 'nightly' }}
-        run: cargo doc --no-deps --features finalfusion,wordfreq
+        run: cargo doc --no-deps --features docs --no-default-features
