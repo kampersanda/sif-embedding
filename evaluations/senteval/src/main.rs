@@ -8,7 +8,6 @@ extern crate openblas_src as _src;
 use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::path::{Path, PathBuf};
 
 use clap::Parser;
 use finalfusion::prelude::*;
@@ -23,13 +22,13 @@ use sif_embedding::{Float, Sif, UnigramLanguageModel, WordEmbeddings};
 #[command(author, version, about, long_about = None)]
 struct Args {
     #[arg(short = 'f', long)]
-    input_fifu: PathBuf,
+    input_fifu: String,
 
     #[arg(short = 'w', long)]
-    input_weights: PathBuf,
+    input_weights: String,
 
     #[arg(short = 'c', long)]
-    corpora_dir: PathBuf,
+    corpora_dir: String,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -56,47 +55,45 @@ fn main() -> Result<(), Box<dyn Error>> {
     let corpora_dir = args.corpora_dir;
     let corpora = vec![
         (
-            "2012",
+            "STS12-en-test",
             vec![
-                "MSRpar.test.tsv",
-                "OnWN.test.tsv",
-                "SMTeuroparl.test.tsv",
-                "SMTnews.test.tsv",
+                "MSRpar",
+                "MSRvid",
+                "SMTeuroparl",
+                "surprise.OnWN",
+                "surprise.SMTnews",
+            ],
+        ),
+        ("STS13-en-test", vec!["FNWN", "headlines", "OnWN"]),
+        (
+            "STS14-en-test",
+            vec![
+                "deft-forum",
+                "deft-news",
+                "headlines",
+                "images",
+                "OnWN",
+                "tweet-news",
             ],
         ),
         (
-            "2013",
-            vec!["FNWN.test.tsv", "headlines.test.tsv", "OnWN.test.tsv"],
-        ),
-        (
-            "2014",
+            "STS15-en-test",
             vec![
-                "deft-forum.test.tsv",
-                "deft-news.test.tsv",
-                "headlines.test.tsv",
-                "images.test.tsv",
-                "OnWN.test.tsv",
-                // "tweet-news.test.tsv", // due to invalid UTF8 errors
+                "answers-forums",
+                "answers-students",
+                "belief",
+                "headlines",
+                "images",
             ],
         ),
         (
-            "2015",
+            "STS16-en-test",
             vec![
-                "answers-forums.test.tsv",
-                "answers-students.test.tsv",
-                "belief.test.tsv",
-                "headlines.test.tsv",
-                "images.test.tsv",
-            ],
-        ),
-        (
-            "2016",
-            vec![
-                "answer-answer.test.tsv",
-                "headlines.test.tsv",
-                "plagiarism.test.tsv",
-                "postediting.test.tsv",
-                "question-question.test.tsv",
+                "answer-answer",
+                "headlines",
+                "plagiarism",
+                "postediting",
+                "question-question",
             ],
         ),
     ];
@@ -104,10 +101,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     for (year, files) in corpora {
         println!("{year}");
         for &file in &files {
-            let mut curpus_path = corpora_dir.clone();
-            curpus_path.push(year);
-            curpus_path.set_extension(file);
-            let corr = simeval(&sif, &curpus_path)?;
+            let gs_file = format!("{corpora_dir}/{year}/STS.gs.{file}.txt");
+            let input_file = format!("{corpora_dir}/{year}/STS.input.{file}.txt");
+            println!("{gs_file}\t{input_file}");
+
+            let (gold_scores, sentences) = load_sts_data(&gs_file, &input_file)?;
+            let corr = evaluate(&sif, &gold_scores, &sentences)?;
             println!("{file}\t{corr}");
         }
         println!();
@@ -116,39 +115,49 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn simeval<W, U>(sif: &Sif<W, U>, curpus_path: &Path) -> Result<Float, Box<dyn Error>>
+fn load_sts_data(
+    gs_path: &str,
+    input_path: &str,
+) -> Result<(Vec<Float>, Vec<String>), Box<dyn Error>> {
+    let gs_lines: Vec<String> = BufReader::new(File::open(gs_path)?)
+        .lines()
+        .map(|l| l.unwrap())
+        .collect();
+    let input_lines: Vec<String> = BufReader::new(File::open(input_path)?)
+        .lines()
+        .map(|l| l.unwrap())
+        .collect();
+    assert_eq!(gs_lines.len(), input_lines.len());
+
+    let mut gold_scores = vec![];
+    let mut sentences = vec![];
+    for (gs_line, input_line) in gs_lines.iter().zip(input_lines.iter()) {
+        if gs_line.is_empty() {
+            continue;
+        }
+        gold_scores.push(gs_line.parse::<Float>()?);
+        let cols: Vec<_> = input_line.split('\t').collect();
+        assert_eq!(cols.len(), 2);
+        sentences.push(cols[0].to_string());
+        sentences.push(cols[1].to_string());
+    }
+
+    Ok((gold_scores, sentences))
+}
+
+fn evaluate<W, U>(
+    sif: &Sif<W, U>,
+    gold_scores: &[Float],
+    sentences: &[String],
+) -> Result<Float, Box<dyn Error>>
 where
     W: WordEmbeddings,
     U: UnigramLanguageModel,
 {
-    eprintln!("[{curpus_path:?}]");
-
-    let mut gold_scores = vec![];
-    let mut sentences = vec![];
-
-    let reader = BufReader::new(File::open(curpus_path)?);
-    for (i, line) in reader.lines().enumerate() {
-        let line = line?;
-        let cols: Vec<_> = line.split('\t').collect();
-        assert_eq!(cols.len(), 3);
-        if cols[0].is_empty() {
-            // That pair was not included in the official scoring.
-            continue;
-        }
-        gold_scores.push(
-            cols[0]
-                .parse::<Float>()
-                .map_err(|e| format!("{e} at Line {i}: {line}"))?,
-        );
-        sentences.push(cols[1].to_string());
-        sentences.push(cols[2].to_string());
-    }
-
     let n_examples = gold_scores.len();
     eprintln!("n_examples = {}", n_examples);
 
-    // NOTE(kampersanda): Should we split the corpus into cols[1] and cols[2]?
-    let sent_embeddings = sif.embeddings(&sentences);
+    let sent_embeddings = sif.embeddings(sentences);
     let mut pred_scores = Vec::with_capacity(n_examples);
 
     for i in 0..n_examples {
