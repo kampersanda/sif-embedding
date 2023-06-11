@@ -6,7 +6,7 @@ Here, we provide a tool to evaluate this library on [Legal case document similar
 
 We show steps to run the evaluation, assuming you are at this directory.
 
-### 1. Download Legal case document similarity datasets
+### 1. Download Legal case document similarity dataset
 
 Run the following commands:
 

@@ -29,7 +29,7 @@ See [examples/tutorial](./examples/tutorial).
 
 ## Evaluations
 
-[evaluations/semeval](./evaluations/semeval) provides tools to evaluate sif-embedding on SemEval STS Task.
+[evaluations](./evaluations/) provides tools to evaluate sif-embedding on several tasks.
 
 ## Wiki
 

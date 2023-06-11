@@ -84,7 +84,7 @@ approx = "0.5.1"
 members = [
     "finalfusion-tools",
     "evaluations/law-ai",
-    "evaluations/semeval",
+    "evaluations/senteval",
     "examples/tutorial",
 ]
 
