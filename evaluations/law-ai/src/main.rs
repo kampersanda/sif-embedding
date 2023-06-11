@@ -113,12 +113,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
     let sif = Sif::new(&word_embeddings, &unigram_lm);
 
-    let mut analyzer = Preprocessor::new();
+    let mut preprocessor = Preprocessor::new();
     let sent_embeddings = sif.embeddings(dataset.document_files.iter().map(|file| {
         let mut reader = BufReader::new(File::open(file).unwrap());
         let mut text = String::new();
         reader.read_to_string(&mut text).unwrap();
-        analyzer.apply(&text)
+        preprocessor.apply(&text)
     }));
 
     let mut pred_scores = vec![];

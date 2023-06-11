@@ -13,19 +13,44 @@ use clap::Parser;
 use finalfusion::prelude::*;
 use ndarray::Array2;
 use ndarray_stats::CorrelationExt;
-use wordfreq_model::{self, ModelKind};
-
 use sif_embedding::util;
 use sif_embedding::{Float, Sif, UnigramLanguageModel, WordEmbeddings};
+use tantivy::tokenizer::*;
+use wordfreq_model::{self, ModelKind};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
+    #[arg(short = 'd', long)]
+    data_dir: String,
+
     #[arg(short = 'f', long)]
     input_fifu: String,
+}
 
-    #[arg(short = 'c', long)]
-    corpora_dir: String,
+struct Preprocessor {
+    analyzer: tantivy::tokenizer::TextAnalyzer,
+}
+
+impl Preprocessor {
+    fn new() -> Self {
+        let analyzer = TextAnalyzer::builder(SimpleTokenizer::default())
+            .filter(RemoveLongFilter::limit(40))
+            .filter(LowerCaser)
+            .filter(StopWordFilter::new(Language::English).unwrap())
+            // .filter(Stemmer::new(Language::English))
+            .build();
+        Self { analyzer }
+    }
+
+    fn apply(&mut self, text: &str) -> String {
+        let mut tokens = self.analyzer.token_stream(text);
+        let mut token_texts = Vec::new();
+        while let Some(tok) = tokens.next() {
+            token_texts.push(tok.text.to_string());
+        }
+        token_texts.join(" ")
+    }
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -41,7 +66,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
     let sif = Sif::new(&word_embeddings, &unigram_lm);
 
-    let corpora_dir = args.corpora_dir;
+    let data_dir = args.data_dir;
     let corpora = vec![
         (
             "STS12-en-test",
@@ -87,14 +112,16 @@ fn main() -> Result<(), Box<dyn Error>> {
         ),
     ];
 
+    let mut preprocessor = Preprocessor::new();
     for (year, files) in corpora {
         println!("{year}");
         let mut corrs = vec![];
         for &file in &files {
-            let gs_file = format!("{corpora_dir}/{year}/STS.gs.{file}.txt");
-            let input_file = format!("{corpora_dir}/{year}/STS.input.{file}.txt");
+            let gs_file = format!("{data_dir}/{year}/STS.gs.{file}.txt");
+            let input_file = format!("{data_dir}/{year}/STS.input.{file}.txt");
             let (gold_scores, sentences) = load_sts_data(&gs_file, &input_file)?;
             eprintln!("file = {}, n_examples = {}", file, gold_scores.len());
+            let sentences: Vec<_> = sentences.iter().map(|s| preprocessor.apply(s)).collect();
             let corr = evaluate(&sif, &gold_scores, &sentences)?;
             corrs.push(corr);
             println!("{file}\t{corr}");
