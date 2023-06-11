@@ -6,12 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["openblas"]
+default = []
 
 # One of these features must always be specified.
 # e.g.,
-#  - `cargo run --features openblas-system --no-default-features`
-#  - `cargo run --features intel-mkl --no-default-features`
+#  - `cargo run --features openblas`
+#  - `cargo run --features intel-mkl`
 openblas = ["openblas-static"]
 openblas-static = ["sif-embedding/openblas-static", "openblas-src/static"]
 openblas-system = ["sif-embedding/openblas-system", "openblas-src/system"]

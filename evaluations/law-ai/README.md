@@ -34,7 +34,7 @@ Here, we assume that you have `glove.42B.300d.fifu` in the current directory.
 Run the following command:
 
 ```shell
-$ cargo run --release -- -d test -f ~/data/finalfusion/glove.42B.300d.fifu -o score.tsv
+$ cargo run --release --features openblas -- -d test -f ~/data/finalfusion/glove.42B.300d.fifu -o score.tsv
 ```
 
 This commnad will report the similarity results in the three metrics as with the paper:
