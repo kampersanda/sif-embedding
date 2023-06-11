@@ -75,7 +75,7 @@ impl DatasetHandler {
             BufReader::new(File::open(&format!("{data_dir}/similarity_scores.csv"))?);
         for line in similarity_scores_reader.lines() {
             let line = line?;
-            let mut cols = line.split(",");
+            let mut cols = line.split(',');
             let file_1 = cols.next().ok_or("invalid line")?;
             let file_id_1 = file_name_map[file_1];
             let file_2 = cols.next().ok_or("invalid line")?;
