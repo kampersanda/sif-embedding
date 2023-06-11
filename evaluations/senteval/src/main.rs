@@ -45,10 +45,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
 
     eprintln!("word_embeddings.len() = {}", word_embeddings.len());
-    eprintln!(
-        "word_embeddings.embedding_size() = {}",
-        word_embeddings.dims()
-    );
+    eprintln!("word_embeddings.dims() = {}", word_embeddings.dims());
 
     let sif = Sif::new(&word_embeddings, &word_freq);
 
@@ -100,15 +97,18 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     for (year, files) in corpora {
         println!("{year}");
+        let mut corrs = vec![];
         for &file in &files {
             let gs_file = format!("{corpora_dir}/{year}/STS.gs.{file}.txt");
             let input_file = format!("{corpora_dir}/{year}/STS.input.{file}.txt");
-            println!("{gs_file}\t{input_file}");
-
             let (gold_scores, sentences) = load_sts_data(&gs_file, &input_file)?;
+            eprintln!("file = {}, n_examples = {}", file, gold_scores.len());
             let corr = evaluate(&sif, &gold_scores, &sentences)?;
+            corrs.push(corr);
             println!("{file}\t{corr}");
         }
+        let mean = corrs.iter().sum::<Float>() / corrs.len() as Float;
+        println!("mean\t{mean}");
         println!();
     }
 
@@ -141,7 +141,6 @@ fn load_sts_data(
         sentences.push(cols[0].to_string());
         sentences.push(cols[1].to_string());
     }
-
     Ok((gold_scores, sentences))
 }
 
@@ -155,18 +154,14 @@ where
     U: UnigramLanguageModel,
 {
     let n_examples = gold_scores.len();
-    eprintln!("n_examples = {}", n_examples);
-
     let sent_embeddings = sif.embeddings(sentences);
     let mut pred_scores = Vec::with_capacity(n_examples);
-
     for i in 0..n_examples {
         let e1 = &sent_embeddings.row(i * 2);
         let e2 = &sent_embeddings.row(i * 2 + 1);
         let score = util::cosine_similarity(e1, e2).unwrap_or(0.); // ok?
         pred_scores.push(score);
     }
-
     Ok(pearson_correlation(&pred_scores, &gold_scores))
 }
 
