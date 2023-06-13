@@ -130,6 +130,7 @@ extern crate netlib_src as _src;
 extern crate openblas_src as _src;
 
 pub mod sif;
+pub mod usif;
 pub mod util;
 
 #[cfg(feature = "finalfusion")]
