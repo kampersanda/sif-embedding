@@ -19,4 +19,8 @@ where
     fn embedding_size(&self) -> usize {
         self.dims()
     }
+
+    fn num_words(&self) -> usize {
+        self.vocab().words_len()
+    }
 }

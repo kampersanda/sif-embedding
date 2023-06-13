@@ -137,6 +137,10 @@ mod tests {
         fn embedding_size(&self) -> usize {
             3
         }
+
+        fn num_words(&self) -> usize {
+            4
+        }
     }
 
     struct SimpleUnigramLanguageModel {}
