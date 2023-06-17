@@ -88,7 +88,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
     println!(
-        "NN accuracy: {:.2}",
+        "NN accuracy: {:.3}",
         num_corrects as f64 / labels.len() as f64
     );
 
