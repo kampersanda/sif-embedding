@@ -5,6 +5,9 @@ extern crate netlib_src as _src;
 #[cfg(any(feature = "openblas-static", feature = "openblas-system"))]
 extern crate openblas_src as _src;
 
+mod dataset;
+
+use std::cell::RefCell;
 use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -17,7 +20,9 @@ use ndarray_stats::CorrelationExt;
 use sif_embedding::util;
 use sif_embedding::{Float, Sif, UnigramLanguageModel, WordEmbeddings};
 use tantivy::tokenizer::*;
+use unicode_normalization::UnicodeNormalization;
 use vibrato::dictionary::Dictionary;
+use vibrato::tokenizer::worker::Worker as VibratoWorker;
 use vibrato::Tokenizer;
 use wordfreq_model::{self, ModelKind};
 
@@ -31,7 +36,7 @@ struct Args {
     input_fifu: String,
 
     #[arg(short = 'v', long)]
-    input_vibrato: String,
+    input_vibrato_zst: String,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -47,49 +52,35 @@ fn main() -> Result<(), Box<dyn Error>> {
     let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeJa)?;
     let sif = Sif::new(&word_embeddings, &unigram_lm);
 
-    let dict = {
-        let reader = zstd::Decoder::new(File::open(args.input_vibrato)?)?;
-        Dictionary::read(reader)?
+    let tokenizer = {
+        let reader = zstd::Decoder::new(File::open(args.input_vibrato_zst)?)?;
+        let dict = Dictionary::read(reader)?;
+        Tokenizer::new(dict)
+            .ignore_space(true)?
+            .max_grouping_len(24)
     };
-    let tokenizer = Tokenizer::new(dict)
-        .ignore_space(true)?
-        .max_grouping_len(24);
-    let mut worker = tokenizer.new_worker();
 
-    let categories = vec![
-        "dokujo-tsushin",
-        "it-life-hack",
-        "kaden-channel",
-        "livedoor-homme",
-        "movie-enter",
-        "peachy",
-        "smax",
-        "sports-watch",
-        "topic-news",
-    ];
-
-    let mut sentences = vec![];
-    let mut labels = vec![];
-
-    let data_dir = args.data_dir;
-    for (label, &cate) in categories.iter().enumerate() {
-        for filepath in glob::glob(&format!("{data_dir}/{cate}/{cate}*.txt"))? {
-            let filepath = filepath?;
-            let sentence = read_sentence(&filepath)?;
-            sentences.push(sentence);
-            labels.push(label);
-        }
-    }
-
+    let (sentences, labels) = dataset::load_livedoor_data(&args.data_dir)?;
     println!("{} sentences", sentences.len());
-    println!("{}", sentences[0]);
+    println!("{} labels", labels.len());
+
+    // Tokenize sentences.
+    let worker = RefCell::new(tokenizer.new_worker());
+    let tokenized: Vec<String> = sentences.iter().map(|s| tokenize(s, &worker)).collect();
+
+    println!("{}", tokenized[0]);
 
     Ok(())
 }
 
-fn read_sentence<P: AsRef<Path>>(filepath: P) -> Result<String, Box<dyn Error>> {
-    let file = File::open(filepath)?;
-    let reader = BufReader::new(file);
-    let lines: Vec<String> = reader.lines().map(|l| l.unwrap()).collect();
-    Ok(lines[3..].join("\n"))
+fn tokenize(sentence: &str, worker: &RefCell<VibratoWorker>) -> String {
+    let mut surfaces = vec![];
+    for line in sentence.split('\n') {
+        let line = line.nfkc().collect::<String>();
+        let mut worker = worker.borrow_mut();
+        worker.reset_sentence(line);
+        worker.tokenize();
+        surfaces.extend(worker.token_iter().map(|t| t.surface().to_string()));
+    }
+    surfaces.join(" ")
 }
