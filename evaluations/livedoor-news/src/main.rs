@@ -57,8 +57,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
 
     let (sentences, labels) = dataset::load_livedoor_data(&args.data_dir)?;
-    println!("{} sentences", sentences.len());
-    println!("{} labels", labels.len());
+    eprintln!("{} sentences", sentences.len());
+    eprintln!("{} labels", labels.len());
 
     // Tokenize sentences.
     let worker = RefCell::new(tokenizer.new_worker());
@@ -66,7 +66,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Compute sentence embeddings.
     let sent_embeddings = sif.embeddings(&tokenized);
-    println!("shape {:?}", sent_embeddings.shape());
+    eprintln!("sent_embeddings.shape() = {:?}", sent_embeddings.shape());
 
     // NN scores.
     let mut num_corrects = 0;
