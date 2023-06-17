@@ -67,8 +67,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Tokenize sentences.
     let worker = RefCell::new(tokenizer.new_worker());
     let tokenized: Vec<String> = sentences.iter().map(|s| tokenize(s, &worker)).collect();
+    println!("0: {}", tokenized[0]);
+    println!("1: {}", tokenized[1]);
 
-    println!("{}", tokenized[0]);
+    // Compute sentence embeddings.
+    let sent_embeddings = sif.embeddings(&tokenized);
+    println!("shape {:?}", sent_embeddings.shape());
+
+    let e1 = &sent_embeddings.row(0);
+    let e2 = &sent_embeddings.row(1);
+    let score = util::cosine_similarity(e1, e2).unwrap_or(0.); // ok?
+    println!("score = {}", score);
 
     Ok(())
 }
