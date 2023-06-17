@@ -45,7 +45,7 @@ This commnad will report the similarity results in the three metrics as with the
 
 ## Experimental results
 
-We show the actual results obtained from the above procedure using `glove.42B.300d.fifu` (GloVe) or `cc.en.300.fifu` (fastText).
+We show the actual results obtained from the above procedure using `glove.42B.300d.fifu` (GloVe) or `cc.en.300.bin.fifu` (fastText).
 We also show the results of Doc2Vec obtained from the original paper.
 
 | Method   | Correlation |   MSE | FScore |

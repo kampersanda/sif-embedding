@@ -37,7 +37,7 @@ This command will report the Pearson correlation coefficient between the cosine 
 
 ## Experimental results
 
-We show the actual results obtained by the above procedure using `glove.42B.300d.fifu` (GloVe+WR) or `cc.en.300.fifu` (fastText+WR).
+We show the actual results obtained by the above procedure using `glove.42B.300d.fifu` (GloVe+WR) or `cc.en.300.bin.fifu` (fastText+WR).
 
 As baseline methods, we also show the following results:
 - SIF-ICLR17: Obtained from the original SIF paper (Table 5 in [ICLR 2017](https://openreview.net/forum?id=SyK00v5xx)).
