@@ -77,7 +77,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             if i == j {
                 continue;
             }
-            let score = util::cosine_similarity(&e1, &e2).unwrap_or(0.);
+            let score = util::cosine_similarity(&e1, &e2).unwrap_or(-1.);
             if score > top_score {
                 top_index = j;
                 top_score = score;
