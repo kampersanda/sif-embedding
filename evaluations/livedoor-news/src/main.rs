@@ -10,16 +10,12 @@ mod dataset;
 use std::cell::RefCell;
 use std::error::Error;
 use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::path::Path;
+use std::io::BufReader;
 
 use clap::Parser;
 use finalfusion::prelude::*;
-use ndarray::Array2;
-use ndarray_stats::CorrelationExt;
 use sif_embedding::util;
-use sif_embedding::{Float, Sif, UnigramLanguageModel, WordEmbeddings};
-use tantivy::tokenizer::*;
+use sif_embedding::Sif;
 use unicode_normalization::UnicodeNormalization;
 use vibrato::dictionary::Dictionary;
 use vibrato::tokenizer::worker::Worker as VibratoWorker;
@@ -67,17 +63,34 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Tokenize sentences.
     let worker = RefCell::new(tokenizer.new_worker());
     let tokenized: Vec<String> = sentences.iter().map(|s| tokenize(s, &worker)).collect();
-    println!("0: {}", tokenized[0]);
-    println!("1: {}", tokenized[1]);
 
     // Compute sentence embeddings.
     let sent_embeddings = sif.embeddings(&tokenized);
     println!("shape {:?}", sent_embeddings.shape());
 
-    let e1 = &sent_embeddings.row(0);
-    let e2 = &sent_embeddings.row(1);
-    let score = util::cosine_similarity(e1, e2).unwrap_or(0.); // ok?
-    println!("score = {}", score);
+    // NN scores.
+    let mut num_corrects = 0;
+    for (i, e1) in sent_embeddings.outer_iter().enumerate() {
+        let mut top_index = 0;
+        let mut top_score = -1.;
+        for (j, e2) in sent_embeddings.outer_iter().enumerate() {
+            if i == j {
+                continue;
+            }
+            let score = util::cosine_similarity(&e1, &e2).unwrap_or(0.);
+            if score > top_score {
+                top_index = j;
+                top_score = score;
+            }
+        }
+        if labels[i] == labels[top_index] {
+            num_corrects += 1;
+        }
+    }
+    println!(
+        "NN accuracy: {:.2}",
+        num_corrects as f64 / labels.len() as f64
+    );
 
     Ok(())
 }
