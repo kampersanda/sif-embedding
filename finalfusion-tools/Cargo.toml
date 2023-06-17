@@ -1,6 +1,6 @@
 [package]
 name = "finalfusion-tools"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -10,12 +10,12 @@ clap = { version = "4.2.7", features = ["derive"] }
 finalfusion = "0.17.2"
 
 [[bin]]
-name = "unique_glove"
-path = "src/unique_glove.rs"
+name = "unique_text"
+path = "src/unique_text.rs"
 
 [[bin]]
-name = "compile_glove"
-path = "src/compile_glove.rs"
+name = "compile_text"
+path = "src/compile_text.rs"
 
 [[bin]]
 name = "compile_fasttext"
