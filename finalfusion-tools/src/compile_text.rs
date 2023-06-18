@@ -11,17 +11,24 @@ use finalfusion::prelude::*;
 #[command(author, version, about, long_about = None)]
 struct Args {
     #[arg(short = 'i', long)]
-    input_glove: PathBuf,
+    input_text: PathBuf,
 
     #[arg(short = 'o', long)]
     output_fifu: PathBuf,
+
+    #[arg(short = 'd', long)]
+    with_dims: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
-    let mut reader = BufReader::new(File::open(args.input_glove)?);
-    let embeddings = Embeddings::read_text(&mut reader)?;
+    let mut reader = BufReader::new(File::open(args.input_text)?);
+    let embeddings = if args.with_dims {
+        Embeddings::read_text_dims(&mut reader)?
+    } else {
+        Embeddings::read_text(&mut reader)?
+    };
 
     let mut writer = BufWriter::new(File::create(args.output_fifu)?);
     embeddings.write_embeddings(&mut writer)?;
