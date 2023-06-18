@@ -166,3 +166,86 @@ where
         (singular_weights, singular_vectors)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use ndarray::{arr1, CowArray, Ix1};
+
+    struct SimpleWordEmbeddings {
+        words: Vec<String>,
+    }
+
+    impl SimpleWordEmbeddings {
+        fn new() -> Self {
+            Self {
+                words: vec![
+                    "A".to_owned(),
+                    "BB".to_owned(),
+                    "CCC".to_owned(),
+                    "DDDD".to_owned(),
+                ],
+            }
+        }
+    }
+
+    impl WordEmbeddings for SimpleWordEmbeddings {
+        fn embedding(&self, word: &str) -> Option<CowArray<Float, Ix1>> {
+            match word {
+                "A" => Some(arr1(&[1., 2., 3.]).into()),
+                "BB" => Some(arr1(&[4., 5., 6.]).into()),
+                "CCC" => Some(arr1(&[7., 8., 9.]).into()),
+                "DDDD" => Some(arr1(&[10., 11., 12.]).into()),
+                _ => None,
+            }
+        }
+
+        fn embedding_size(&self) -> usize {
+            3
+        }
+
+        fn n_words(&self) -> usize {
+            4
+        }
+
+        fn words(&self) -> &[String] {
+            &self.words
+        }
+    }
+
+    struct SimpleUnigramLanguageModel {}
+
+    impl UnigramLanguageModel for SimpleUnigramLanguageModel {
+        fn probability(&self, word: &str) -> Float {
+            match word {
+                "A" => 1.,
+                "BB" => 2.,
+                "CCC" => 3.,
+                "DDDD" => 4.,
+                _ => 0.,
+            }
+        }
+    }
+
+    #[test]
+    fn test_embeddings() {
+        let word_embeddings = SimpleWordEmbeddings::new();
+        let unigram_lm = SimpleUnigramLanguageModel {};
+
+        let usif = USif::new(&word_embeddings, &unigram_lm)
+            .fit(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
+            .unwrap();
+
+        let sent_embeddings = usif
+            .embeddings(["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
+            .unwrap();
+        assert_eq!(sent_embeddings.shape(), &[5, 3]);
+
+        let sent_embeddings = usif.embeddings(Vec::<&str>::new()).unwrap();
+        assert_eq!(sent_embeddings.shape(), &[0, 3]);
+
+        let sent_embeddings = usif.embeddings(["", ""]).unwrap();
+        assert_eq!(sent_embeddings.shape(), &[2, 3]);
+    }
+}
