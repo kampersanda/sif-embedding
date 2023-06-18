@@ -8,8 +8,6 @@ use crate::Float;
 use crate::UnigramLanguageModel;
 use crate::WordEmbeddings;
 
-const N_COMPONENTS: usize = 5;
-
 /// uSIF
 ///
 /// Unsupervised Random Walk Sentence Embeddings: A Strong but Simple Baseline
@@ -19,6 +17,7 @@ pub struct USif<'w, 'u, W, U> {
     word_embeddings: &'w W,
     unigram_lm: &'u U,
     separator: char,
+    n_components: usize,
     param_a: Option<Float>,
     singular_weights: Option<Array1<Float>>,
     singular_vectors: Option<Array2<Float>>,
@@ -35,6 +34,7 @@ where
             word_embeddings,
             unigram_lm,
             separator: ' ',
+            n_components: 2,
             param_a: None,
             singular_weights: None,
             singular_vectors: None,
@@ -61,8 +61,11 @@ where
         if sentences.is_empty() {
             return Err(anyhow!("no sentences"));
         }
-        self.param_a = Some(self.estimate_param_a(self.average_sentence_length(sentences)));
+        // SIF-weighting.
+        let sent_len = self.average_sentence_length(sentences);
+        self.param_a = Some(self.estimate_param_a(sent_len));
         let sent_embeddings = self.weighted_embeddings(sentences);
+        // Common component removal.
         let (singular_weights, singular_vectors) =
             self.estimate_principal_components(&sent_embeddings);
         self.singular_weights = Some(singular_weights);
@@ -160,7 +163,7 @@ where
         sent_embeddings: &Array2<Float>,
     ) -> (Array1<Float>, Array2<Float>) {
         let (singular_values, singular_vectors) =
-            util::principal_components(&sent_embeddings, N_COMPONENTS);
+            util::principal_components(&sent_embeddings, self.n_components);
         let singular_weights = singular_values.mapv(|v| v.powf(2.0));
         let singular_weights = singular_weights.to_owned() / singular_weights.sum();
         (singular_weights, singular_vectors)

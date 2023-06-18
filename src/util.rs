@@ -8,7 +8,7 @@ use crate::Float;
 // So, we set a small value, following https://github.com/oborchers/Fast_Sentence_Embeddings/blob/master/fse/models/utils.py.
 const SVD_MAX_ITER: usize = 7;
 
-/// Computes the cosine similarity.
+/// Computes the cosine similarity in [-1,1].
 pub fn cosine_similarity<S, T>(a: &ArrayBase<S, Ix1>, b: &ArrayBase<T, Ix1>) -> Option<Float>
 where
     S: Data<Elem = Float>,
@@ -24,23 +24,27 @@ where
     }
 }
 
-/// Computes the right singular vectors of the input data `x`,
-/// returning a 2D-array of shape `(k, m)`.
+/// Computes the principal components of the input matrix.
 ///
 /// # Arguments
 ///
 /// - `x`: 2D-array of shape `(n, m)`
 /// - `k`: Number of components
+///
+/// # Returns
+///
+/// - Singular values of shape `(k,)`
+/// - Right singular vectors of shape `(k, m)`
 pub(crate) fn principal_components<S>(
-    input: &ArrayBase<S, Ix2>,
-    n_components: usize,
+    x: &ArrayBase<S, Ix2>,
+    k: usize,
 ) -> (Array1<Float>, Array2<Float>)
 where
     S: Data<Elem = Float>,
 {
-    let svd = TruncatedSvd::new(input.to_owned(), TruncatedOrder::Largest)
+    let svd = TruncatedSvd::new(x.to_owned(), TruncatedOrder::Largest)
         .maxiter(SVD_MAX_ITER)
-        .decompose(n_components)
+        .decompose(k)
         .unwrap();
     let (_, s, vt) = svd.values_vectors();
     (s, vt)
@@ -48,17 +52,17 @@ where
 
 /// # Arguments
 ///
-/// - `input`: 2D-array of shape `(n, m)`
-/// - `components`: Principal components of shape `(k, m)`
-/// - `weights`: Weights of shape `(k,)`
+/// - `x`: 2D-array of shape `(n, m)`
+/// - `c`: Principal components of shape `(k, m)`
+/// - `w`: Weights of shape `(k,)`
 pub(crate) fn remove_principal_components(
-    input: &Array2<Float>,
-    components: &Array2<Float>,
-    weights: &Array1<Float>,
+    x: &Array2<Float>,
+    c: &Array2<Float>,
+    w: &Array1<Float>,
 ) -> Array2<Float> {
-    let components = components * &weights.slice(&ndarray::s![..,]);
-    let proj = components.t().dot(&components.to_owned());
-    input.to_owned() - &(input.dot(&proj))
+    let c = c * &w.slice(&ndarray::s![..,]);
+    let proj = c.t().dot(&c.to_owned());
+    x.to_owned() - &(x.dot(&proj))
 }
 
 /// Computes the principal components of the input data `x`,
