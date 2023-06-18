@@ -16,7 +16,7 @@ const N_COMPONENTS: usize = 5;
 #[derive(Clone)]
 pub struct Usif<'w, 'u, W, U> {
     separator: char,
-    param_a: Float,
+    param_a: Option<Float>,
     word_embeddings: &'w W,
     unigram_lm: &'u U,
 }
@@ -30,7 +30,7 @@ where
     pub const fn new(word_embeddings: &'w W, unigram_lm: &'u U) -> Self {
         Self {
             separator: ' ',
-            param_a: 1e-3,
+            param_a: None,
             word_embeddings,
             unigram_lm,
         }
@@ -42,9 +42,15 @@ where
         self
     }
 
-    /// Sets a SIF-weighting parameter `a` (default: `1e-3`).
-    pub const fn param_a(mut self, param_a: Float) -> Self {
-        self.param_a = param_a;
+    ///
+    pub fn fit<S>(mut self, sentences: &[S]) -> Self
+    where
+        S: AsRef<str>,
+    {
+        let sent_len = self.average_sentence_length(sentences);
+        self.param_a = Some(self.estimate_param_a(sent_len));
+        let sent_embeddings = self.weighted_embeddings(sentences);
+
         self
     }
 
@@ -53,12 +59,14 @@ where
     ///
     /// - `n_sentences` is the number of input sentences, and
     /// - `embedding_size` is [`Self::embedding_size()`].
-    pub fn embeddings<I, S>(&self, sentences: I) -> Array2<Float>
+    pub fn embeddings<S>(&self, sentences: &[S]) -> Array2<Float>
     where
-        I: IntoIterator<Item = S>,
         S: AsRef<str>,
     {
-        let sent_embeddings = self.weighted_average_embeddings(sentences);
+        let avg_sent_len = self.average_sentence_length(sentences);
+        let param_a = self.estimate_param_a(avg_sent_len);
+
+        let sent_embeddings = self.weighted_embeddings(sentences);
         if sent_embeddings.is_empty() {
             return sent_embeddings;
         }
@@ -70,6 +78,18 @@ where
     /// which is equivalent to that of the input word embeddings.
     pub fn embedding_size(&self) -> usize {
         self.word_embeddings.embedding_size()
+    }
+
+    fn average_sentence_length<S>(&self, sentences: &[S]) -> Float
+    where
+        S: AsRef<str>,
+    {
+        let mut n_words = 0;
+        for sent in sentences {
+            let sent = sent.as_ref();
+            n_words += sent.split(self.separator).count();
+        }
+        n_words as Float / sentences.len() as Float
     }
 
     fn estimate_param_a(&self, avg_sent_len: Float) -> Float {
@@ -88,11 +108,13 @@ where
     }
 
     /// Lines 1--3
-    fn weighted_average_embeddings<I, S>(&self, sentences: I) -> Array2<Float>
+    fn weighted_embeddings<I, S>(&self, sentences: I) -> Array2<Float>
     where
         I: IntoIterator<Item = S>,
         S: AsRef<str>,
     {
+        let param_a = self.param_a.unwrap();
+
         let mut sent_embeddings = vec![];
         let mut n_sentences = 0;
         for sent in sentences {
@@ -101,7 +123,8 @@ where
             let mut sent_embedding = Array1::zeros(self.embedding_size());
             for word in sent.split(self.separator) {
                 if let Some(word_embedding) = self.word_embeddings.embedding(word) {
-                    let weight = self.param_a / (self.param_a + self.unigram_lm.probability(word));
+                    let pw = self.unigram_lm.probability(word);
+                    let weight = param_a / (0.5 * param_a + pw);
                     sent_embedding += &(word_embedding.to_owned() * weight);
                     n_words += 1;
                 }
