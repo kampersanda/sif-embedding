@@ -4,6 +4,10 @@ use ndarray_linalg::{lobpcg::TruncatedOrder, TruncatedSvd};
 
 use crate::Float;
 
+// NOTE(kampersanda): The default value of maxiter will take a long time to converge.
+// So, we set a small value, following https://github.com/oborchers/Fast_Sentence_Embeddings/blob/master/fse/models/utils.py.
+const SVD_MAX_ITER: usize = 7;
+
 /// Computes the cosine similarity.
 pub fn cosine_similarity<S, T>(a: &ArrayBase<S, Ix1>, b: &ArrayBase<T, Ix1>) -> Option<Float>
 where
@@ -34,10 +38,8 @@ pub(crate) fn principal_components<S>(
 where
     S: Data<Elem = Float>,
 {
-    // NOTE(kampersanda): The default value of maxiter will take a long time to converge.
-    // So, we set a small value, following https://github.com/oborchers/Fast_Sentence_Embeddings/blob/master/fse/models/utils.py.
     let svd = TruncatedSvd::new(input.to_owned(), TruncatedOrder::Largest)
-        .maxiter(7)
+        .maxiter(SVD_MAX_ITER)
         .decompose(n_components)
         .unwrap();
     let (_, s, vt) = svd.values_vectors();
@@ -49,13 +51,14 @@ where
 /// - `input`: 2D-array of shape `(n, m)`
 /// - `components`: Principal components of shape `(k, m)`
 /// - `weights`: Weights of shape `(k,)`
-pub(crate) fn remove_principal_components<S>(
-    input: &ArrayBase<S, Ix2>,
-    components: &ArrayBase<S, Ix2>,
-    weights: &ArrayBase<S, Ix1>,
-) where
-    S: Data<Elem = Float>,
-{
+pub(crate) fn remove_principal_components(
+    input: &Array2<Float>,
+    components: &Array2<Float>,
+    weights: &Array1<Float>,
+) -> Array2<Float> {
+    let components = components * &weights.slice(&ndarray::s![..,]);
+    let proj = components.t().dot(&components.to_owned());
+    input.to_owned() - &(input.dot(&proj))
 }
 
 /// Computes the principal components of the input data `x`,
