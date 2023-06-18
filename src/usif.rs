@@ -16,14 +16,16 @@ const N_COMPONENTS: usize = 5;
 /// Unsupervised Random Walk Sentence Embeddings: A Strong but Simple Baseline
 /// https://aclanthology.org/W18-3012/
 #[derive(Clone)]
-pub struct Usif<'w, 'u, W, U> {
+pub struct USif<'w, 'u, W, U> {
     word_embeddings: &'w W,
     unigram_lm: &'u U,
     separator: char,
     param_a: Option<Float>,
+    singular_vectors: Option<Array2<Float>>,
+    singular_weights: Option<Array1<Float>>,
 }
 
-impl<'w, 'u, W, U> Usif<'w, 'u, W, U>
+impl<'w, 'u, W, U> USif<'w, 'u, W, U>
 where
     W: WordEmbeddings,
     U: UnigramLanguageModel,
@@ -35,6 +37,8 @@ where
             unigram_lm,
             separator: ' ',
             param_a: None,
+            singular_vectors: None,
+            singular_weights: None,
         }
     }
 
