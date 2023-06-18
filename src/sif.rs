@@ -121,7 +121,22 @@ mod tests {
 
     use ndarray::{arr1, CowArray, Ix1};
 
-    struct SimpleWordEmbeddings {}
+    struct SimpleWordEmbeddings {
+        words: Vec<String>,
+    }
+
+    impl SimpleWordEmbeddings {
+        fn new() -> Self {
+            Self {
+                words: vec![
+                    "A".to_owned(),
+                    "BB".to_owned(),
+                    "CCC".to_owned(),
+                    "DDDD".to_owned(),
+                ],
+            }
+        }
+    }
 
     impl WordEmbeddings for SimpleWordEmbeddings {
         fn embedding(&self, word: &str) -> Option<CowArray<Float, Ix1>> {
@@ -141,6 +156,10 @@ mod tests {
         fn n_words(&self) -> usize {
             4
         }
+
+        fn words(&self) -> &[String] {
+            &self.words
+        }
     }
 
     struct SimpleUnigramLanguageModel {}
@@ -159,7 +178,7 @@ mod tests {
 
     #[test]
     fn test_embeddings() {
-        let word_embeddings = SimpleWordEmbeddings {};
+        let word_embeddings = SimpleWordEmbeddings::new();
         let unigram_lm = SimpleUnigramLanguageModel {};
 
         let sif = Sif::new(&word_embeddings, &unigram_lm);

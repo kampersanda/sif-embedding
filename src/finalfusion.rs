@@ -23,4 +23,8 @@ where
     fn n_words(&self) -> usize {
         self.vocab().words_len()
     }
+
+    fn words(&self) -> &[String] {
+        self.vocab().words()
+    }
 }
