@@ -154,7 +154,7 @@ pub trait WordEmbeddings {
     fn embedding_size(&self) -> usize;
 
     /// Returns the number of words in the vocabulary.
-    fn num_words(&self) -> usize;
+    fn n_words(&self) -> usize;
 }
 
 /// Unigram language model.

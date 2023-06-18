@@ -20,7 +20,7 @@ where
         self.dims()
     }
 
-    fn num_words(&self) -> usize {
+    fn n_words(&self) -> usize {
         self.vocab().words_len()
     }
 }

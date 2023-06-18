@@ -138,7 +138,7 @@ mod tests {
             3
         }
 
-        fn num_words(&self) -> usize {
+        fn n_words(&self) -> usize {
             4
         }
     }
