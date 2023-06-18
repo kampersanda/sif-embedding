@@ -154,6 +154,7 @@ where
         Array2::from_shape_vec((n_sentences, self.embedding_size()), sent_embeddings).unwrap()
     }
 
+    /// Lines 11--17 in Algorithm 1.
     fn estimate_principal_components(
         &self,
         sent_embeddings: &Array2<Float>,
