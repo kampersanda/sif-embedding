@@ -55,11 +55,14 @@ where
 /// - `x`: 2D-array of shape `(n, m)`
 /// - `c`: Principal components of shape `(k, m)`
 /// - `w`: Weights of shape `(k,)`
-pub(crate) fn remove_principal_components(
-    x: &Array2<Float>,
-    c: &Array2<Float>,
-    w: &Array1<Float>,
-) -> Array2<Float> {
+pub(crate) fn remove_principal_components<S>(
+    x: &ArrayBase<S, Ix2>,
+    c: &ArrayBase<S, Ix2>,
+    w: &ArrayBase<S, Ix1>,
+) -> Array2<Float>
+where
+    S: Data<Elem = Float>,
+{
     let c = c * &w.slice(&ndarray::s![..,]);
     let proj = c.t().dot(&c.to_owned());
     x.to_owned() - &(x.dot(&proj))
