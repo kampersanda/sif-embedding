@@ -100,7 +100,7 @@ where
         Ok(sent_embeddings)
     }
 
-    /// Compute the average sentence length.
+    /// Computes the average length of sentences.
     /// (Line 3 in Algorithm 1)
     fn average_sentence_length<S>(&self, sentences: &[S]) -> Float
     where
@@ -114,7 +114,7 @@ where
         n_words as Float / sentences.len() as Float
     }
 
-    /// Estimate the parameter `a` for the weight function.
+    /// Estimates the parameter `a` for the weight function.
     /// (Lines 5--7 in Algorithm 1)
     fn estimate_param_a(&self, sent_len: Float) -> Float {
         let n_words = self.word_embeddings.n_words() as Float;
@@ -129,7 +129,8 @@ where
         (1. - alpha) / (alpha * partiion)
     }
 
-    /// Line 8 in Algorithm 1
+    /// Applies SIF-weighting.
+    /// (Line 8 in Algorithm 1)
     fn weighted_embeddings<I, S>(&self, sentences: I) -> Array2<Float>
     where
         I: IntoIterator<Item = S>,
@@ -159,7 +160,8 @@ where
         Array2::from_shape_vec((n_sentences, self.embedding_size()), sent_embeddings).unwrap()
     }
 
-    /// Lines 11--17 in Algorithm 1.
+    /// Estimates the principal components of sentence embeddings.
+    /// (Lines 11--17 in Algorithm 1)
     fn estimate_principal_components(
         &self,
         sent_embeddings: &Array2<Float>,
@@ -221,6 +223,12 @@ mod tests {
 
     struct SimpleUnigramLanguageModel {}
 
+    impl SimpleUnigramLanguageModel {
+        fn new() -> Self {
+            Self {}
+        }
+    }
+
     impl UnigramLanguageModel for SimpleUnigramLanguageModel {
         fn probability(&self, word: &str) -> Float {
             match word {
@@ -236,7 +244,7 @@ mod tests {
     #[test]
     fn test_embeddings() {
         let word_embeddings = SimpleWordEmbeddings::new();
-        let unigram_lm = SimpleUnigramLanguageModel {};
+        let unigram_lm = SimpleUnigramLanguageModel::new();
 
         let usif = USif::new(&word_embeddings, &unigram_lm)
             .fit(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])

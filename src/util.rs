@@ -34,10 +34,10 @@ where
 ///
 /// # Returns
 ///
-/// Let `k` be the smaller one of `n_components` and `Rank(vectors)`.
-///
 /// - Singular values of shape `(k,)`
 /// - Right singular vectors of shape `(k, m)`
+///
+/// where `k` is the smaller one of `n_components` and `Rank(vectors)`.
 pub(crate) fn principal_components<S>(
     vectors: &ArrayBase<S, Ix2>,
     n_components: usize,
@@ -141,7 +141,7 @@ mod tests {
     }
 
     #[test]
-    fn test_truncated_svd_k6() {
+    fn test_truncated_svd_k10() {
         let x = ndarray::arr2(&[
             [1., 1., 1., 0., 0.],
             [3., 3., 3., 0., 0.],
@@ -151,7 +151,7 @@ mod tests {
             [0., 0., 0., 5., 5.],
             [0., 1., 0., 2., 2.],
         ]);
-        let (s, vt) = principal_components(&x, 6);
+        let (s, vt) = principal_components(&x, 10);
         // Rank(x) = 3.
         assert_eq!(s.shape(), &[3]);
         assert_eq!(vt.shape(), &[3, 5]);
