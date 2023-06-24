@@ -174,6 +174,9 @@ pub trait Model: Sized {
     fn embedding_size(&self) -> usize;
 
     ///
+    fn is_fitted(&self) -> bool;
+
+    ///
     fn fit<S>(self, sentences: &[S]) -> Result<Self>
     where
         S: AsRef<str>;
@@ -192,7 +195,4 @@ pub trait Model: Sized {
     fn fit_embeddings<S>(&mut self, sentences: &[S]) -> Result<Array2<Float>>
     where
         S: AsRef<str>;
-
-    ///
-    fn is_fitted(&self) -> bool;
 }
