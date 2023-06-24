@@ -71,7 +71,6 @@ where
     S: Data<Elem = Float>,
 {
     debug_assert_eq!(vectors.ncols(), components.ncols());
-
     // Principal components can be empty if the input matrix is zero.
     if components.is_empty() {
         return vectors.to_owned();
@@ -84,9 +83,11 @@ where
     } else {
         components.to_owned()
     };
-    // projection of shape (m, m)
-    let projection = weighted_components.t().dot(&weighted_components);
-    vectors.to_owned() - &(vectors.dot(&projection))
+    // (n,m).dot((m,k).t()).dot((k,m) = (n,m)
+    let projection = vectors
+        .dot(&weighted_components.t())
+        .dot(&weighted_components);
+    vectors.to_owned() - &projection
 }
 
 #[cfg(test)]
@@ -158,6 +159,23 @@ mod tests {
 
     #[test]
     fn test_remove_principal_components_k1() {
+        let vectors = ndarray::arr2(&[
+            [1., 1., 1., 0., 0.],
+            [3., 3., 3., 0., 0.],
+            [4., 4., 4., 0., 0.],
+            [5., 5., 5., 0., 0.],
+            [0., 2., 0., 4., 4.],
+            [0., 0., 0., 5., 5.],
+            [0., 1., 0., 2., 2.],
+        ]);
+        let components = ndarray::arr2(&[[1., 1., 1., 0., 0.]]);
+        let weights = ndarray::arr1(&[1.]);
+        let result = remove_principal_components(&vectors, &components, Some(&weights));
+        assert_eq!(result.shape(), &[7, 5]);
+    }
+
+    #[test]
+    fn test_remove_principal_components_k3() {
         let vectors = ndarray::arr2(&[
             [1., 1., 1., 0., 0.],
             [3., 3., 3., 0., 0.],
