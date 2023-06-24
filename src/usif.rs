@@ -184,10 +184,11 @@ where
         if !self.is_fitted() {
             return Err(anyhow!("The model is not fitted."));
         }
-
         // SIF-weighting.
         let mut sent_embeddings = self.weighted_embeddings(sentences, self.param_a.unwrap());
-
+        if sent_embeddings.is_empty() {
+            return Ok(sent_embeddings);
+        }
         // Common component removal.
         if self.n_components != 0 {
             let weights = self.weights.as_ref().unwrap();
