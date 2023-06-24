@@ -47,6 +47,9 @@ struct Args {
 
     #[arg(short = 'm', long, default_value = "sif")]
     method: MethodKind,
+
+    #[arg(short = 'n', long)]
+    n_components: Option<usize>,
 }
 
 struct Preprocessor {
@@ -144,11 +147,19 @@ fn main() -> Result<(), Box<dyn Error>> {
             let sentences: Vec<_> = sentences.iter().map(|s| preprocessor.apply(s)).collect();
             let corr = match args.method {
                 MethodKind::Sif => {
-                    let model = Sif::new(&word_embeddings, &unigram_lm);
+                    let model = if let Some(n_components) = args.n_components {
+                        Sif::new(&word_embeddings, &unigram_lm).n_components(n_components)?
+                    } else {
+                        Sif::new(&word_embeddings, &unigram_lm)
+                    };
                     evaluate(model, &gold_scores, &sentences)?
                 }
                 MethodKind::USif => {
-                    let model = USif::new(&word_embeddings, &unigram_lm);
+                    let model = if let Some(n_components) = args.n_components {
+                        USif::new(&word_embeddings, &unigram_lm).n_components(n_components)?
+                    } else {
+                        USif::new(&word_embeddings, &unigram_lm)
+                    };
                     evaluate(model, &gold_scores, &sentences)?
                 }
             };
