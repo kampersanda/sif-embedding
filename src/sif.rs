@@ -1,4 +1,6 @@
 //! Smooth Inverse Frequency (SIF).
+use anyhow::Ok;
+use anyhow::{anyhow, Result};
 use ndarray::Array1;
 use ndarray::Array2;
 
@@ -44,6 +46,12 @@ where
         }
     }
 
+    /// Returns the number of dimensions for sentence embeddings,
+    /// which is equivalent to that of the input word embeddings.
+    pub fn embedding_size(&self) -> usize {
+        self.word_embeddings.embedding_size()
+    }
+
     /// Sets a separator for sentence segmentation (default: ASCII whitespace).
     pub const fn separator(mut self, separator: char) -> Self {
         self.separator = separator;
@@ -51,9 +59,32 @@ where
     }
 
     /// Sets a SIF-weighting parameter `a` (default: `1e-3`).
-    pub const fn param_a(mut self, param_a: Float) -> Self {
-        self.param_a = param_a;
-        self
+    pub fn param_a(mut self, param_a: Float) -> Result<Self> {
+        if self.is_fitted() {
+            Err(anyhow!("already fitted"))
+        } else {
+            self.param_a = param_a;
+            Ok(self)
+        }
+    }
+
+    ///
+    pub fn is_fitted(&self) -> bool {
+        self.common_components.is_some()
+    }
+
+    ///
+    pub fn fit<S>(mut self, sentences: &[S]) -> Result<Self>
+    where
+        S: AsRef<str>,
+    {
+        if sentences.is_empty() {
+            return Err(anyhow!("no sentences"));
+        }
+        let sent_embeddings = self.weighted_embeddings(sentences);
+        let (_, common_components) = util::principal_components(&sent_embeddings, N_COMPONENTS);
+        self.common_components = Some(common_components);
+        Ok(self)
     }
 
     /// Computes embeddings for input sentences,
@@ -61,23 +92,38 @@ where
     ///
     /// - `n_sentences` is the number of input sentences, and
     /// - `embedding_size` is [`Self::embedding_size()`].
-    pub fn embeddings<I, S>(&self, sentences: I) -> Array2<Float>
+    pub fn embeddings<I, S>(&self, sentences: I) -> Result<Array2<Float>>
     where
         I: IntoIterator<Item = S>,
         S: AsRef<str>,
     {
+        if !self.is_fitted() {
+            return Err(anyhow!("not fitted"));
+        }
         let sent_embeddings = self.weighted_embeddings(sentences);
         if sent_embeddings.is_empty() {
-            return sent_embeddings;
+            return Ok(sent_embeddings);
         }
-        let (_, common_components) = util::principal_components(&sent_embeddings, N_COMPONENTS);
-        util::remove_principal_components(&sent_embeddings, &common_components, None)
+        let common_components = self.common_components.as_ref().unwrap();
+        let sent_embeddings =
+            util::remove_principal_components(&sent_embeddings, common_components, None);
+        Ok(sent_embeddings)
     }
 
-    /// Returns the number of dimensions for sentence embeddings,
-    /// which is equivalent to that of the input word embeddings.
-    pub fn embedding_size(&self) -> usize {
-        self.word_embeddings.embedding_size()
+    ///
+    pub fn fit_embeddings<S>(&mut self, sentences: &[S]) -> Result<Array2<Float>>
+    where
+        S: AsRef<str>,
+    {
+        if sentences.is_empty() {
+            return Err(anyhow!("no sentences"));
+        }
+        let sent_embeddings = self.weighted_embeddings(sentences);
+        let (_, common_components) = util::principal_components(&sent_embeddings, N_COMPONENTS);
+        let sent_embeddings =
+            util::remove_principal_components(&sent_embeddings, &common_components, None);
+        self.common_components = Some(common_components);
+        Ok(sent_embeddings)
     }
 
     /// Applies SIF-weighting. (Lines 1--3 in Algorithm 1)
@@ -176,14 +222,19 @@ mod tests {
         let unigram_lm = SimpleUnigramLanguageModel {};
 
         let sif = Sif::new(&word_embeddings, &unigram_lm);
+        let sif = sif
+            .fit(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
+            .unwrap();
 
-        let sent_embeddings = sif.embeddings(["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""]);
+        let sent_embeddings = sif
+            .embeddings(["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
+            .unwrap();
         assert_eq!(sent_embeddings.shape(), &[5, 3]);
 
-        let sent_embeddings = sif.embeddings(Vec::<&str>::new());
+        let sent_embeddings = sif.embeddings(Vec::<&str>::new()).unwrap();
         assert_eq!(sent_embeddings.shape(), &[0, 3]);
 
-        let sent_embeddings = sif.embeddings(["", ""]);
+        let sent_embeddings = sif.embeddings(["", ""]).unwrap();
         assert_eq!(sent_embeddings.shape(), &[2, 3]);
     }
 }

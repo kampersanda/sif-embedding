@@ -43,16 +43,21 @@ where
         }
     }
 
+    /// Returns the number of dimensions for sentence embeddings,
+    /// which is equivalent to that of the input word embeddings.
+    pub fn embedding_size(&self) -> usize {
+        self.word_embeddings.embedding_size()
+    }
+
     /// Sets a separator for sentence segmentation (default: ASCII whitespace).
     pub const fn separator(mut self, separator: char) -> Self {
         self.separator = separator;
         self
     }
 
-    /// Returns the number of dimensions for sentence embeddings,
-    /// which is equivalent to that of the input word embeddings.
-    pub fn embedding_size(&self) -> usize {
-        self.word_embeddings.embedding_size()
+    ///
+    pub fn is_fitted(&self) -> bool {
+        self.param_a.is_some() || self.singular_weights.is_some() || self.singular_vectors.is_some()
     }
 
     ///
@@ -85,10 +90,7 @@ where
         I: IntoIterator<Item = S>,
         S: AsRef<str>,
     {
-        if self.param_a.is_none()
-            || self.singular_weights.is_none()
-            || self.singular_vectors.is_none()
-        {
+        if !self.is_fitted() {
             return Err(anyhow!("not fitted"));
         }
         let sent_embeddings = self.weighted_embeddings(sentences);
