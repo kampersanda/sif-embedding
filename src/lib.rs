@@ -41,8 +41,8 @@
 //!
 //! // Computes sentence embeddings in shape (n, m),
 //! // where n is the number of sentences and m is the number of dimensions.
-//! let sif = Sif::new(&word_embeddings, &unigram_lm);
-//! let sent_embeddings = sif.embeddings(["go to las vegas", "mega vegas"]);
+//! let mut sif = Sif::new(&word_embeddings, &unigram_lm);
+//! let sent_embeddings = sif.fit_embeddings(&["go to las vegas", "mega vegas"]).unwrap();
 //! assert_eq!(sent_embeddings.shape(), &[2, 3]);
 //! ```
 //!

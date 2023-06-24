@@ -71,6 +71,11 @@ where
         // SIF-weighting.
         let sent_len = self.average_sentence_length(sentences);
         let param_a = self.estimate_param_a(sent_len);
+        if param_a == 0. {
+            return Err(anyhow!(
+                "Estimated parameter `a` is 0.0. Please reconfirm the input parameters."
+            ));
+        }
         let sent_embeddings = self.weighted_embeddings(sentences, param_a);
         // Common component removal.
         let (weights, common_components) = self.estimate_principal_components(&sent_embeddings);
@@ -92,7 +97,7 @@ where
         S: AsRef<str>,
     {
         if !self.is_fitted() {
-            return Err(anyhow!("Parameters are not fitted."));
+            return Err(anyhow!("The model is not fitted."));
         }
         // Get the fitted parameters.
         let param_a = self.param_a.unwrap();
@@ -116,6 +121,11 @@ where
         // SIF-weighting.
         let sent_len = self.average_sentence_length(sentences);
         let param_a = self.estimate_param_a(sent_len);
+        if param_a == 0. {
+            return Err(anyhow!(
+                "Estimated parameter `a` is 0.0. Please reconfirm the input parameters."
+            ));
+        }
         let sent_embeddings = self.weighted_embeddings(sentences, param_a);
         // Common component removal.
         let (weights, common_components) = self.estimate_principal_components(&sent_embeddings);
@@ -164,11 +174,7 @@ where
         I: IntoIterator<Item = S>,
         S: AsRef<str>,
     {
-        if param_a == 0. {
-            eprintln!(
-                "All embeddings will be zero-valued vectors since estimated parameter `a` is 0.0."
-            );
-        }
+        debug_assert!(param_a > 0.);
         let mut sent_embeddings = vec![];
         let mut n_sentences = 0;
         for sent in sentences {
@@ -200,7 +206,6 @@ where
         &self,
         sent_embeddings: &Array2<Float>,
     ) -> (Array1<Float>, Array2<Float>) {
-        dbg!(sent_embeddings);
         let (singular_values, singular_vectors) =
             util::principal_components(&sent_embeddings, self.n_components);
         let singular_weights = singular_values.mapv(|v| v.powf(2.0));
