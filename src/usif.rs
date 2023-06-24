@@ -155,15 +155,16 @@ where
     /// Estimates the parameter `a` for the weight function.
     /// (Lines 5--7 in Algorithm 1)
     fn estimate_param_a(&self, sent_len: Float) -> Float {
-        let n_words = self.unigram_lm.n_words() as Float;
-        let threshold = 1. - (1. - (1. / n_words)).powf(sent_len);
+        debug_assert!(sent_len > 0.);
+        let vocab_size = self.unigram_lm.n_words() as Float;
+        let threshold = 1. - (1. - (1. / vocab_size)).powf(sent_len);
         let n_greater = self
             .unigram_lm
             .entries()
             .filter(|(_, prob)| *prob > threshold)
             .count() as Float;
-        let alpha = n_greater / n_words;
-        let partiion = n_words / 2.;
+        let alpha = n_greater / vocab_size;
+        let partiion = 0.5 * vocab_size;
         (1. - alpha) / (alpha * partiion)
     }
 
