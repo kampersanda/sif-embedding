@@ -16,7 +16,7 @@ use std::str::FromStr;
 use clap::Parser;
 use finalfusion::prelude::*;
 use sif_embedding::util;
-use sif_embedding::Model;
+use sif_embedding::SentenceEmbedder;
 use sif_embedding::Sif;
 use sif_embedding::USif;
 use unicode_normalization::UnicodeNormalization;

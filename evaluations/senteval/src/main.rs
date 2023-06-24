@@ -15,7 +15,7 @@ use finalfusion::prelude::*;
 use ndarray::Array2;
 use ndarray_stats::CorrelationExt;
 use sif_embedding::util;
-use sif_embedding::{Float, Model, Sif, USif};
+use sif_embedding::{Float, SentenceEmbedder, Sif, USif};
 use tantivy::tokenizer::*;
 use wordfreq_model::{self, ModelKind};
 
@@ -209,7 +209,7 @@ fn evaluate<M>(
     sentences: &[String],
 ) -> Result<Float, Box<dyn Error>>
 where
-    M: Model,
+    M: SentenceEmbedder,
 {
     let sent_embeddings = model.fit_embeddings(sentences)?;
     let n_examples = gold_scores.len();

@@ -5,7 +5,7 @@ use ndarray::Array2;
 
 use crate::util;
 use crate::Float;
-use crate::Model;
+use crate::SentenceEmbedder;
 use crate::UnigramLanguageModel;
 use crate::WordEmbeddings;
 
@@ -137,7 +137,7 @@ where
     }
 }
 
-impl<'w, 'u, W, U> Model for USif<'w, 'u, W, U>
+impl<'w, 'u, W, U> SentenceEmbedder for USif<'w, 'u, W, U>
 where
     W: WordEmbeddings,
     U: UnigramLanguageModel,

@@ -28,7 +28,7 @@
 //! use finalfusion::embeddings::Embeddings;
 //! use wordfreq::WordFreq;
 //!
-//! use sif_embedding::{Sif, Model};
+//! use sif_embedding::{Sif, SentenceEmbedder};
 //!
 //! // Creates word embeddings from a pretrained model.
 //! let word_model = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
@@ -169,7 +169,7 @@ pub trait UnigramLanguageModel {
 }
 
 /// Sentence Embeddings.
-pub trait Model: Sized {
+pub trait SentenceEmbedder: Sized {
     /// Returns the number of dimensions for sentence embeddings.
     fn embedding_size(&self) -> usize;
 

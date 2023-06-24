@@ -16,7 +16,7 @@ use clap::Parser;
 use finalfusion::prelude::*;
 use ndarray::Array2;
 use ndarray_stats::CorrelationExt;
-use sif_embedding::Model;
+use sif_embedding::SentenceEmbedder;
 use sif_embedding::Sif;
 use sif_embedding::USif;
 use tantivy::tokenizer::*;
