@@ -307,4 +307,78 @@ mod tests {
         let embeddings_3 = sif.embeddings(sentences).unwrap();
         assert_relative_eq!(embeddings_1, embeddings_3);
     }
+
+    #[test]
+    fn test_separator() {
+        let word_embeddings = SimpleWordEmbeddings::new();
+        let unigram_lm = SimpleUnigramLanguageModel::new();
+
+        let sentences_1 = &["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
+        let sentences_2 = &["A,BB,CCC,DDDD", "BB,CCC", "A,B,C", "Z", ""];
+
+        let sif = USif::new(&word_embeddings, &unigram_lm);
+        let sif = sif.fit(sentences_1).unwrap();
+        let embeddings_1 = sif.embeddings(sentences_1).unwrap();
+
+        let sif = sif.separator(',');
+        let embeddings_2 = sif.embeddings(sentences_2).unwrap();
+
+        assert_relative_eq!(embeddings_1, embeddings_2);
+    }
+
+    #[test]
+    fn test_param_a() {
+        let word_embeddings = SimpleWordEmbeddings::new();
+        let unigram_lm = SimpleUnigramLanguageModel::new();
+
+        let sif = USif::new(&word_embeddings, &unigram_lm);
+        let sif = sif.fit(&[""]).unwrap();
+
+        let e = sif.param_a(1.);
+        assert!(e.is_err());
+    }
+
+    #[test]
+    fn test_is_fitted() {
+        let word_embeddings = SimpleWordEmbeddings::new();
+        let unigram_lm = SimpleUnigramLanguageModel::new();
+
+        let sif = USif::new(&word_embeddings, &unigram_lm);
+        let sif = sif.fit(&[""]).unwrap();
+
+        assert!(sif.is_fitted());
+    }
+
+    #[test]
+    fn test_no_fitted() {
+        let word_embeddings = SimpleWordEmbeddings::new();
+        let unigram_lm = SimpleUnigramLanguageModel::new();
+
+        let sif = USif::new(&word_embeddings, &unigram_lm);
+        let embeddings = sif.embeddings([""]);
+
+        assert!(embeddings.is_err());
+    }
+
+    #[test]
+    fn test_empty_fit() {
+        let word_embeddings = SimpleWordEmbeddings::new();
+        let unigram_lm = SimpleUnigramLanguageModel::new();
+
+        let sif = USif::new(&word_embeddings, &unigram_lm);
+        let sif = sif.fit(&Vec::<&str>::new());
+
+        assert!(sif.is_err());
+    }
+
+    #[test]
+    fn test_empty_fit_embeddings() {
+        let word_embeddings = SimpleWordEmbeddings::new();
+        let unigram_lm = SimpleUnigramLanguageModel::new();
+
+        let mut sif = USif::new(&word_embeddings, &unigram_lm);
+        let embeddings = sif.fit_embeddings(&Vec::<&str>::new());
+
+        assert!(embeddings.is_err());
+    }
 }
