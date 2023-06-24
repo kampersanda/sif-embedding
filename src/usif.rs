@@ -19,7 +19,6 @@ pub struct USif<'w, 'u, W, U> {
     word_embeddings: &'w W,
     unigram_lm: &'u U,
     separator: char,
-    n_components: usize,
     param_a: Option<Float>,
     weights: Option<Array1<Float>>,
     common_components: Option<Array2<Float>>,
@@ -36,7 +35,6 @@ where
             word_embeddings,
             unigram_lm,
             separator: ' ',
-            n_components: N_COMPONENTS,
             param_a: None,
             weights: None,
             common_components: None,
@@ -208,7 +206,7 @@ where
         sent_embeddings: &Array2<Float>,
     ) -> (Array1<Float>, Array2<Float>) {
         let (singular_values, singular_vectors) =
-            util::principal_components(&sent_embeddings, self.n_components);
+            util::principal_components(&sent_embeddings, N_COMPONENTS);
         let singular_weights = singular_values.mapv(|v| v.powf(2.0));
         let singular_weights = singular_weights.to_owned() / singular_weights.sum();
         (singular_weights, singular_vectors)
