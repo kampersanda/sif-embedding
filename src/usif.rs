@@ -8,6 +8,8 @@ use crate::Float;
 use crate::UnigramLanguageModel;
 use crate::WordEmbeddings;
 
+const N_COMPONENTS: usize = 5;
+
 /// uSIF
 ///
 /// Unsupervised Random Walk Sentence Embeddings: A Strong but Simple Baseline
@@ -34,7 +36,7 @@ where
             word_embeddings,
             unigram_lm,
             separator: ' ',
-            n_components: 5,
+            n_components: N_COMPONENTS,
             param_a: None,
             singular_weights: None,
             singular_vectors: None,
