@@ -8,7 +8,7 @@ use crate::Float;
 // So, we set a small value, following https://github.com/oborchers/Fast_Sentence_Embeddings/blob/master/fse/models/utils.py.
 const SVD_MAX_ITER: usize = 7;
 
-/// Computes the cosine similarity in [-1,1].
+/// Computes the cosine similarity in `[-1,1]`.
 pub fn cosine_similarity<S, T>(a: &ArrayBase<S, Ix1>, b: &ArrayBase<T, Ix1>) -> Option<Float>
 where
     S: Data<Elem = Float>,
