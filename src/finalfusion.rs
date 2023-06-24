@@ -19,12 +19,4 @@ where
     fn embedding_size(&self) -> usize {
         self.dims()
     }
-
-    fn n_words(&self) -> usize {
-        self.vocab().words_len()
-    }
-
-    fn words(&self) -> Box<dyn Iterator<Item = String> + '_> {
-        Box::new(self.vocab().words().iter().cloned())
-    }
 }

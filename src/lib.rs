@@ -152,16 +152,16 @@ pub trait WordEmbeddings {
 
     /// Returns the number of dimension of the word embeddings.
     fn embedding_size(&self) -> usize;
-
-    /// Returns the number of words in the vocabulary.
-    fn n_words(&self) -> usize;
-
-    /// Returns the iterator over the words in the vocabulary.
-    fn words(&self) -> Box<dyn Iterator<Item = String> + '_>;
 }
 
 /// Unigram language model.
 pub trait UnigramLanguageModel {
     /// Returns the probability of a word.
     fn probability(&self, word: &str) -> Float;
+
+    /// Returns the number of words in the vocabulary.
+    fn n_words(&self) -> usize;
+
+    /// Returns the iterator over words and probabilities in the vocabulary.
+    fn entries(&self) -> Box<dyn Iterator<Item = (String, Float)> + '_>;
 }

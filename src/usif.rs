@@ -155,12 +155,12 @@ where
     /// Estimates the parameter `a` for the weight function.
     /// (Lines 5--7 in Algorithm 1)
     fn estimate_param_a(&self, sent_len: Float) -> Float {
-        let n_words = self.word_embeddings.n_words() as Float;
+        let n_words = self.unigram_lm.n_words() as Float;
         let threshold = 1. - (1. - (1. / n_words)).powf(sent_len);
         let n_greater = self
-            .word_embeddings
-            .words()
-            .filter(|word| self.unigram_lm.probability(word) > threshold)
+            .unigram_lm
+            .entries()
+            .filter(|(_, prob)| *prob > threshold)
             .count() as Float;
         let alpha = n_greater / n_words;
         let partiion = n_words / 2.;
@@ -221,22 +221,7 @@ mod tests {
     use approx::assert_relative_eq;
     use ndarray::{arr1, CowArray, Ix1};
 
-    struct SimpleWordEmbeddings {
-        words: Vec<String>,
-    }
-
-    impl SimpleWordEmbeddings {
-        fn new() -> Self {
-            Self {
-                words: vec![
-                    "A".to_owned(),
-                    "BB".to_owned(),
-                    "CCC".to_owned(),
-                    "DDDD".to_owned(),
-                ],
-            }
-        }
-    }
+    struct SimpleWordEmbeddings {}
 
     impl WordEmbeddings for SimpleWordEmbeddings {
         fn embedding(&self, word: &str) -> Option<CowArray<Float, Ix1>> {
@@ -252,23 +237,9 @@ mod tests {
         fn embedding_size(&self) -> usize {
             3
         }
-
-        fn n_words(&self) -> usize {
-            4
-        }
-
-        fn words(&self) -> Box<dyn Iterator<Item = String> + '_> {
-            Box::new(self.words.iter().cloned())
-        }
     }
 
     struct SimpleUnigramLanguageModel {}
-
-    impl SimpleUnigramLanguageModel {
-        fn new() -> Self {
-            Self {}
-        }
-    }
 
     impl UnigramLanguageModel for SimpleUnigramLanguageModel {
         fn probability(&self, word: &str) -> Float {
@@ -280,12 +251,24 @@ mod tests {
                 _ => 0.,
             }
         }
+
+        fn n_words(&self) -> usize {
+            4
+        }
+
+        fn entries(&self) -> Box<dyn Iterator<Item = (String, Float)> + '_> {
+            Box::new(
+                [("A", 0.6), ("BB", 0.2), ("CCC", 0.1), ("DDDD", 0.1)]
+                    .iter()
+                    .map(|&(word, prob)| (word.to_string(), prob)),
+            )
+        }
     }
 
     #[test]
     fn test_basic() {
-        let word_embeddings = SimpleWordEmbeddings::new();
-        let unigram_lm = SimpleUnigramLanguageModel::new();
+        let word_embeddings = SimpleWordEmbeddings {};
+        let unigram_lm = SimpleUnigramLanguageModel {};
 
         let sif = USif::new(&word_embeddings, &unigram_lm)
             .fit(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
@@ -312,8 +295,8 @@ mod tests {
 
     #[test]
     fn test_equality() {
-        let word_embeddings = SimpleWordEmbeddings::new();
-        let unigram_lm = SimpleUnigramLanguageModel::new();
+        let word_embeddings = SimpleWordEmbeddings {};
+        let unigram_lm = SimpleUnigramLanguageModel {};
 
         let sentences = &["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
 
@@ -325,8 +308,8 @@ mod tests {
 
     #[test]
     fn test_separator() {
-        let word_embeddings = SimpleWordEmbeddings::new();
-        let unigram_lm = SimpleUnigramLanguageModel::new();
+        let word_embeddings = SimpleWordEmbeddings {};
+        let unigram_lm = SimpleUnigramLanguageModel {};
 
         let sentences_1 = &["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
         let sentences_2 = &["A,BB,CCC,DDDD", "BB,CCC", "A,B,C", "Z", ""];
@@ -343,8 +326,8 @@ mod tests {
 
     #[test]
     fn test_is_fitted() {
-        let word_embeddings = SimpleWordEmbeddings::new();
-        let unigram_lm = SimpleUnigramLanguageModel::new();
+        let word_embeddings = SimpleWordEmbeddings {};
+        let unigram_lm = SimpleUnigramLanguageModel {};
 
         let sentences = &["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
 
@@ -356,8 +339,8 @@ mod tests {
 
     #[test]
     fn test_no_fitted() {
-        let word_embeddings = SimpleWordEmbeddings::new();
-        let unigram_lm = SimpleUnigramLanguageModel::new();
+        let word_embeddings = SimpleWordEmbeddings {};
+        let unigram_lm = SimpleUnigramLanguageModel {};
 
         let sentences = &["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
 
@@ -369,8 +352,8 @@ mod tests {
 
     #[test]
     fn test_empty_fit() {
-        let word_embeddings = SimpleWordEmbeddings::new();
-        let unigram_lm = SimpleUnigramLanguageModel::new();
+        let word_embeddings = SimpleWordEmbeddings {};
+        let unigram_lm = SimpleUnigramLanguageModel {};
 
         let sif = USif::new(&word_embeddings, &unigram_lm);
         let sif = sif.fit(&Vec::<&str>::new());
@@ -380,8 +363,8 @@ mod tests {
 
     #[test]
     fn test_empty_fit_embeddings() {
-        let word_embeddings = SimpleWordEmbeddings::new();
-        let unigram_lm = SimpleUnigramLanguageModel::new();
+        let word_embeddings = SimpleWordEmbeddings {};
+        let unigram_lm = SimpleUnigramLanguageModel {};
 
         let mut sif = USif::new(&word_embeddings, &unigram_lm);
         let embeddings = sif.fit_embeddings(&Vec::<&str>::new());

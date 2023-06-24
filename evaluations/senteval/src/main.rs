@@ -172,7 +172,8 @@ where
     W: WordEmbeddings,
     U: UnigramLanguageModel,
 {
-    let mut sif = Sif::new(word_embeddings, unigram_lm);
+    // let mut sif = Sif::new(word_embeddings, unigram_lm);
+    let mut sif = sif_embedding::usif::USif::new(word_embeddings, unigram_lm);
     let sent_embeddings = sif.fit_embeddings(sentences)?;
 
     let n_examples = gold_scores.len();
