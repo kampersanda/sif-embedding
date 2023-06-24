@@ -205,6 +205,7 @@ where
 mod tests {
     use super::*;
 
+    use approx::assert_relative_eq;
     use ndarray::{arr1, CowArray, Ix1};
 
     struct SimpleWordEmbeddings {
@@ -273,19 +274,37 @@ mod tests {
         let word_embeddings = SimpleWordEmbeddings::new();
         let unigram_lm = SimpleUnigramLanguageModel::new();
 
-        let usif = USif::new(&word_embeddings, &unigram_lm)
+        let sif = USif::new(&word_embeddings, &unigram_lm)
             .fit(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
             .unwrap();
 
-        let sent_embeddings = usif
+        let sent_embeddings = sif
             .embeddings(["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
             .unwrap();
         assert_eq!(sent_embeddings.shape(), &[5, 3]);
 
-        let sent_embeddings = usif.embeddings(Vec::<&str>::new()).unwrap();
+        let sent_embeddings = sif.embeddings(Vec::<&str>::new()).unwrap();
         assert_eq!(sent_embeddings.shape(), &[0, 3]);
 
-        let sent_embeddings = usif.embeddings(["", ""]).unwrap();
+        let sent_embeddings = sif.embeddings(["", ""]).unwrap();
         assert_eq!(sent_embeddings.shape(), &[2, 3]);
+    }
+
+    #[test]
+    fn test_equality() {
+        let word_embeddings = SimpleWordEmbeddings::new();
+        let unigram_lm = SimpleUnigramLanguageModel::new();
+
+        let sentences = &["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
+
+        let mut sif = USif::new(&word_embeddings, &unigram_lm);
+        let embeddings_1 = sif.fit_embeddings(sentences).unwrap();
+        let embeddings_2 = sif.embeddings(sentences).unwrap();
+        assert_relative_eq!(embeddings_1, embeddings_2);
+
+        let sif = USif::new(&word_embeddings, &unigram_lm);
+        let sif = sif.fit(sentences).unwrap();
+        let embeddings_3 = sif.embeddings(sentences).unwrap();
+        assert_relative_eq!(embeddings_1, embeddings_3);
     }
 }
