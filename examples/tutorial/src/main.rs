@@ -9,7 +9,7 @@ extern crate openblas_src as _src;
 
 use std::error::Error;
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::BufReader;
 use std::path::PathBuf;
 
 use clap::Parser;
@@ -35,16 +35,16 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
 
-    let sif = Sif::new(&word_embeddings, &unigram_lm);
-    let sent_embeddings = sif.embeddings(std::io::stdin().lock().lines().map(|l| l.unwrap()));
-    for sent_embedding in sent_embeddings.rows() {
-        let row = sent_embedding
-            .iter()
-            .map(|f| f.to_string())
-            .collect::<Vec<_>>()
-            .join(" ");
-        println!("{row}");
-    }
+    let sentences = vec![
+        "This is a sentence.",
+        "This is another sentence.",
+        "This is a third sentence.",
+    ];
+
+    let mut sif = Sif::new(&word_embeddings, &unigram_lm);
+    let sent_embeddings = sif.fit_embeddings(&sentences)?;
+
+    println!("Sentence embeddings: {:?}", sent_embeddings);
 
     Ok(())
 }

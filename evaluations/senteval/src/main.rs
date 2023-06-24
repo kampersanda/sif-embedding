@@ -64,7 +64,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     eprintln!("word_embeddings.dims() = {}", word_embeddings.dims());
 
     let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
-    let sif = Sif::new(&word_embeddings, &unigram_lm);
 
     let data_dir = args.data_dir;
     let corpora = vec![
@@ -122,7 +121,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             let (gold_scores, sentences) = load_sts_data(&gs_file, &input_file)?;
             eprintln!("file = {}, n_examples = {}", file, gold_scores.len());
             let sentences: Vec<_> = sentences.iter().map(|s| preprocessor.apply(s)).collect();
-            let corr = evaluate(&sif, &gold_scores, &sentences)?;
+            let corr = evaluate(&word_embeddings, &unigram_lm, &gold_scores, &sentences)?;
             corrs.push(corr);
             println!("{file}\t{corr}");
         }
@@ -164,7 +163,8 @@ fn load_sts_data(
 }
 
 fn evaluate<W, U>(
-    sif: &Sif<W, U>,
+    word_embeddings: &W,
+    unigram_lm: &U,
     gold_scores: &[Float],
     sentences: &[String],
 ) -> Result<Float, Box<dyn Error>>
@@ -172,9 +172,12 @@ where
     W: WordEmbeddings,
     U: UnigramLanguageModel,
 {
+    let mut sif = Sif::new(word_embeddings, unigram_lm);
+    let sent_embeddings = sif.fit_embeddings(sentences)?;
+
     let n_examples = gold_scores.len();
-    let sent_embeddings = sif.embeddings(sentences);
     let mut pred_scores = Vec::with_capacity(n_examples);
+
     for i in 0..n_examples {
         let e1 = &sent_embeddings.row(i * 2);
         let e2 = &sent_embeddings.row(i * 2 + 1);
