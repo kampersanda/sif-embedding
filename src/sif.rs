@@ -68,6 +68,8 @@ where
     pub fn n_components(mut self, n_components: usize) -> Result<Self> {
         if self.is_fitted() {
             Err(anyhow!("The model is already fitted."))
+        } else if n_components == 0 {
+            Err(anyhow!("n_components must be positive."))
         } else {
             self.n_components = n_components;
             Ok(self)
@@ -112,6 +114,10 @@ where
         self.word_embeddings.embedding_size()
     }
 
+    fn is_fitted(&self) -> bool {
+        self.common_components.is_some()
+    }
+
     fn fit<S>(mut self, sentences: &[S]) -> Result<Self>
     where
         S: AsRef<str>,
@@ -122,13 +128,9 @@ where
         // SIF-weighting.
         let sent_embeddings = self.weighted_embeddings(sentences);
         // Common component removal.
-        if self.n_components == 0 {
-            self.common_components = None;
-        } else {
-            let (_, common_components) =
-                util::principal_components(&sent_embeddings, self.n_components);
-            self.common_components = Some(common_components);
-        }
+        let (_, common_components) =
+            util::principal_components(&sent_embeddings, self.n_components);
+        self.common_components = Some(common_components);
         Ok(self)
     }
 
@@ -137,19 +139,18 @@ where
         I: IntoIterator<Item = S>,
         S: AsRef<str>,
     {
-        if self.n_components != 0 && !self.is_fitted() {
+        if !self.is_fitted() {
             return Err(anyhow!("The model is not fitted."));
         }
         // SIF-weighting.
-        let mut sent_embeddings = self.weighted_embeddings(sentences);
+        let sent_embeddings = self.weighted_embeddings(sentences);
         if sent_embeddings.is_empty() {
             return Ok(sent_embeddings);
         }
         // Common component removal.
-        if let Some(common_components) = self.common_components.as_ref() {
-            sent_embeddings =
-                util::remove_principal_components(&sent_embeddings, common_components, None);
-        }
+        let common_components = self.common_components.as_ref().unwrap();
+        let sent_embeddings =
+            util::remove_principal_components(&sent_embeddings, common_components, None);
         Ok(sent_embeddings)
     }
 
@@ -161,23 +162,14 @@ where
             return Err(anyhow!("Input sentences must not be empty."));
         }
         // SIF-weighting.
-        let mut sent_embeddings = self.weighted_embeddings(sentences);
+        let sent_embeddings = self.weighted_embeddings(sentences);
         // Common component removal.
-        if self.n_components == 0 {
-            self.common_components = None;
-        } else {
-            let (_, common_components) =
-                util::principal_components(&sent_embeddings, self.n_components);
-            sent_embeddings =
-                util::remove_principal_components(&sent_embeddings, &common_components, None);
-            self.common_components = Some(common_components);
-        }
+        let (_, common_components) =
+            util::principal_components(&sent_embeddings, self.n_components);
+        let sent_embeddings =
+            util::remove_principal_components(&sent_embeddings, &common_components, None);
+        self.common_components = Some(common_components);
         Ok(sent_embeddings)
-    }
-
-    fn is_fitted(&self) -> bool {
-        // NOTE: self.common_components will be never Some when self.n_components == 0.
-        self.n_components != 0 && self.common_components.is_some()
     }
 }
 
@@ -239,36 +231,6 @@ mod tests {
 
         let sif = Sif::new(&word_embeddings, &unigram_lm);
         let sif = sif
-            .fit(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
-            .unwrap();
-
-        let sent_embeddings = sif
-            .embeddings(["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
-            .unwrap();
-        assert_ne!(
-            sent_embeddings.slice(ndarray::s![..3, ..]),
-            Array2::zeros((3, 3))
-        );
-        assert_eq!(
-            sent_embeddings.slice(ndarray::s![3.., ..]),
-            Array2::zeros((2, 3))
-        );
-
-        let sent_embeddings = sif.embeddings(Vec::<&str>::new()).unwrap();
-        assert_eq!(sent_embeddings.shape(), &[0, 3]);
-
-        let sent_embeddings = sif.embeddings([""]).unwrap();
-        assert_eq!(sent_embeddings, Array2::zeros((1, 3)));
-    }
-
-    #[test]
-    fn test_zero_component() {
-        let word_embeddings = SimpleWordEmbeddings {};
-        let unigram_lm = SimpleUnigramLanguageModel {};
-
-        let sif = Sif::new(&word_embeddings, &unigram_lm)
-            .n_components(0)
-            .unwrap()
             .fit(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
             .unwrap();
 
@@ -362,6 +324,15 @@ mod tests {
         let unigram_lm = SimpleUnigramLanguageModel {};
 
         let sif = Sif::new(&word_embeddings, &unigram_lm).param_a(0.);
+        assert!(sif.is_err());
+    }
+
+    #[test]
+    fn test_invalid_n_components() {
+        let word_embeddings = SimpleWordEmbeddings {};
+        let unigram_lm = SimpleUnigramLanguageModel {};
+
+        let sif = Sif::new(&word_embeddings, &unigram_lm).n_components(0);
         assert!(sif.is_err());
     }
 
