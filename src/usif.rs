@@ -384,6 +384,20 @@ mod tests {
     }
 
     #[test]
+    fn test_reset_n_components() {
+        let word_embeddings = SimpleWordEmbeddings {};
+        let unigram_lm = SimpleUnigramLanguageModel {};
+
+        let sentences = &["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
+
+        let sif = USif::new(&word_embeddings, &unigram_lm);
+        let sif = sif.fit(sentences).unwrap();
+
+        let e = sif.n_components(1);
+        assert!(e.is_err());
+    }
+
+    #[test]
     fn test_is_fitted() {
         let word_embeddings = SimpleWordEmbeddings {};
         let unigram_lm = SimpleUnigramLanguageModel {};
