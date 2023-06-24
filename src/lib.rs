@@ -28,7 +28,7 @@
 //! use finalfusion::embeddings::Embeddings;
 //! use wordfreq::WordFreq;
 //!
-//! use sif_embedding::Sif;
+//! use sif_embedding::{Sif, SentenceEmbeddings};
 //!
 //! // Creates word embeddings from a pretrained model.
 //! let word_model = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
@@ -144,7 +144,8 @@ pub use usif::USif;
 /// Common type of floating numbers.
 pub type Float = f32;
 
-use ndarray::{CowArray, Ix1};
+use anyhow::Result;
+use ndarray::{Array2, CowArray, Ix1};
 
 /// Word embeddings.
 pub trait WordEmbeddings {
@@ -165,4 +166,34 @@ pub trait UnigramLanguageModel {
 
     /// Returns the iterator over words and probabilities in the vocabulary.
     fn entries(&self) -> Box<dyn Iterator<Item = (String, Float)> + '_>;
+}
+
+///
+pub trait SentenceEmbeddings: Sized {
+    /// Returns the number of dimensions for sentence embeddings,
+    /// which is equivalent to that of the input word embeddings.
+    fn embedding_size(&self) -> usize;
+
+    ///
+    fn fit<S>(self, sentences: &[S]) -> Result<Self>
+    where
+        S: AsRef<str>;
+
+    /// Computes embeddings for input sentences,
+    /// returning a 2D-array of shape `(n_sentences, embedding_size)`, where
+    ///
+    /// - `n_sentences` is the number of input sentences, and
+    /// - `embedding_size` is [`Self::embedding_size()`].
+    fn embeddings<I, S>(&self, sentences: I) -> Result<Array2<Float>>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>;
+
+    ///
+    fn fit_embeddings<S>(&mut self, sentences: &[S]) -> Result<Array2<Float>>
+    where
+        S: AsRef<str>;
+
+    ///
+    fn is_fitted(&self) -> bool;
 }

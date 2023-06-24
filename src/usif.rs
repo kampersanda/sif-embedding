@@ -5,6 +5,7 @@ use ndarray::Array2;
 
 use crate::util;
 use crate::Float;
+use crate::SentenceEmbeddings;
 use crate::UnigramLanguageModel;
 use crate::WordEmbeddings;
 
@@ -41,99 +42,10 @@ where
         }
     }
 
-    /// Returns the number of dimensions for sentence embeddings,
-    /// which is equivalent to that of the input word embeddings.
-    pub fn embedding_size(&self) -> usize {
-        self.word_embeddings.embedding_size()
-    }
-
     /// Sets a separator for sentence segmentation (default: ASCII whitespace).
     pub const fn separator(mut self, separator: char) -> Self {
         self.separator = separator;
         self
-    }
-
-    ///
-    pub fn is_fitted(&self) -> bool {
-        self.param_a.is_some() || self.weights.is_some() || self.common_components.is_some()
-    }
-
-    ///
-    pub fn fit<S>(mut self, sentences: &[S]) -> Result<Self>
-    where
-        S: AsRef<str>,
-    {
-        if sentences.is_empty() {
-            return Err(anyhow!("Input sentences must not be empty."));
-        }
-        // SIF-weighting.
-        let sent_len = self.average_sentence_length(sentences);
-        let param_a = self.estimate_param_a(sent_len);
-        if param_a == 0. {
-            return Err(anyhow!(
-                "Estimated parameter `a` is 0.0. Please reconfirm the input parameters."
-            ));
-        }
-        let sent_embeddings = self.weighted_embeddings(sentences, param_a);
-        // Common component removal.
-        let (weights, common_components) = self.estimate_principal_components(&sent_embeddings);
-        // Set the fitted parameters.
-        self.param_a = Some(param_a);
-        self.weights = Some(weights);
-        self.common_components = Some(common_components);
-        Ok(self)
-    }
-
-    /// Computes embeddings for input sentences,
-    /// returning a 2D-array of shape `(n_sentences, embedding_size)`, where
-    ///
-    /// - `n_sentences` is the number of input sentences, and
-    /// - `embedding_size` is [`Self::embedding_size()`].
-    pub fn embeddings<I, S>(&self, sentences: I) -> Result<Array2<Float>>
-    where
-        I: IntoIterator<Item = S>,
-        S: AsRef<str>,
-    {
-        if !self.is_fitted() {
-            return Err(anyhow!("The model is not fitted."));
-        }
-        // Get the fitted parameters.
-        let param_a = self.param_a.unwrap();
-        let weights = self.weights.as_ref().unwrap();
-        let common_components = self.common_components.as_ref().unwrap();
-        // Embedding.
-        let sent_embeddings = self.weighted_embeddings(sentences, param_a);
-        let sent_embeddings =
-            util::remove_principal_components(&sent_embeddings, common_components, Some(weights));
-        Ok(sent_embeddings)
-    }
-
-    ///
-    pub fn fit_embeddings<S>(&mut self, sentences: &[S]) -> Result<Array2<Float>>
-    where
-        S: AsRef<str>,
-    {
-        if sentences.is_empty() {
-            return Err(anyhow!("Input sentences must not be empty."));
-        }
-        // SIF-weighting.
-        let sent_len = self.average_sentence_length(sentences);
-        let param_a = self.estimate_param_a(sent_len);
-        if param_a == 0. {
-            return Err(anyhow!(
-                "Estimated parameter `a` is 0.0. Please reconfirm the input parameters."
-            ));
-        }
-        let sent_embeddings = self.weighted_embeddings(sentences, param_a);
-        // Common component removal.
-        let (weights, common_components) = self.estimate_principal_components(&sent_embeddings);
-        let sent_embeddings =
-            util::remove_principal_components(&sent_embeddings, &common_components, Some(&weights));
-        // Set the fitted parameters.
-        self.param_a = Some(param_a);
-        self.weights = Some(weights);
-        self.common_components = Some(common_components);
-        Ok(sent_embeddings)
     }
 
     /// Computes the average length of sentences.
@@ -210,6 +122,91 @@ where
         let singular_weights = singular_values.mapv(|v| v.powf(2.0));
         let singular_weights = singular_weights.to_owned() / singular_weights.sum();
         (singular_weights, singular_vectors)
+    }
+}
+
+impl<'w, 'u, W, U> SentenceEmbeddings for USif<'w, 'u, W, U>
+where
+    W: WordEmbeddings,
+    U: UnigramLanguageModel,
+{
+    fn embedding_size(&self) -> usize {
+        self.word_embeddings.embedding_size()
+    }
+
+    fn fit<S>(mut self, sentences: &[S]) -> Result<Self>
+    where
+        S: AsRef<str>,
+    {
+        if sentences.is_empty() {
+            return Err(anyhow!("Input sentences must not be empty."));
+        }
+        // SIF-weighting.
+        let sent_len = self.average_sentence_length(sentences);
+        let param_a = self.estimate_param_a(sent_len);
+        if param_a == 0. {
+            return Err(anyhow!(
+                "Estimated parameter `a` is 0.0. Please reconfirm the input parameters."
+            ));
+        }
+        let sent_embeddings = self.weighted_embeddings(sentences, param_a);
+        // Common component removal.
+        let (weights, common_components) = self.estimate_principal_components(&sent_embeddings);
+        // Set the fitted parameters.
+        self.param_a = Some(param_a);
+        self.weights = Some(weights);
+        self.common_components = Some(common_components);
+        Ok(self)
+    }
+
+    fn embeddings<I, S>(&self, sentences: I) -> Result<Array2<Float>>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        if !self.is_fitted() {
+            return Err(anyhow!("The model is not fitted."));
+        }
+        // Get the fitted parameters.
+        let param_a = self.param_a.unwrap();
+        let weights = self.weights.as_ref().unwrap();
+        let common_components = self.common_components.as_ref().unwrap();
+        // Embedding.
+        let sent_embeddings = self.weighted_embeddings(sentences, param_a);
+        let sent_embeddings =
+            util::remove_principal_components(&sent_embeddings, common_components, Some(weights));
+        Ok(sent_embeddings)
+    }
+
+    fn fit_embeddings<S>(&mut self, sentences: &[S]) -> Result<Array2<Float>>
+    where
+        S: AsRef<str>,
+    {
+        if sentences.is_empty() {
+            return Err(anyhow!("Input sentences must not be empty."));
+        }
+        // SIF-weighting.
+        let sent_len = self.average_sentence_length(sentences);
+        let param_a = self.estimate_param_a(sent_len);
+        if param_a == 0. {
+            return Err(anyhow!(
+                "Estimated parameter `a` is 0.0. Please reconfirm the input parameters."
+            ));
+        }
+        let sent_embeddings = self.weighted_embeddings(sentences, param_a);
+        // Common component removal.
+        let (weights, common_components) = self.estimate_principal_components(&sent_embeddings);
+        let sent_embeddings =
+            util::remove_principal_components(&sent_embeddings, &common_components, Some(&weights));
+        // Set the fitted parameters.
+        self.param_a = Some(param_a);
+        self.weights = Some(weights);
+        self.common_components = Some(common_components);
+        Ok(sent_embeddings)
+    }
+
+    fn is_fitted(&self) -> bool {
+        self.param_a.is_some() || self.weights.is_some() || self.common_components.is_some()
     }
 }
 

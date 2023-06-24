@@ -1,11 +1,11 @@
 //! Smooth Inverse Frequency (SIF).
-use anyhow::Ok;
 use anyhow::{anyhow, Result};
 use ndarray::Array1;
 use ndarray::Array2;
 
 use crate::util;
 use crate::Float;
+use crate::SentenceEmbeddings;
 use crate::UnigramLanguageModel;
 use crate::WordEmbeddings;
 
@@ -46,12 +46,6 @@ where
         }
     }
 
-    /// Returns the number of dimensions for sentence embeddings,
-    /// which is equivalent to that of the input word embeddings.
-    pub fn embedding_size(&self) -> usize {
-        self.word_embeddings.embedding_size()
-    }
-
     /// Sets a separator for sentence segmentation (default: ASCII whitespace).
     pub const fn separator(mut self, separator: char) -> Self {
         self.separator = separator;
@@ -68,64 +62,6 @@ where
             self.param_a = param_a;
             Ok(self)
         }
-    }
-
-    ///
-    pub fn is_fitted(&self) -> bool {
-        self.common_components.is_some()
-    }
-
-    ///
-    pub fn fit<S>(mut self, sentences: &[S]) -> Result<Self>
-    where
-        S: AsRef<str>,
-    {
-        if sentences.is_empty() {
-            return Err(anyhow!("Input sentences must not be empty."));
-        }
-        let sent_embeddings = self.weighted_embeddings(sentences);
-        let (_, common_components) = util::principal_components(&sent_embeddings, N_COMPONENTS);
-        self.common_components = Some(common_components);
-        Ok(self)
-    }
-
-    /// Computes embeddings for input sentences,
-    /// returning a 2D-array of shape `(n_sentences, embedding_size)`, where
-    ///
-    /// - `n_sentences` is the number of input sentences, and
-    /// - `embedding_size` is [`Self::embedding_size()`].
-    pub fn embeddings<I, S>(&self, sentences: I) -> Result<Array2<Float>>
-    where
-        I: IntoIterator<Item = S>,
-        S: AsRef<str>,
-    {
-        if !self.is_fitted() {
-            return Err(anyhow!("The model is not fitted."));
-        }
-        let sent_embeddings = self.weighted_embeddings(sentences);
-        if sent_embeddings.is_empty() {
-            return Ok(sent_embeddings);
-        }
-        let common_components = self.common_components.as_ref().unwrap();
-        let sent_embeddings =
-            util::remove_principal_components(&sent_embeddings, common_components, None);
-        Ok(sent_embeddings)
-    }
-
-    ///
-    pub fn fit_embeddings<S>(&mut self, sentences: &[S]) -> Result<Array2<Float>>
-    where
-        S: AsRef<str>,
-    {
-        if sentences.is_empty() {
-            return Err(anyhow!("Input sentences must not be empty."));
-        }
-        let sent_embeddings = self.weighted_embeddings(sentences);
-        let (_, common_components) = util::principal_components(&sent_embeddings, N_COMPONENTS);
-        let sent_embeddings =
-            util::remove_principal_components(&sent_embeddings, &common_components, None);
-        self.common_components = Some(common_components);
-        Ok(sent_embeddings)
     }
 
     /// Applies SIF-weighting. (Lines 1--3 in Algorithm 1)
@@ -154,6 +90,66 @@ where
             n_sentences += 1;
         }
         Array2::from_shape_vec((n_sentences, self.embedding_size()), sent_embeddings).unwrap()
+    }
+}
+
+impl<'w, 'u, W, U> SentenceEmbeddings for Sif<'w, 'u, W, U>
+where
+    W: WordEmbeddings,
+    U: UnigramLanguageModel,
+{
+    fn embedding_size(&self) -> usize {
+        self.word_embeddings.embedding_size()
+    }
+
+    fn fit<S>(mut self, sentences: &[S]) -> Result<Self>
+    where
+        S: AsRef<str>,
+    {
+        if sentences.is_empty() {
+            return Err(anyhow!("Input sentences must not be empty."));
+        }
+        let sent_embeddings = self.weighted_embeddings(sentences);
+        let (_, common_components) = util::principal_components(&sent_embeddings, N_COMPONENTS);
+        self.common_components = Some(common_components);
+        Ok(self)
+    }
+
+    fn embeddings<I, S>(&self, sentences: I) -> Result<Array2<Float>>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        if !self.is_fitted() {
+            return Err(anyhow!("The model is not fitted."));
+        }
+        let sent_embeddings = self.weighted_embeddings(sentences);
+        if sent_embeddings.is_empty() {
+            return Ok(sent_embeddings);
+        }
+        let common_components = self.common_components.as_ref().unwrap();
+        let sent_embeddings =
+            util::remove_principal_components(&sent_embeddings, common_components, None);
+        Ok(sent_embeddings)
+    }
+
+    fn fit_embeddings<S>(&mut self, sentences: &[S]) -> Result<Array2<Float>>
+    where
+        S: AsRef<str>,
+    {
+        if sentences.is_empty() {
+            return Err(anyhow!("Input sentences must not be empty."));
+        }
+        let sent_embeddings = self.weighted_embeddings(sentences);
+        let (_, common_components) = util::principal_components(&sent_embeddings, N_COMPONENTS);
+        let sent_embeddings =
+            util::remove_principal_components(&sent_embeddings, &common_components, None);
+        self.common_components = Some(common_components);
+        Ok(sent_embeddings)
+    }
+
+    fn is_fitted(&self) -> bool {
+        self.common_components.is_some()
     }
 }
 
