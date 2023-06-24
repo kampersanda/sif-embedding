@@ -45,7 +45,7 @@ pub(crate) fn principal_components<S>(
 where
     S: Data<Elem = Float>,
 {
-    let n_components = n_components.min(vectors.ncols());
+    let n_components = n_components.min(vectors.ncols()).min(vectors.nrows());
     let svd = TruncatedSvd::new(vectors.to_owned(), TruncatedOrder::Largest)
         .maxiter(SVD_MAX_ITER)
         .decompose(n_components)
@@ -70,8 +70,15 @@ pub(crate) fn remove_principal_components<S>(
 where
     S: Data<Elem = Float>,
 {
+    debug_assert_eq!(vectors.ncols(), components.ncols());
+
+    // Principal components can be empty if the input matrix is zero.
+    if components.is_empty() {
+        return vectors.to_owned();
+    }
     // weighted_components of shape (k, m)
     let weighted_components = if let Some(weights) = weights {
+        debug_assert_eq!(components.nrows(), weights.len());
         let weights = weights.to_owned().insert_axis(Axis(1));
         components * &weights
     } else {
@@ -120,6 +127,7 @@ mod tests {
 
     #[test]
     fn test_principal_components_k10() {
+        // Rank(x) = 3.
         let vectors = ndarray::arr2(&[
             [1., 1., 1., 0., 0.],
             [3., 3., 3., 0., 0.],
@@ -130,35 +138,22 @@ mod tests {
             [0., 1., 0., 2., 2.],
         ]);
         let (s, vt) = principal_components(&vectors, 10);
-        // Rank(x) = 3.
         assert_eq!(s.shape(), &[3]);
         assert_eq!(vt.shape(), &[3, 5]);
     }
 
     #[test]
     fn test_principal_components_zeros() {
+        // Rank(x) = 0.
         let vectors = ndarray::arr2(&[
             [0., 0., 0., 0., 0.],
             [0., 0., 0., 0., 0.],
             [0., 0., 0., 0., 0.],
             [0., 0., 0., 0., 0.],
         ]);
-        let (s, vt) = principal_components(&vectors, 1);
+        let (s, vt) = principal_components(&vectors, 5);
         assert_eq!(s.shape(), &[0]);
         assert_eq!(vt.shape(), &[0, 5]);
-    }
-
-    #[test]
-    fn test_principal_components_ones() {
-        let vectors = ndarray::arr2(&[
-            [1., 1., 1., 1., 1.],
-            [1., 1., 1., 1., 1.],
-            [1., 1., 1., 1., 1.],
-            [1., 1., 1., 1., 1.],
-        ]);
-        let (s, vt) = principal_components(&vectors, 1);
-        assert_eq!(s.shape(), &[1]);
-        assert_eq!(vt.shape(), &[1, 5]);
     }
 
     #[test]

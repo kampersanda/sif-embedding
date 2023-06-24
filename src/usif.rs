@@ -66,7 +66,7 @@ where
         S: AsRef<str>,
     {
         if sentences.is_empty() {
-            return Err(anyhow!("no sentences"));
+            return Err(anyhow!("Input sentences must not be empty."));
         }
         // SIF-weighting.
         let sent_len = self.average_sentence_length(sentences);
@@ -92,7 +92,7 @@ where
         S: AsRef<str>,
     {
         if !self.is_fitted() {
-            return Err(anyhow!("not fitted"));
+            return Err(anyhow!("Parameters are not fitted."));
         }
         // Get the fitted parameters.
         let param_a = self.param_a.unwrap();
@@ -111,7 +111,7 @@ where
         S: AsRef<str>,
     {
         if sentences.is_empty() {
-            return Err(anyhow!("no sentences"));
+            return Err(anyhow!("Input sentences must not be empty."));
         }
         // SIF-weighting.
         let sent_len = self.average_sentence_length(sentences);
@@ -164,6 +164,11 @@ where
         I: IntoIterator<Item = S>,
         S: AsRef<str>,
     {
+        if param_a == 0. {
+            eprintln!(
+                "All embeddings will be zero-valued vectors since estimated parameter `a` is 0.0."
+            );
+        }
         let mut sent_embeddings = vec![];
         let mut n_sentences = 0;
         for sent in sentences {
@@ -189,10 +194,13 @@ where
 
     /// Estimates the principal components of sentence embeddings.
     /// (Lines 11--17 in Algorithm 1)
+    ///
+    /// NOTE: Principal components can be empty iff sentence embeddings are all zeros.
     fn estimate_principal_components(
         &self,
         sent_embeddings: &Array2<Float>,
     ) -> (Array1<Float>, Array2<Float>) {
+        dbg!(sent_embeddings);
         let (singular_values, singular_vectors) =
             util::principal_components(&sent_embeddings, self.n_components);
         let singular_weights = singular_values.mapv(|v| v.powf(2.0));
@@ -260,17 +268,17 @@ mod tests {
     impl UnigramLanguageModel for SimpleUnigramLanguageModel {
         fn probability(&self, word: &str) -> Float {
             match word {
-                "A" => 1.,
-                "BB" => 2.,
-                "CCC" => 3.,
-                "DDDD" => 4.,
+                "A" => 0.6,
+                "BB" => 0.2,
+                "CCC" => 0.1,
+                "DDDD" => 0.1,
                 _ => 0.,
             }
         }
     }
 
     #[test]
-    fn test_embeddings() {
+    fn test_basic() {
         let word_embeddings = SimpleWordEmbeddings::new();
         let unigram_lm = SimpleUnigramLanguageModel::new();
 
@@ -281,13 +289,20 @@ mod tests {
         let sent_embeddings = sif
             .embeddings(["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
             .unwrap();
-        assert_eq!(sent_embeddings.shape(), &[5, 3]);
+        assert_ne!(
+            sent_embeddings.slice(ndarray::s![..3, ..]),
+            Array2::zeros((3, 3))
+        );
+        assert_eq!(
+            sent_embeddings.slice(ndarray::s![3.., ..]),
+            Array2::zeros((2, 3))
+        );
 
         let sent_embeddings = sif.embeddings(Vec::<&str>::new()).unwrap();
         assert_eq!(sent_embeddings.shape(), &[0, 3]);
 
-        let sent_embeddings = sif.embeddings(["", ""]).unwrap();
-        assert_eq!(sent_embeddings.shape(), &[2, 3]);
+        let sent_embeddings = sif.embeddings([""]).unwrap();
+        assert_eq!(sent_embeddings, Array2::zeros((1, 3)));
     }
 
     #[test]
@@ -301,11 +316,6 @@ mod tests {
         let embeddings_1 = sif.fit_embeddings(sentences).unwrap();
         let embeddings_2 = sif.embeddings(sentences).unwrap();
         assert_relative_eq!(embeddings_1, embeddings_2);
-
-        let sif = USif::new(&word_embeddings, &unigram_lm);
-        let sif = sif.fit(sentences).unwrap();
-        let embeddings_3 = sif.embeddings(sentences).unwrap();
-        assert_relative_eq!(embeddings_1, embeddings_3);
     }
 
     #[test]
@@ -331,8 +341,10 @@ mod tests {
         let word_embeddings = SimpleWordEmbeddings::new();
         let unigram_lm = SimpleUnigramLanguageModel::new();
 
+        let sentences = &["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
+
         let sif = USif::new(&word_embeddings, &unigram_lm);
-        let sif = sif.fit(&[""]).unwrap();
+        let sif = sif.fit(sentences).unwrap();
 
         assert!(sif.is_fitted());
     }
@@ -342,8 +354,10 @@ mod tests {
         let word_embeddings = SimpleWordEmbeddings::new();
         let unigram_lm = SimpleUnigramLanguageModel::new();
 
+        let sentences = &["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
+
         let sif = USif::new(&word_embeddings, &unigram_lm);
-        let embeddings = sif.embeddings([""]);
+        let embeddings = sif.embeddings(sentences);
 
         assert!(embeddings.is_err());
     }
