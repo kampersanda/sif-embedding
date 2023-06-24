@@ -168,10 +168,9 @@ pub trait UnigramLanguageModel {
     fn entries(&self) -> Box<dyn Iterator<Item = (String, Float)> + '_>;
 }
 
-///
-pub trait SentenceEmbeddings: Sized {
-    /// Returns the number of dimensions for sentence embeddings,
-    /// which is equivalent to that of the input word embeddings.
+/// Sentence Embeddings.
+pub trait Model: Sized {
+    /// Returns the number of dimensions for sentence embeddings.
     fn embedding_size(&self) -> usize;
 
     ///

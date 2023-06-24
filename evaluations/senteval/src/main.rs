@@ -8,15 +8,33 @@ extern crate openblas_src as _src;
 use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::str::FromStr;
 
 use clap::Parser;
 use finalfusion::prelude::*;
 use ndarray::Array2;
 use ndarray_stats::CorrelationExt;
 use sif_embedding::util;
-use sif_embedding::{Float, Sif, UnigramLanguageModel, WordEmbeddings};
+use sif_embedding::{Float, Model, Sif, USif};
 use tantivy::tokenizer::*;
 use wordfreq_model::{self, ModelKind};
+
+#[derive(Clone, Debug)]
+enum MethodKind {
+    Sif,
+    USif,
+}
+
+impl FromStr for MethodKind {
+    type Err = &'static str;
+    fn from_str(mode: &str) -> Result<Self, Self::Err> {
+        match mode {
+            "sif" => Ok(Self::Sif),
+            "usif" => Ok(Self::USif),
+            _ => Err("Could not parse a mode"),
+        }
+    }
+}
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -26,6 +44,9 @@ struct Args {
 
     #[arg(short = 'f', long)]
     input_fifu: String,
+
+    #[arg(short = 'm', long, default_value = "sif")]
+    method: MethodKind,
 }
 
 struct Preprocessor {
@@ -121,7 +142,16 @@ fn main() -> Result<(), Box<dyn Error>> {
             let (gold_scores, sentences) = load_sts_data(&gs_file, &input_file)?;
             eprintln!("file = {}, n_examples = {}", file, gold_scores.len());
             let sentences: Vec<_> = sentences.iter().map(|s| preprocessor.apply(s)).collect();
-            let corr = evaluate(&word_embeddings, &unigram_lm, &gold_scores, &sentences)?;
+            let corr = match args.method {
+                MethodKind::Sif => {
+                    let model = Sif::new(&word_embeddings, &unigram_lm);
+                    evaluate(model, &gold_scores, &sentences)?
+                }
+                MethodKind::USif => {
+                    let model = USif::new(&word_embeddings, &unigram_lm);
+                    evaluate(model, &gold_scores, &sentences)?
+                }
+            };
             corrs.push(corr);
             println!("{file}\t{corr}");
         }
@@ -162,23 +192,17 @@ fn load_sts_data(
     Ok((gold_scores, sentences))
 }
 
-fn evaluate<W, U>(
-    word_embeddings: &W,
-    unigram_lm: &U,
+fn evaluate<M>(
+    mut model: M,
     gold_scores: &[Float],
     sentences: &[String],
 ) -> Result<Float, Box<dyn Error>>
 where
-    W: WordEmbeddings,
-    U: UnigramLanguageModel,
+    M: Model,
 {
-    // let mut sif = Sif::new(word_embeddings, unigram_lm);
-    let mut sif = sif_embedding::usif::USif::new(word_embeddings, unigram_lm);
-    let sent_embeddings = sif.fit_embeddings(sentences)?;
-
+    let sent_embeddings = model.fit_embeddings(sentences)?;
     let n_examples = gold_scores.len();
     let mut pred_scores = Vec::with_capacity(n_examples);
-
     for i in 0..n_examples {
         let e1 = &sent_embeddings.row(i * 2);
         let e2 = &sent_embeddings.row(i * 2 + 1);
