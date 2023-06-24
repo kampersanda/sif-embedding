@@ -157,7 +157,7 @@ pub trait WordEmbeddings {
     fn n_words(&self) -> usize;
 
     /// Returns the iterator over the words in the vocabulary.
-    fn words(&self) -> &[String];
+    fn words(&self) -> Box<dyn Iterator<Item = String> + '_>;
 }
 
 /// Unigram language model.

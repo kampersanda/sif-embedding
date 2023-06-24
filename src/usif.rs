@@ -119,7 +119,6 @@ where
         let n_greater = self
             .word_embeddings
             .words()
-            .iter()
             .filter(|word| self.unigram_lm.probability(word) > threshold)
             .count() as Float;
         let alpha = n_greater / n_words;
@@ -212,8 +211,8 @@ mod tests {
             4
         }
 
-        fn words(&self) -> &[String] {
-            &self.words
+        fn words(&self) -> Box<dyn Iterator<Item = String> + '_> {
+            Box::new(self.words.iter().cloned())
         }
     }
 

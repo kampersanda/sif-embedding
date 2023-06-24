@@ -24,7 +24,7 @@ where
         self.vocab().words_len()
     }
 
-    fn words(&self) -> &[String] {
-        self.vocab().words()
+    fn words(&self) -> Box<dyn Iterator<Item = String> + '_> {
+        Box::new(self.vocab().words().iter().cloned())
     }
 }
