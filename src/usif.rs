@@ -9,8 +9,6 @@ use crate::Model;
 use crate::UnigramLanguageModel;
 use crate::WordEmbeddings;
 
-const N_COMPONENTS: usize = 5;
-
 /// uSIF
 ///
 /// Unsupervised Random Walk Sentence Embeddings: A Strong but Simple Baseline
@@ -20,6 +18,7 @@ pub struct USif<'w, 'u, W, U> {
     word_embeddings: &'w W,
     unigram_lm: &'u U,
     separator: char,
+    n_components: usize,
     param_a: Option<Float>,
     weights: Option<Array1<Float>>,
     common_components: Option<Array2<Float>>,
@@ -36,6 +35,7 @@ where
             word_embeddings,
             unigram_lm,
             separator: ' ',
+            n_components: 5,
             param_a: None,
             weights: None,
             common_components: None,
@@ -46,6 +46,16 @@ where
     pub const fn separator(mut self, separator: char) -> Self {
         self.separator = separator;
         self
+    }
+
+    /// Sets a SIF-weighting parameter `a` (default: `5`).
+    pub fn n_components(mut self, n_components: usize) -> Result<Self> {
+        if self.is_fitted() {
+            Err(anyhow!("The model is already fitted."))
+        } else {
+            self.n_components = n_components;
+            Ok(self)
+        }
     }
 
     /// Computes the average length of sentences.
@@ -117,8 +127,9 @@ where
         &self,
         sent_embeddings: &Array2<Float>,
     ) -> (Array1<Float>, Array2<Float>) {
+        debug_assert_ne!(self.n_components, 0);
         let (singular_values, singular_vectors) =
-            util::principal_components(&sent_embeddings, N_COMPONENTS);
+            util::principal_components(&sent_embeddings, self.n_components);
         let singular_weights = singular_values.mapv(|v| v.powf(2.0));
         let singular_weights = singular_weights.to_owned() / singular_weights.sum();
         (singular_weights, singular_vectors)
@@ -141,6 +152,7 @@ where
         if sentences.is_empty() {
             return Err(anyhow!("Input sentences must not be empty."));
         }
+
         // SIF-weighting.
         let sent_len = self.average_sentence_length(sentences);
         let param_a = self.estimate_param_a(sent_len);
@@ -150,12 +162,17 @@ where
             ));
         }
         let sent_embeddings = self.weighted_embeddings(sentences, param_a);
-        // Common component removal.
-        let (weights, common_components) = self.estimate_principal_components(&sent_embeddings);
-        // Set the fitted parameters.
         self.param_a = Some(param_a);
-        self.weights = Some(weights);
-        self.common_components = Some(common_components);
+
+        // Common component removal.
+        if self.n_components == 0 {
+            self.weights = None;
+            self.common_components = None;
+        } else {
+            let (weights, common_components) = self.estimate_principal_components(&sent_embeddings);
+            self.weights = Some(weights);
+            self.common_components = Some(common_components);
+        }
         Ok(self)
     }
 
@@ -167,14 +184,20 @@ where
         if !self.is_fitted() {
             return Err(anyhow!("The model is not fitted."));
         }
-        // Get the fitted parameters.
-        let param_a = self.param_a.unwrap();
-        let weights = self.weights.as_ref().unwrap();
-        let common_components = self.common_components.as_ref().unwrap();
-        // Embedding.
-        let sent_embeddings = self.weighted_embeddings(sentences, param_a);
-        let sent_embeddings =
-            util::remove_principal_components(&sent_embeddings, common_components, Some(weights));
+
+        // SIF-weighting.
+        let mut sent_embeddings = self.weighted_embeddings(sentences, self.param_a.unwrap());
+
+        // Common component removal.
+        if self.n_components != 0 {
+            let weights = self.weights.as_ref().unwrap();
+            let common_components = self.common_components.as_ref().unwrap();
+            sent_embeddings = util::remove_principal_components(
+                &sent_embeddings,
+                common_components,
+                Some(weights),
+            );
+        }
         Ok(sent_embeddings)
     }
 
@@ -185,6 +208,7 @@ where
         if sentences.is_empty() {
             return Err(anyhow!("Input sentences must not be empty."));
         }
+
         // SIF-weighting.
         let sent_len = self.average_sentence_length(sentences);
         let param_a = self.estimate_param_a(sent_len);
@@ -193,20 +217,29 @@ where
                 "Estimated parameter `a` is 0.0. Please reconfirm the input parameters."
             ));
         }
-        let sent_embeddings = self.weighted_embeddings(sentences, param_a);
-        // Common component removal.
-        let (weights, common_components) = self.estimate_principal_components(&sent_embeddings);
-        let sent_embeddings =
-            util::remove_principal_components(&sent_embeddings, &common_components, Some(&weights));
-        // Set the fitted parameters.
+        let mut sent_embeddings = self.weighted_embeddings(sentences, param_a);
         self.param_a = Some(param_a);
-        self.weights = Some(weights);
-        self.common_components = Some(common_components);
+
+        // Common component removal.
+        if self.n_components == 0 {
+            self.weights = None;
+            self.common_components = None;
+        } else {
+            let (weights, common_components) = self.estimate_principal_components(&sent_embeddings);
+            sent_embeddings = util::remove_principal_components(
+                &sent_embeddings,
+                &common_components,
+                Some(&weights),
+            );
+            self.weights = Some(weights);
+            self.common_components = Some(common_components);
+        }
         Ok(sent_embeddings)
     }
 
     fn is_fitted(&self) -> bool {
-        self.param_a.is_some() || self.weights.is_some() || self.common_components.is_some()
+        // NOTE: weights and common_components can be None if n_components is 0.
+        self.param_a.is_some()
     }
 }
 
@@ -267,6 +300,36 @@ mod tests {
         let unigram_lm = SimpleUnigramLanguageModel {};
 
         let sif = USif::new(&word_embeddings, &unigram_lm)
+            .fit(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
+            .unwrap();
+
+        let sent_embeddings = sif
+            .embeddings(["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
+            .unwrap();
+        assert_ne!(
+            sent_embeddings.slice(ndarray::s![..3, ..]),
+            Array2::zeros((3, 3))
+        );
+        assert_eq!(
+            sent_embeddings.slice(ndarray::s![3.., ..]),
+            Array2::zeros((2, 3))
+        );
+
+        let sent_embeddings = sif.embeddings(Vec::<&str>::new()).unwrap();
+        assert_eq!(sent_embeddings.shape(), &[0, 3]);
+
+        let sent_embeddings = sif.embeddings([""]).unwrap();
+        assert_eq!(sent_embeddings, Array2::zeros((1, 3)));
+    }
+
+    #[test]
+    fn test_zero_component() {
+        let word_embeddings = SimpleWordEmbeddings {};
+        let unigram_lm = SimpleUnigramLanguageModel {};
+
+        let sif = USif::new(&word_embeddings, &unigram_lm)
+            .n_components(0)
+            .unwrap()
             .fit(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
             .unwrap();
 
