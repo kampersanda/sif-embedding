@@ -43,7 +43,7 @@ pub(crate) fn principal_components<S>(
 where
     S: Data<Elem = Float>,
 {
-    let n_components = n_components.min(vectors.nrows());
+    let n_components = n_components.min(vectors.ncols());
     let svd = TruncatedSvd::new(vectors.to_owned(), TruncatedOrder::Largest)
         .maxiter(SVD_MAX_ITER)
         .decompose(n_components)
