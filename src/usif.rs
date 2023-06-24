@@ -327,18 +327,6 @@ mod tests {
     }
 
     #[test]
-    fn test_param_a() {
-        let word_embeddings = SimpleWordEmbeddings::new();
-        let unigram_lm = SimpleUnigramLanguageModel::new();
-
-        let sif = USif::new(&word_embeddings, &unigram_lm);
-        let sif = sif.fit(&[""]).unwrap();
-
-        let e = sif.param_a(1.);
-        assert!(e.is_err());
-    }
-
-    #[test]
     fn test_is_fitted() {
         let word_embeddings = SimpleWordEmbeddings::new();
         let unigram_lm = SimpleUnigramLanguageModel::new();

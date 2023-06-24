@@ -136,6 +136,32 @@ mod tests {
     }
 
     #[test]
+    fn test_principal_components_zeros() {
+        let vectors = ndarray::arr2(&[
+            [0., 0., 0., 0., 0.],
+            [0., 0., 0., 0., 0.],
+            [0., 0., 0., 0., 0.],
+            [0., 0., 0., 0., 0.],
+        ]);
+        let (s, vt) = principal_components(&vectors, 1);
+        assert_eq!(s.shape(), &[0]);
+        assert_eq!(vt.shape(), &[0, 5]);
+    }
+
+    #[test]
+    fn test_principal_components_ones() {
+        let vectors = ndarray::arr2(&[
+            [1., 1., 1., 1., 1.],
+            [1., 1., 1., 1., 1.],
+            [1., 1., 1., 1., 1.],
+            [1., 1., 1., 1., 1.],
+        ]);
+        let (s, vt) = principal_components(&vectors, 1);
+        assert_eq!(s.shape(), &[1]);
+        assert_eq!(vt.shape(), &[1, 5]);
+    }
+
+    #[test]
     fn test_remove_principal_components_k1() {
         let vectors = ndarray::arr2(&[
             [1., 1., 1., 0., 0.],
