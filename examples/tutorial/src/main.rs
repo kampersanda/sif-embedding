@@ -16,6 +16,7 @@ use clap::Parser;
 use finalfusion::prelude::*;
 use wordfreq_model::{self, ModelKind};
 
+use sif_embedding::Model;
 use sif_embedding::Sif;
 
 #[derive(Parser, Debug)]
