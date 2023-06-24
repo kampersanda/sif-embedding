@@ -1,5 +1,6 @@
 //! Utilities.
-use ndarray::{self, Array1, Array2, ArrayBase, Data, Ix1, Ix2};
+
+use ndarray::{self, Array1, Array2, ArrayBase, Axis, Data, Ix1, Ix2};
 use ndarray_linalg::{lobpcg::TruncatedOrder, TruncatedSvd};
 
 use crate::Float;
@@ -36,15 +37,16 @@ where
 /// - Singular values of shape `(k,)`
 /// - Right singular vectors of shape `(k, m)`
 pub(crate) fn principal_components<S>(
-    x: &ArrayBase<S, Ix2>,
-    k: usize,
+    vectors: &ArrayBase<S, Ix2>,
+    n_components: usize,
 ) -> (Array1<Float>, Array2<Float>)
 where
     S: Data<Elem = Float>,
 {
-    let svd = TruncatedSvd::new(x.to_owned(), TruncatedOrder::Largest)
+    let n_components = n_components.min(vectors.nrows());
+    let svd = TruncatedSvd::new(vectors.to_owned(), TruncatedOrder::Largest)
         .maxiter(SVD_MAX_ITER)
-        .decompose(k)
+        .decompose(n_components)
         .unwrap();
     let (_, s, vt) = svd.values_vectors();
     (s, vt)
@@ -52,20 +54,27 @@ where
 
 /// # Arguments
 ///
-/// - `x`: 2D-array of shape `(n, m)`
-/// - `c`: Principal components of shape `(k, m)`
-/// - `w`: Weights of shape `(k,)`
+/// - `vectors`: Sentence vectors to remove components from, of shape `(n, m)`
+/// - `components`: `k` principal components of shape `(k, m)`
+/// - `weights`: Weights of shape `(k,)`
 pub(crate) fn remove_principal_components<S>(
-    x: &ArrayBase<S, Ix2>,
-    c: &ArrayBase<S, Ix2>,
-    w: &ArrayBase<S, Ix1>,
+    vectors: &ArrayBase<S, Ix2>,
+    components: &ArrayBase<S, Ix2>,
+    weights: Option<&ArrayBase<S, Ix1>>,
 ) -> Array2<Float>
 where
     S: Data<Elem = Float>,
 {
-    let c = c * &w.slice(&ndarray::s![..,]);
-    let proj = c.t().dot(&c.to_owned());
-    x.to_owned() - &(x.dot(&proj))
+    // weighted_components of shape (k, m)
+    let weighted_components = if let Some(weights) = weights {
+        let weights = weights.to_owned().insert_axis(Axis(1));
+        components * &weights
+    } else {
+        components.to_owned()
+    };
+    // projection of shape (m, m)
+    let projection = weighted_components.t().dot(&weighted_components);
+    vectors.to_owned() - &(vectors.dot(&projection))
 }
 
 /// Computes the principal components of the input data `x`,
@@ -157,5 +166,15 @@ mod tests {
         ]);
         let y = principal_component(&x, 2);
         assert_eq!(y.shape(), &[5, 5]);
+    }
+
+    #[test]
+    fn test_remove_principal_components_k1() {
+        let vectors = ndarray::arr2(&[[1., 2., 3.], [4., 5., 6.]]);
+        let components = ndarray::arr2(&[[3., 2., 1.], [1., 2., 3.]]);
+        let weights = ndarray::arr1(&[3., 2.]);
+
+        let y = remove_principal_components(&vectors, &components, Some(&weights));
+        dbg!(y);
     }
 }
