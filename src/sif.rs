@@ -21,10 +21,11 @@ const N_COMPONENTS: usize = 1;
 /// See [the top page](crate).
 #[derive(Clone)]
 pub struct Sif<'w, 'u, W, U> {
-    separator: char,
-    param_a: Float,
     word_embeddings: &'w W,
     unigram_lm: &'u U,
+    separator: char,
+    param_a: Float,
+    common_components: Option<Array2<Float>>,
 }
 
 impl<'w, 'u, W, U> Sif<'w, 'u, W, U>
@@ -35,10 +36,11 @@ where
     /// Creates a new instance.
     pub const fn new(word_embeddings: &'w W, unigram_lm: &'u U) -> Self {
         Self {
-            separator: ' ',
-            param_a: 1e-3,
             word_embeddings,
             unigram_lm,
+            separator: ' ',
+            param_a: 1e-3,
+            common_components: None,
         }
     }
 
@@ -64,12 +66,12 @@ where
         I: IntoIterator<Item = S>,
         S: AsRef<str>,
     {
-        let sent_embeddings = self.weighted_average_embeddings(sentences);
+        let sent_embeddings = self.weighted_embeddings(sentences);
         if sent_embeddings.is_empty() {
             return sent_embeddings;
         }
-        let common_component = util::principal_component(&sent_embeddings, N_COMPONENTS);
-        Self::subtract_common_components(sent_embeddings, &common_component)
+        let (_, common_components) = util::principal_components(&sent_embeddings, N_COMPONENTS);
+        util::remove_principal_components(&sent_embeddings, &common_components, None)
     }
 
     /// Returns the number of dimensions for sentence embeddings,
@@ -78,8 +80,8 @@ where
         self.word_embeddings.embedding_size()
     }
 
-    /// Lines 1--3
-    fn weighted_average_embeddings<I, S>(&self, sentences: I) -> Array2<Float>
+    /// Applies SIF-weighting. (Lines 1--3 in Algorithm 1)
+    fn weighted_embeddings<I, S>(&self, sentences: I) -> Array2<Float>
     where
         I: IntoIterator<Item = S>,
         S: AsRef<str>,
@@ -104,14 +106,6 @@ where
             n_sentences += 1;
         }
         Array2::from_shape_vec((n_sentences, self.embedding_size()), sent_embeddings).unwrap()
-    }
-
-    /// Lines 5--7
-    fn subtract_common_components(
-        sent_embeddings: Array2<Float>,
-        common_component: &Array2<Float>,
-    ) -> Array2<Float> {
-        sent_embeddings.to_owned() - &(sent_embeddings.dot(common_component))
     }
 }
 
