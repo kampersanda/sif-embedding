@@ -70,10 +70,12 @@ where
         }
         // SIF-weighting.
         let sent_len = self.average_sentence_length(sentences);
-        self.param_a = Some(self.estimate_param_a(sent_len));
-        let sent_embeddings = self.weighted_embeddings(sentences);
+        let param_a = self.estimate_param_a(sent_len);
+        let sent_embeddings = self.weighted_embeddings(sentences, param_a);
         // Common component removal.
         let (weights, common_components) = self.estimate_principal_components(&sent_embeddings);
+        // Set the fitted parameters.
+        self.param_a = Some(param_a);
         self.weights = Some(weights);
         self.common_components = Some(common_components);
         Ok(self)
@@ -92,9 +94,12 @@ where
         if !self.is_fitted() {
             return Err(anyhow!("not fitted"));
         }
-        let sent_embeddings = self.weighted_embeddings(sentences);
+        // Get the fitted parameters.
+        let param_a = self.param_a.unwrap();
         let weights = self.weights.as_ref().unwrap();
         let common_components = self.common_components.as_ref().unwrap();
+        // Embedding.
+        let sent_embeddings = self.weighted_embeddings(sentences, param_a);
         let sent_embeddings =
             util::remove_principal_components(&sent_embeddings, common_components, Some(weights));
         Ok(sent_embeddings)
@@ -110,12 +115,14 @@ where
         }
         // SIF-weighting.
         let sent_len = self.average_sentence_length(sentences);
-        self.param_a = Some(self.estimate_param_a(sent_len));
-        let sent_embeddings = self.weighted_embeddings(sentences);
+        let param_a = self.estimate_param_a(sent_len);
+        let sent_embeddings = self.weighted_embeddings(sentences, param_a);
         // Common component removal.
         let (weights, common_components) = self.estimate_principal_components(&sent_embeddings);
         let sent_embeddings =
             util::remove_principal_components(&sent_embeddings, &common_components, Some(&weights));
+        // Set the fitted parameters.
+        self.param_a = Some(param_a);
         self.weights = Some(weights);
         self.common_components = Some(common_components);
         Ok(sent_embeddings)
@@ -152,12 +159,11 @@ where
 
     /// Applies SIF-weighting.
     /// (Line 8 in Algorithm 1)
-    fn weighted_embeddings<I, S>(&self, sentences: I) -> Array2<Float>
+    fn weighted_embeddings<I, S>(&self, sentences: I, param_a: Float) -> Array2<Float>
     where
         I: IntoIterator<Item = S>,
         S: AsRef<str>,
     {
-        let param_a = self.param_a.unwrap();
         let mut sent_embeddings = vec![];
         let mut n_sentences = 0;
         for sent in sentences {
