@@ -33,7 +33,7 @@ clap = { version = "4.2.7", features = ["derive"] }
 finalfusion = "0.17.2"
 ndarray-stats = "0.5.1"
 tantivy = "0.20.0"
-wordfreq-model = { version = "0.2.2", features = ["large-en"] }
+wordfreq-model = { version = "0.2.3", features = ["large-en"] }
 
 [dependencies.sif-embedding]
 path = "../../"
