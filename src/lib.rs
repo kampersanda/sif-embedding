@@ -139,6 +139,7 @@ pub mod finalfusion;
 pub mod wordfreq;
 
 pub use sif::Sif;
+pub use usif::USif;
 
 /// Common type of floating numbers.
 pub type Float = f32;
