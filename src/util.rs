@@ -5,8 +5,8 @@ use ndarray_linalg::{lobpcg::TruncatedOrder, TruncatedSvd};
 
 use crate::Float;
 
-// NOTE(kampersanda): The default value of maxiter will take a long time to converge.
-// So, we set a small value, following https://github.com/oborchers/Fast_Sentence_Embeddings/blob/master/fse/models/utils.py.
+// The default value of maxiter will take a long time to converge, so we set a small value.
+// (cf. https://github.com/oborchers/Fast_Sentence_Embeddings/blob/master/fse/models/utils.py)
 const SVD_MAX_ITER: usize = 7;
 
 /// Computes the cosine similarity in `[-1,1]`.
@@ -29,10 +29,12 @@ where
 ///
 /// # Arguments
 ///
-/// - `x`: 2D-array of shape `(n, m)`
-/// - `k`: Number of components
+/// - `vectors`: 2D-array of shape `(n, m)`
+/// - `n_components`: Number of components
 ///
 /// # Returns
+///
+/// Let `k` be the smaller one of `n_components` and `Rank(vectors)`.
 ///
 /// - Singular values of shape `(k,)`
 /// - Right singular vectors of shape `(k, m)`
@@ -136,6 +138,23 @@ mod tests {
         let (s, vt) = principal_components(&x, 2);
         assert_eq!(s.shape(), &[2]);
         assert_eq!(vt.shape(), &[2, 5]);
+    }
+
+    #[test]
+    fn test_truncated_svd_k6() {
+        let x = ndarray::arr2(&[
+            [1., 1., 1., 0., 0.],
+            [3., 3., 3., 0., 0.],
+            [4., 4., 4., 0., 0.],
+            [5., 5., 5., 0., 0.],
+            [0., 2., 0., 4., 4.],
+            [0., 0., 0., 5., 5.],
+            [0., 1., 0., 2., 2.],
+        ]);
+        let (s, vt) = principal_components(&x, 6);
+        // Rank(x) = 3.
+        assert_eq!(s.shape(), &[3]);
+        assert_eq!(vt.shape(), &[3, 5]);
     }
 
     #[test]
