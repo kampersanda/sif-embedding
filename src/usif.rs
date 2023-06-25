@@ -135,7 +135,7 @@ where
         let word_weights = Array2::from_shape_vec((n_words, 1), word_weights).unwrap();
 
         // 3. Normalize word embeddings.
-        let axis = ndarray_linalg::norm::NormalizeAxis::Column;
+        let axis = ndarray_linalg::norm::NormalizeAxis::Column; // equivalent to Axis(0)
         let (word_embeddings, _) = ndarray_linalg::norm::normalize(word_embeddings, axis);
 
         // 4. Weight word embeddings.
