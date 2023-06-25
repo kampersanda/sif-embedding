@@ -115,8 +115,9 @@ where
                 n_words += 1;
             }
         }
+
+        // 1.1 if no parseable tokens, return a vector of a's
         if n_words == 0 {
-            // if no parseable tokens, return a vector of a's
             return Array1::zeros(self.embedding_size()) + param_a;
         }
 
