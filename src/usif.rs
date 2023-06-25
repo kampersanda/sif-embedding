@@ -90,7 +90,7 @@ where
         (1. - alpha) / (alpha * partiion)
     }
 
-    /// Applies SIF-weighting.
+    /// Applies SIF-weighting for sentences.
     /// (Line 8 in Algorithm 1)
     fn weighted_embeddings<I, S>(&self, sentences: I, param_a: Float) -> Array2<Float>
     where
@@ -108,7 +108,7 @@ where
         Array2::from_shape_vec((n_sentences, self.embedding_size()), sent_embeddings).unwrap()
     }
 
-    /// Applies SIF-weighting.
+    /// Applies SIF-weighting for a sentence.
     /// (Line 8 in Algorithm 1)
     fn weighted_embedding(&self, sent: &str, param_a: Float) -> Array1<Float> {
         debug_assert!(param_a > 0.);

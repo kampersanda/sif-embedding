@@ -76,7 +76,8 @@ where
         }
     }
 
-    /// Applies SIF-weighting. (Lines 1--3 in Algorithm 1)
+    /// Applies SIF-weighting.
+    /// (Lines 1--3 in Algorithm 1)
     fn weighted_embeddings<I, S>(&self, sentences: I) -> Array2<Float>
     where
         I: IntoIterator<Item = S>,
@@ -97,6 +98,8 @@ where
             }
             if n_words != 0 {
                 sent_embedding /= n_words as Float;
+            } else {
+                sent_embedding += self.param_a;
             }
             sent_embeddings.extend(sent_embedding.iter());
             n_sentences += 1;
@@ -237,20 +240,13 @@ mod tests {
         let sent_embeddings = sif
             .embeddings(["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
             .unwrap();
-        assert_ne!(
-            sent_embeddings.slice(ndarray::s![..3, ..]),
-            Array2::zeros((3, 3))
-        );
-        assert_eq!(
-            sent_embeddings.slice(ndarray::s![3.., ..]),
-            Array2::zeros((2, 3))
-        );
+        assert_ne!(sent_embeddings, Array2::zeros((5, 3)));
 
         let sent_embeddings = sif.embeddings(Vec::<&str>::new()).unwrap();
         assert_eq!(sent_embeddings.shape(), &[0, 3]);
 
         let sent_embeddings = sif.embeddings([""]).unwrap();
-        assert_eq!(sent_embeddings, Array2::zeros((1, 3)));
+        assert_ne!(sent_embeddings, Array2::zeros((1, 3)));
     }
 
     #[test]
