@@ -44,8 +44,8 @@
 //!
 //! // Computes sentence embeddings in shape (n, m),
 //! // where n is the number of sentences and m is the number of dimensions.
-//! let sif = Sif::new(&word_embeddings, &word_probs);
-//! let (sent_embeddings, _) = sif.fit_embeddings(&["las vegas", "mega vegas"]).unwrap();
+//! let model = Sif::new(&word_embeddings, &word_probs);
+//! let (sent_embeddings, _) = model.fit_embeddings(&["las vegas", "mega vegas"]).unwrap();
 //! assert_eq!(sent_embeddings.shape(), &[2, 3]);
 //! ```
 //!

@@ -1,4 +1,4 @@
-//! Unsupervised Smooth Inverse Frequency (uSIF).
+//! uSIF: Unsupervised Smooth Inverse Frequency + Piecewise Common Component Removal.
 use anyhow::{anyhow, Result};
 use ndarray::Array1;
 use ndarray::Array2;
@@ -12,10 +12,37 @@ use crate::WordProbabilities;
 /// A default value of the number of common components.
 pub const DEFAULT_N_COMPONENTS: usize = 5;
 
-/// uSIF
+/// An implementation of *Unsupervised Smooth Inverse Frequency* and *Piecewise Common Component Removal*,
+/// simple but pewerful techniques for sentence embeddings described in the paper:
+/// Kawin Ethayarajh,
+/// [Unsupervised Random Walk Sentence Embeddings: A Strong but Simple Baseline](https://aclanthology.org/W18-3012/),
+/// RepL4NLP 2018.
 ///
-/// Unsupervised Random Walk Sentence Embeddings: A Strong but Simple Baseline
-/// https://aclanthology.org/W18-3012/
+/// # Examples
+///
+/// ```
+/// use std::io::BufReader;
+///
+/// use finalfusion::compat::text::ReadText;
+/// use finalfusion::embeddings::Embeddings;
+/// use wordfreq::WordFreq;
+///
+/// use sif_embedding::{USif, SentenceEmbedder};
+///
+/// // Loads word embeddings from a pretrained model.
+/// let word_embeddings_text = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
+/// let mut reader = BufReader::new(word_embeddings_text.as_bytes());
+/// let word_embeddings = Embeddings::read_text(&mut reader).unwrap();
+///
+/// // Loads word probabilities from a pretrained model.
+/// let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
+///
+/// // Computes sentence embeddings in shape (n, m),
+/// // where n is the number of sentences and m is the number of dimensions.
+/// let model = USif::new(&word_embeddings, &word_probs);
+/// let (sent_embeddings, _) = model.fit_embeddings(&["las vegas", "mega vegas"]).unwrap();
+/// assert_eq!(sent_embeddings.shape(), &[2, 3]);
+/// ```
 #[derive(Clone)]
 pub struct USif<'w, 'u, W, U> {
     word_embeddings: &'w W,

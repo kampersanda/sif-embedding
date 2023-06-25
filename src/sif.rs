@@ -1,4 +1,4 @@
-//! Smooth Inverse Frequency (SIF).
+//! SIF: Smooth Inverse Frequency + Common Component Removal.
 use anyhow::{anyhow, Result};
 use ndarray::Array1;
 use ndarray::Array2;
@@ -15,16 +15,37 @@ pub const DEFAULT_PARAM_A: Float = 1e-3;
 /// A default value of the number of common components.
 pub const DEFAULT_N_COMPONENTS: usize = 1;
 
-/// An implementation of *Smooth Inverse Frequency (SIF)* that is a simple but pewerful
-/// embedding technique for sentences, described in the paper:
-///
-/// > Sanjeev Arora, Yingyu Liang, and Tengyu Ma,
-/// > [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
-/// > ICLR 2017.
+/// An implementation of *Smooth Inverse Frequency* and *Common Component Removal*,
+/// simple but pewerful techniques for sentence embeddings described in the paper:
+/// Sanjeev Arora, Yingyu Liang, and Tengyu Ma,
+/// [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
+/// ICLR 2017.
 ///
 /// # Examples
 ///
-/// See [the top page](crate).
+/// ```
+/// use std::io::BufReader;
+///
+/// use finalfusion::compat::text::ReadText;
+/// use finalfusion::embeddings::Embeddings;
+/// use wordfreq::WordFreq;
+///
+/// use sif_embedding::{Sif, SentenceEmbedder};
+///
+/// // Loads word embeddings from a pretrained model.
+/// let word_embeddings_text = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
+/// let mut reader = BufReader::new(word_embeddings_text.as_bytes());
+/// let word_embeddings = Embeddings::read_text(&mut reader).unwrap();
+///
+/// // Loads word probabilities from a pretrained model.
+/// let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
+///
+/// // Computes sentence embeddings in shape (n, m),
+/// // where n is the number of sentences and m is the number of dimensions.
+/// let model = Sif::new(&word_embeddings, &word_probs);
+/// let (sent_embeddings, _) = model.fit_embeddings(&["las vegas", "mega vegas"]).unwrap();
+/// assert_eq!(sent_embeddings.shape(), &[2, 3]);
+/// ```
 #[derive(Clone)]
 pub struct Sif<'w, 'u, W, U> {
     word_embeddings: &'w W,
