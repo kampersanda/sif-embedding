@@ -7,7 +7,8 @@ extern crate openblas_src as _src;
 
 use std::error::Error;
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::BufRead;
+use std::io::BufReader;
 use std::str::FromStr;
 
 use clap::Parser;
@@ -15,7 +16,10 @@ use finalfusion::prelude::*;
 use ndarray::Array2;
 use ndarray_stats::CorrelationExt;
 use sif_embedding::util;
-use sif_embedding::{Float, SentenceEmbedder, Sif, USif};
+use sif_embedding::Float;
+use sif_embedding::SentenceEmbedder;
+use sif_embedding::Sif;
+use sif_embedding::USif;
 use tantivy::tokenizer::*;
 use wordfreq_model::ModelKind;
 
@@ -147,19 +151,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             let sentences: Vec<_> = sentences.iter().map(|s| preprocessor.apply(s)).collect();
             let corr = match args.method {
                 MethodKind::Sif => {
-                    let model = if let Some(n_components) = args.n_components {
-                        Sif::new(&word_embeddings, &unigram_lm).n_components(n_components)?
-                    } else {
-                        Sif::new(&word_embeddings, &unigram_lm)
-                    };
+                    let mut model = Sif::new(&word_embeddings, &unigram_lm);
+                    if let Some(n_components) = args.n_components {
+                        model = model.n_components(n_components)?;
+                    }
                     evaluate(model, &gold_scores, &sentences)?
                 }
                 MethodKind::USif => {
-                    let model = if let Some(n_components) = args.n_components {
-                        USif::new(&word_embeddings, &unigram_lm).n_components(n_components)?
-                    } else {
-                        USif::new(&word_embeddings, &unigram_lm)
-                    };
+                    let mut model = USif::new(&word_embeddings, &unigram_lm);
+                    if let Some(n_components) = args.n_components {
+                        model = model.n_components(n_components)?;
+                    }
                     evaluate(model, &gold_scores, &sentences)?
                 }
             };
