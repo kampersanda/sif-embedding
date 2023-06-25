@@ -29,7 +29,6 @@
 //! use wordfreq::WordFreq;
 //!
 //! use sif_embedding::{Sif, SentenceEmbedder};
-//! use sif_embedding::sif::{DEFAULT_PARAM_A, DEFAULT_N_COMPONENTS};
 //!
 //! // Creates word embeddings from a pretrained model.
 //! let word_model = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
@@ -42,9 +41,8 @@
 //!
 //! // Computes sentence embeddings in shape (n, m),
 //! // where n is the number of sentences and m is the number of dimensions.
-//! let sif = Sif::new(&word_embeddings, &unigram_lm, DEFAULT_PARAM_A, DEFAULT_N_COMPONENTS).unwrap();
-//! let sif = sif.fit(&["go to las vegas", "mega vegas"]).unwrap();
-//! let sent_embeddings = sif.embeddings(&["go to las vegas", "mega vegas"]).unwrap();
+//! let sif = Sif::new(&word_embeddings, &unigram_lm);
+//! let (sent_embeddings, _) = sif.fit_embeddings(&["go to las vegas", "mega vegas"]).unwrap();
 //! assert_eq!(sent_embeddings.shape(), &[2, 3]);
 //! ```
 //!
@@ -189,4 +187,14 @@ pub trait SentenceEmbedder: Sized {
     where
         I: IntoIterator<Item = S>,
         S: AsRef<str>;
+
+    ///
+    fn fit_embeddings<S>(self, sentences: &[S]) -> Result<(Array2<Float>, Self)>
+    where
+        S: AsRef<str>,
+    {
+        let model = self.fit(sentences)?;
+        let embeddings = model.embeddings(sentences)?;
+        Ok((embeddings, model))
+    }
 }

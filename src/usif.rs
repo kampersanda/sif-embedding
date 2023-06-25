@@ -33,7 +33,24 @@ where
     U: UnigramLanguageModel,
 {
     /// Creates a new instance.
-    pub const fn new(word_embeddings: &'w W, unigram_lm: &'u U, n_components: usize) -> Self {
+    pub const fn new(word_embeddings: &'w W, unigram_lm: &'u U) -> Self {
+        Self {
+            word_embeddings,
+            unigram_lm,
+            n_components: DEFAULT_N_COMPONENTS,
+            param_a: None,
+            weights: None,
+            common_components: None,
+            separator: ' ',
+        }
+    }
+
+    /// Creates a new instance.
+    pub const fn with_parameters(
+        word_embeddings: &'w W,
+        unigram_lm: &'u U,
+        n_components: usize,
+    ) -> Self {
         Self {
             word_embeddings,
             unigram_lm,
@@ -269,7 +286,7 @@ mod tests {
         let word_embeddings = SimpleWordEmbeddings {};
         let unigram_lm = SimpleUnigramLanguageModel {};
 
-        let sif = USif::new(&word_embeddings, &unigram_lm, DEFAULT_N_COMPONENTS)
+        let sif = USif::new(&word_embeddings, &unigram_lm)
             .fit(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
             .unwrap();
 
@@ -293,7 +310,7 @@ mod tests {
         let sentences_1 = &["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
         let sentences_2 = &["A,BB,CCC,DDDD", "BB,CCC", "A,B,C", "Z", ""];
 
-        let sif = USif::new(&word_embeddings, &unigram_lm, DEFAULT_N_COMPONENTS);
+        let sif = USif::new(&word_embeddings, &unigram_lm);
 
         let sif = sif.fit(sentences_1).unwrap();
         let embeddings_1 = sif.embeddings(sentences_1).unwrap();
@@ -311,7 +328,7 @@ mod tests {
 
         let sentences = &["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
 
-        let sif = USif::new(&word_embeddings, &unigram_lm, DEFAULT_N_COMPONENTS);
+        let sif = USif::new(&word_embeddings, &unigram_lm);
         let embeddings = sif.embeddings(sentences);
 
         assert!(embeddings.is_err());
@@ -322,7 +339,7 @@ mod tests {
         let word_embeddings = SimpleWordEmbeddings {};
         let unigram_lm = SimpleUnigramLanguageModel {};
 
-        let sif = USif::new(&word_embeddings, &unigram_lm, DEFAULT_N_COMPONENTS);
+        let sif = USif::new(&word_embeddings, &unigram_lm);
         let sif = sif.fit(&Vec::<&str>::new());
 
         assert!(sif.is_err());

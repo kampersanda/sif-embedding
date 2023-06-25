@@ -40,7 +40,19 @@ where
     U: UnigramLanguageModel,
 {
     /// Creates a new instance.
-    pub fn new(
+    pub fn new(word_embeddings: &'w W, unigram_lm: &'u U) -> Self {
+        Self {
+            word_embeddings,
+            unigram_lm,
+            param_a: DEFAULT_PARAM_A,
+            n_components: DEFAULT_N_COMPONENTS,
+            common_components: None,
+            separator: ' ',
+        }
+    }
+
+    /// Creates a new instance.
+    pub fn with_parameters(
         word_embeddings: &'w W,
         unigram_lm: &'u U,
         param_a: Float,
@@ -114,7 +126,7 @@ where
             return Err(anyhow!("Input sentences must not be empty."));
         }
         if self.n_components == 0 {
-            eprintln!("Warning: n_components is 0. The model is not fitted.");
+            eprintln!("Warning: n_components is 0, and nothing to fit.");
             return Ok(self);
         }
         // SIF-weighting.
@@ -206,15 +218,9 @@ mod tests {
         let word_embeddings = SimpleWordEmbeddings {};
         let unigram_lm = SimpleUnigramLanguageModel {};
 
-        let sif = Sif::new(
-            &word_embeddings,
-            &unigram_lm,
-            DEFAULT_PARAM_A,
-            DEFAULT_N_COMPONENTS,
-        )
-        .unwrap()
-        .fit(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
-        .unwrap();
+        let sif = Sif::new(&word_embeddings, &unigram_lm)
+            .fit(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
+            .unwrap();
 
         let sent_embeddings = sif
             .embeddings(["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
@@ -236,13 +242,7 @@ mod tests {
         let sentences_1 = &["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
         let sentences_2 = &["A,BB,CCC,DDDD", "BB,CCC", "A,B,C", "Z", ""];
 
-        let sif = Sif::new(
-            &word_embeddings,
-            &unigram_lm,
-            DEFAULT_PARAM_A,
-            DEFAULT_N_COMPONENTS,
-        )
-        .unwrap();
+        let sif = Sif::new(&word_embeddings, &unigram_lm);
 
         let sif = sif.fit(sentences_1).unwrap();
         let embeddings_1 = sif.embeddings(sentences_1).unwrap();
@@ -258,7 +258,7 @@ mod tests {
         let word_embeddings = SimpleWordEmbeddings {};
         let unigram_lm = SimpleUnigramLanguageModel {};
 
-        let sif = Sif::new(&word_embeddings, &unigram_lm, 0., DEFAULT_N_COMPONENTS);
+        let sif = Sif::with_parameters(&word_embeddings, &unigram_lm, 0., DEFAULT_N_COMPONENTS);
         assert!(sif.is_err());
     }
 
@@ -269,14 +269,7 @@ mod tests {
 
         let sentences = &["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
 
-        let sif = Sif::new(
-            &word_embeddings,
-            &unigram_lm,
-            DEFAULT_PARAM_A,
-            DEFAULT_N_COMPONENTS,
-        )
-        .unwrap();
-
+        let sif = Sif::new(&word_embeddings, &unigram_lm);
         let embeddings = sif.embeddings(sentences);
         assert!(embeddings.is_err());
     }
@@ -286,14 +279,7 @@ mod tests {
         let word_embeddings = SimpleWordEmbeddings {};
         let unigram_lm = SimpleUnigramLanguageModel {};
 
-        let sif = Sif::new(
-            &word_embeddings,
-            &unigram_lm,
-            DEFAULT_PARAM_A,
-            DEFAULT_N_COMPONENTS,
-        )
-        .unwrap();
-
+        let sif = Sif::new(&word_embeddings, &unigram_lm);
         let sif = sif.fit(&Vec::<&str>::new());
         assert!(sif.is_err());
     }
