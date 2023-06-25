@@ -89,13 +89,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let sent_embeddings = match args.method {
         MethodKind::Sif => {
             eprintln!("SIF");
-            let mut sif = Sif::new(&word_embeddings, &unigram_lm);
-            sif.fit_embeddings(&tokenized)?
+            let model = Sif::new(&word_embeddings, &unigram_lm);
+            model.fit_embeddings(&tokenized)?.0
         }
         MethodKind::USif => {
             eprintln!("USIF");
-            let mut sif = USif::new(&word_embeddings, &unigram_lm);
-            sif.fit_embeddings(&tokenized)?
+            let model = USif::new(&word_embeddings, &unigram_lm);
+            model.fit_embeddings(&tokenized)?.0
         }
     };
     eprintln!("sent_embeddings.shape() = {:?}", sent_embeddings.shape());

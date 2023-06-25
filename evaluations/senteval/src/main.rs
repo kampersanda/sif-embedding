@@ -151,17 +151,19 @@ fn main() -> Result<(), Box<dyn Error>> {
             let sentences: Vec<_> = sentences.iter().map(|s| preprocessor.apply(s)).collect();
             let corr = match args.method {
                 MethodKind::Sif => {
-                    let mut model = Sif::new(&word_embeddings, &unigram_lm);
-                    if let Some(n_components) = args.n_components {
-                        model = model.n_components(n_components)?;
-                    }
+                    let param_a = sif_embedding::sif::DEFAULT_PARAM_A;
+                    let n_components = args
+                        .n_components
+                        .unwrap_or(sif_embedding::sif::DEFAULT_N_COMPONENTS);
+                    let model =
+                        Sif::with_parameters(&word_embeddings, &unigram_lm, param_a, n_components)?;
                     evaluate(model, &gold_scores, &sentences)?
                 }
                 MethodKind::USif => {
-                    let mut model = USif::new(&word_embeddings, &unigram_lm);
-                    if let Some(n_components) = args.n_components {
-                        model = model.n_components(n_components)?;
-                    }
+                    let n_components = args
+                        .n_components
+                        .unwrap_or(sif_embedding::usif::DEFAULT_N_COMPONENTS);
+                    let model = USif::with_parameters(&word_embeddings, &unigram_lm, n_components);
                     evaluate(model, &gold_scores, &sentences)?
                 }
             };
@@ -206,14 +208,14 @@ fn load_sts_data(
 }
 
 fn evaluate<M>(
-    mut model: M,
+    model: M,
     gold_scores: &[Float],
     sentences: &[String],
 ) -> Result<Float, Box<dyn Error>>
 where
     M: SentenceEmbedder,
 {
-    let sent_embeddings = model.fit_embeddings(sentences)?;
+    let (sent_embeddings, _) = model.fit_embeddings(sentences)?;
     let n_examples = gold_scores.len();
     let mut pred_scores = Vec::with_capacity(n_examples);
     for i in 0..n_examples {

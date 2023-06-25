@@ -149,12 +149,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let sent_embeddings = match args.method {
         MethodKind::Sif => {
-            let mut sif = Sif::new(&word_embeddings, &unigram_lm);
-            sif.fit_embeddings(&sentences)?
+            eprintln!("SIF");
+            let model = Sif::new(&word_embeddings, &unigram_lm);
+            model.fit_embeddings(&sentences)?.0
         }
         MethodKind::USif => {
-            let mut sif = USif::new(&word_embeddings, &unigram_lm);
-            sif.fit_embeddings(&sentences)?
+            eprintln!("USIF");
+            let model = USif::new(&word_embeddings, &unigram_lm);
+            model.fit_embeddings(&sentences)?.0
         }
     };
 

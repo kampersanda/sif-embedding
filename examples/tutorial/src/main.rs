@@ -42,8 +42,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         "This is a third sentence.",
     ];
 
-    let mut sif = Sif::new(&word_embeddings, &unigram_lm);
-    let sent_embeddings = sif.fit_embeddings(&sentences)?;
+    let sif = Sif::new(&word_embeddings, &unigram_lm);
+    let (sent_embeddings, _) = sif.fit_embeddings(&sentences)?;
 
     println!("Sentence embeddings: {:?}", sent_embeddings);
 
