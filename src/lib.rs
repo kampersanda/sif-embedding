@@ -144,11 +144,11 @@ pub mod wordfreq;
 pub use sif::Sif;
 pub use usif::USif;
 
-/// Common type of floating numbers.
-pub type Float = f32;
-
 use anyhow::Result;
 use ndarray::{Array2, CowArray, Ix1};
+
+/// Common type of floating numbers.
+pub type Float = f32;
 
 /// Word embeddings.
 pub trait WordEmbeddings {
@@ -181,13 +181,13 @@ pub trait SentenceEmbedder: Sized {
     where
         S: AsRef<str>;
 
-    /// Computes embeddings for input sentences.
+    /// Computes embeddings for input sentences using the trained model.
     fn embeddings<I, S>(&self, sentences: I) -> Result<Array2<Float>>
     where
         I: IntoIterator<Item = S>,
         S: AsRef<str>;
 
-    ///
+    /// Trains the model with input sentences and computes embeddings using it.
     fn fit_embeddings<S>(self, sentences: &[S]) -> Result<(Array2<Float>, Self)>
     where
         S: AsRef<str>,
