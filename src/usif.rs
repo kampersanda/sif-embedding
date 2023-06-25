@@ -120,7 +120,8 @@ where
             .entries()
             .filter(|(_, prob)| *prob > threshold)
             .count() as Float;
-        let alpha = n_greater / vocab_size;
+        // NOTE: Add a small value to avoid division by zero.
+        let alpha = n_greater / vocab_size + Float::EPSILON;
         let partiion = 0.5 * vocab_size;
         (1. - alpha) / (alpha * partiion)
     }
