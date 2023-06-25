@@ -120,10 +120,9 @@ where
             .entries()
             .filter(|(_, prob)| *prob > threshold)
             .count() as Float;
-        // NOTE: Add a small value to avoid division by zero.
-        let alpha = n_greater / vocab_size + Float::EPSILON;
+        let alpha = n_greater / vocab_size;
         let partiion = 0.5 * vocab_size;
-        (1. - alpha) / (alpha * partiion)
+        (1. - alpha) / (alpha * partiion + Float::EPSILON) // avoid division by zero.
     }
 
     /// Applies SIF-weighting for sentences.
@@ -216,12 +215,10 @@ where
         }
         // SIF-weighting.
         let sent_len = self.average_sentence_length(sentences);
-        let param_a = self.estimate_param_a(sent_len);
-        if param_a == 0. {
-            return Err(anyhow!(
-                "Estimated parameter `a` is 0.0. Please reconfirm the input parameters."
-            ));
+        if sent_len == 0. {
+            return Err(anyhow!("Input sentences must not be empty."));
         }
+        let param_a = self.estimate_param_a(sent_len).max(Float::EPSILON); // avoid 0.0.
         let sent_embeddings = self.weighted_embeddings(sentences, param_a);
         self.param_a = Some(param_a);
         // Common component removal.
