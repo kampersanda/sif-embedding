@@ -101,6 +101,7 @@ where
             if n_words != 0 {
                 sent_embedding /= n_words as Float;
             } else {
+                // If no parseable tokens, return a vector of a's
                 sent_embedding += self.param_a;
             }
             sent_embeddings.extend(sent_embedding.iter());
