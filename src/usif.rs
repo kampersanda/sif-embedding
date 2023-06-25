@@ -101,24 +101,48 @@ where
         let mut sent_embeddings = vec![];
         let mut n_sentences = 0;
         for sent in sentences {
-            let sent = sent.as_ref();
-            let mut n_words = 0;
-            let mut sent_embedding = Array1::zeros(self.embedding_size());
-            for word in sent.split(self.separator) {
-                if let Some(word_embedding) = self.word_embeddings.embedding(word) {
-                    let pw = self.unigram_lm.probability(word);
-                    let weight = param_a / (pw + 0.5 * param_a);
-                    sent_embedding += &(word_embedding.to_owned() * weight);
-                    n_words += 1;
-                }
-            }
-            if n_words != 0 {
-                sent_embedding /= n_words as Float;
-            }
+            let sent_embedding = self.weighted_embedding(sent.as_ref(), param_a);
             sent_embeddings.extend(sent_embedding.iter());
             n_sentences += 1;
         }
         Array2::from_shape_vec((n_sentences, self.embedding_size()), sent_embeddings).unwrap()
+    }
+
+    /// Applies SIF-weighting.
+    /// (Line 8 in Algorithm 1)
+    fn weighted_embedding(&self, sent: &str, param_a: Float) -> Array1<Float> {
+        debug_assert!(param_a > 0.);
+
+        // 1. Extract word embeddings and weights.
+        let mut n_words = 0;
+        let mut word_embeddings: Vec<Float> = vec![];
+        let mut word_weights: Vec<Float> = vec![];
+        for word in sent.split(self.separator) {
+            if let Some(word_embedding) = self.word_embeddings.embedding(word) {
+                word_embeddings.extend(word_embedding.iter());
+                word_weights.push(param_a / (self.unigram_lm.probability(word) + 0.5 * param_a));
+                n_words += 1;
+            }
+        }
+        if n_words == 0 {
+            // if no parseable tokens, return a vector of a's
+            return Array1::zeros(self.embedding_size()) + param_a;
+        }
+
+        // 2. Convert to nd-arrays.
+        let word_embeddings =
+            Array2::from_shape_vec((n_words, self.embedding_size()), word_embeddings).unwrap();
+        let word_weights = Array2::from_shape_vec((n_words, 1), word_weights).unwrap();
+
+        // 3. Normalize word embeddings.
+        let axis = ndarray_linalg::norm::NormalizeAxis::Column;
+        let (word_embeddings, _) = ndarray_linalg::norm::normalize(word_embeddings, axis);
+
+        // 4. Weight word embeddings.
+        let word_embeddings = word_embeddings * &word_weights;
+
+        // 5. Average word embeddings.
+        word_embeddings.mean_axis(ndarray::Axis(0)).unwrap()
     }
 
     /// Estimates the principal components of sentence embeddings.
@@ -285,20 +309,13 @@ mod tests {
         let sent_embeddings = sif
             .embeddings(["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
             .unwrap();
-        assert_ne!(
-            sent_embeddings.slice(ndarray::s![..3, ..]),
-            Array2::zeros((3, 3))
-        );
-        assert_eq!(
-            sent_embeddings.slice(ndarray::s![3.., ..]),
-            Array2::zeros((2, 3))
-        );
+        assert_ne!(sent_embeddings, Array2::zeros((5, 3)));
 
         let sent_embeddings = sif.embeddings(Vec::<&str>::new()).unwrap();
         assert_eq!(sent_embeddings.shape(), &[0, 3]);
 
         let sent_embeddings = sif.embeddings([""]).unwrap();
-        assert_eq!(sent_embeddings, Array2::zeros((1, 3)));
+        assert_ne!(sent_embeddings, Array2::zeros((1, 3)));
     }
 
     #[test]

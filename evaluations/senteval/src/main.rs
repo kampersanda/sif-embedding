@@ -17,7 +17,7 @@ use ndarray_stats::CorrelationExt;
 use sif_embedding::util;
 use sif_embedding::{Float, SentenceEmbedder, Sif, USif};
 use tantivy::tokenizer::*;
-use wordfreq_model::{self, ModelKind};
+use wordfreq_model::ModelKind;
 
 #[derive(Clone, Debug)]
 enum MethodKind {
