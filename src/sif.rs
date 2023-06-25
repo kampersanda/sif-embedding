@@ -11,6 +11,7 @@ use crate::WordEmbeddings;
 
 /// A default value of the SIF-weighting parameter `a`.
 pub const DEFAULT_PARAM_A: Float = 1e-3;
+
 /// A default value of the number of common components.
 pub const DEFAULT_N_COMPONENTS: usize = 1;
 
@@ -126,7 +127,7 @@ where
             return Err(anyhow!("Input sentences must not be empty."));
         }
         if self.n_components == 0 {
-            eprintln!("Warning: n_components is 0, and nothing to fit.");
+            eprintln!("Warning: Nothing to fit since n_components is 0.");
             return Ok(self);
         }
         // SIF-weighting.
