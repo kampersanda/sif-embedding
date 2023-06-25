@@ -1,10 +1,10 @@
 //! UnigramLanguageModel implementations for [`wordfreq::WordFreq`].
 use crate::Float;
-use crate::UnigramLanguageModel;
+use crate::WordProbabilities;
 
 use wordfreq::WordFreq;
 
-impl UnigramLanguageModel for WordFreq {
+impl WordProbabilities for WordFreq {
     fn probability(&self, word: &str) -> Float {
         self.word_frequency(word)
     }

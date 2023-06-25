@@ -6,8 +6,8 @@ use ndarray::Array2;
 use crate::util;
 use crate::Float;
 use crate::SentenceEmbedder;
-use crate::UnigramLanguageModel;
 use crate::WordEmbeddings;
+use crate::WordProbabilities;
 
 /// A default value of the number of common components.
 pub const DEFAULT_N_COMPONENTS: usize = 5;
@@ -30,7 +30,7 @@ pub struct USif<'w, 'u, W, U> {
 impl<'w, 'u, W, U> USif<'w, 'u, W, U>
 where
     W: WordEmbeddings,
-    U: UnigramLanguageModel,
+    U: WordProbabilities,
 {
     /// Creates a new instance.
     pub const fn new(word_embeddings: &'w W, unigram_lm: &'u U) -> Self {
@@ -173,7 +173,7 @@ where
 impl<'w, 'u, W, U> SentenceEmbedder for USif<'w, 'u, W, U>
 where
     W: WordEmbeddings,
-    U: UnigramLanguageModel,
+    U: WordProbabilities,
 {
     fn embedding_size(&self) -> usize {
         self.word_embeddings.embedding_size()
@@ -257,7 +257,7 @@ mod tests {
 
     struct SimpleUnigramLanguageModel {}
 
-    impl UnigramLanguageModel for SimpleUnigramLanguageModel {
+    impl WordProbabilities for SimpleUnigramLanguageModel {
         fn probability(&self, word: &str) -> Float {
             match word {
                 "A" => 0.6,

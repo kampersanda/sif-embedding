@@ -12,7 +12,7 @@
 //!
 //! ## Getting started
 //!
-//! Given models of word embeddings and unigram probabilities,
+//! Given models of word embeddings and probabilities,
 //! sif-embedding can immediately compute sentence embeddings.
 //!
 //! This crate does not have any dependency limitations on using the input models;
@@ -34,19 +34,18 @@
 //!
 //! use sif_embedding::{Sif, SentenceEmbedder};
 //!
-//! // Creates word embeddings from a pretrained model.
-//! let word_model = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
-//! let mut reader = BufReader::new(word_model.as_bytes());
+//! // Loads word embeddings from a pretrained model.
+//! let word_embeddings_text = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
+//! let mut reader = BufReader::new(word_embeddings_text.as_bytes());
 //! let word_embeddings = Embeddings::read_text(&mut reader).unwrap();
 //!
-//! // Creates a unigram language model.
-//! let word_weights = [("las", 10.), ("vegas", 20.)];
-//! let unigram_lm = WordFreq::new(word_weights);
+//! // Loads word probabilities from a pretrained model.
+//! let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
 //!
 //! // Computes sentence embeddings in shape (n, m),
 //! // where n is the number of sentences and m is the number of dimensions.
-//! let sif = Sif::new(&word_embeddings, &unigram_lm);
-//! let (sent_embeddings, _) = sif.fit_embeddings(&["go to las vegas", "mega vegas"]).unwrap();
+//! let sif = Sif::new(&word_embeddings, &word_probs);
+//! let (sent_embeddings, _) = sif.fit_embeddings(&["las vegas", "mega vegas"]).unwrap();
 //! assert_eq!(sent_embeddings.shape(), &[2, 3]);
 //! ```
 //!
@@ -98,14 +97,14 @@
 //!
 //! ## Instructions: Pre-trained models
 //!
-//! sif-embedding, or the SIF algorithm, requires two pre-trained models as input:
+//! The embedding techniques require two pre-trained models as input:
 //!
 //! - Word embeddings
-//! - Unigram language models
+//! - Word probabilities
 //!
-//! You can use arbitrary models in this crate through the [`WordEmbeddings`] and [`UnigramLanguageModel`] traits.
+//! You can use arbitrary models through the [`WordEmbeddings`] and [`WordProbabilities`] traits.
 //!
-//! This crate already implements the traits for the two external libraries:
+//! This crate already implements these traits for the two external libraries:
 //!
 //! - [finalfusion (v0.17)](https://docs.rs/finalfusion/): Library to handle different types of word embeddings such as Glove and fastText.
 //! - [wordfreq (v0.2)](https://docs.rs/wordfreq/): Library to look up the frequencies of words in many languages.
@@ -160,33 +159,29 @@ pub trait WordEmbeddings {
     fn embedding_size(&self) -> usize;
 }
 
-/// Unigram language model.
-pub trait UnigramLanguageModel {
+/// Word probabilities.
+pub trait WordProbabilities {
     /// Returns the probability of a word.
     fn probability(&self, word: &str) -> Float;
 
     /// Returns the number of words in the vocabulary.
     fn n_words(&self) -> usize;
 
-    /// Returns the iterator over words and probabilities in the vocabulary.
+    /// Returns an iterator over words and probabilities in the vocabulary.
     fn entries(&self) -> Box<dyn Iterator<Item = (String, Float)> + '_>;
 }
 
-/// Sentence Embeddings.
+/// Common behavior of our models for sentence embeddings.
 pub trait SentenceEmbedder: Sized {
     /// Returns the number of dimensions for sentence embeddings.
     fn embedding_size(&self) -> usize;
 
-    ///
+    /// Trains the model with input sentences.
     fn fit<S>(self, sentences: &[S]) -> Result<Self>
     where
         S: AsRef<str>;
 
-    /// Computes embeddings for input sentences,
-    /// returning a 2D-array of shape `(n_sentences, embedding_size)`, where
-    ///
-    /// - `n_sentences` is the number of input sentences, and
-    /// - `embedding_size` is [`Self::embedding_size()`].
+    /// Computes embeddings for input sentences.
     fn embeddings<I, S>(&self, sentences: I) -> Result<Array2<Float>>
     where
         I: IntoIterator<Item = S>,
