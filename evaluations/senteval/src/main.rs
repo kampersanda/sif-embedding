@@ -65,7 +65,7 @@ impl Preprocessor {
         let analyzer = TextAnalyzer::builder(SimpleTokenizer::default())
             .filter(RemoveLongFilter::limit(40))
             .filter(LowerCaser)
-            .filter(StopWordFilter::new(Language::English).unwrap())
+            // .filter(StopWordFilter::new(Language::English).unwrap())
             // .filter(Stemmer::new(Language::English))
             .build();
         Self { analyzer }
