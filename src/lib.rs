@@ -1,15 +1,18 @@
 //! # sif-embedding
 //!
 //! This crate provides simple but powerful sentence embedding techniques based on
-//! *Smooth Inverse Frequency (SIF)* described in the paper:
+//! *Smooth Inverse Frequency* and *Common Component Removal* described in the following papers:
 //!
-//! > Sanjeev Arora, Yingyu Liang, and Tengyu Ma,
-//! > [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
-//! > ICLR 2017.
+//! - Sanjeev Arora, Yingyu Liang, and Tengyu Ma,
+//!   [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
+//!   ICLR 2017
+//! - Kawin Ethayarajh,
+//!   [Unsupervised Random Walk Sentence Embeddings: A Strong but Simple Baseline](https://aclanthology.org/W18-3012/),
+//!   RepL4NLP 2018
 //!
 //! ## Getting started
 //!
-//! Given word embeddings and a unigram language model,
+//! Given models of word embeddings and unigram probabilities,
 //! sif-embedding can immediately compute sentence embeddings.
 //!
 //! This crate does not have any dependency limitations on using the input models;
@@ -18,7 +21,8 @@
 //! because these libraries can handle various pre-trained models and are pluged into this crate.
 //! See [the instructions](#instructions-pre-trained-models) to install the libraries in this crate.
 //!
-//! [`Sif`] is the class for sentence embeddings.
+//! [`Sif`] or [`USif`] implements the techniques of sentence embeddings.
+//! [`SentenceEmbedder`] defines the behavior of sentence embeddings.
 //! The following code shows an example to compute sentence embeddings using finalfusion and wordfreq.
 //!
 //! ```
@@ -46,7 +50,7 @@
 //! assert_eq!(sent_embeddings.shape(), &[2, 3]);
 //! ```
 //!
-//! ## Instructions: Backend
+//! ## Instructions: Backend specifications
 //!
 //! This crate depends on [ndarray-linalg](https://github.com/rust-ndarray/ndarray-linalg) and
 //! allows you to specify any backend supported by ndarray-linalg.
