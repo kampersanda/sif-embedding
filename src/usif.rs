@@ -20,9 +20,27 @@ pub const DEFAULT_N_COMPONENTS: usize = 5;
 /// [Unsupervised Random Walk Sentence Embeddings: A Strong but Simple Baseline](https://aclanthology.org/W18-3012/),
 /// RepL4NLP 2018.
 ///
+/// # Brief description of API
+///
+/// The algorithm consists of two steps:
+///
+/// 1. Compute sentence embeddings with the uSIF weighting.
+/// 2. Remove the common components from the sentence embeddings.
+///
+/// The weighting parameter and common components are computed from input sentences.
+///
+/// Our API is designed to allow reuse of these values once computed
+/// because it is not always possible to obtain a sufficient number of sentences as queries to compute.
+///
+/// [`USif::fit`] computes these values from input sentences and returns a fitted instance of [`USif`].
+/// [`USif::embeddings`] computes sentence embeddings with the fitted values.
+///
+/// If you find these two steps annoying, you can use [`USif::fit_embeddings`].
+///
 /// # Examples
 ///
 /// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// use std::io::BufReader;
 ///
 /// use finalfusion::compat::text::ReadText;
@@ -34,7 +52,7 @@ pub const DEFAULT_N_COMPONENTS: usize = 5;
 /// // Loads word embeddings from a pretrained model.
 /// let word_embeddings_text = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
 /// let mut reader = BufReader::new(word_embeddings_text.as_bytes());
-/// let word_embeddings = Embeddings::read_text(&mut reader).unwrap();
+/// let word_embeddings = Embeddings::read_text(&mut reader)?;
 ///
 /// // Loads word probabilities from a pretrained model.
 /// let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
@@ -42,8 +60,14 @@ pub const DEFAULT_N_COMPONENTS: usize = 5;
 /// // Computes sentence embeddings in shape (n, m),
 /// // where n is the number of sentences and m is the number of dimensions.
 /// let model = USif::new(&word_embeddings, &word_probs);
-/// let (sent_embeddings, _) = model.fit_embeddings(&["las vegas", "mega vegas"]).unwrap();
+/// let (sent_embeddings, model) = model.fit_embeddings(&["las vegas", "mega vegas"])?;
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
+///
+/// // Once fitted, the parameters can be used to compute sentence embeddings.
+/// let sent_embeddings = model.embeddings(["vegas pro"])?;
+/// assert_eq!(sent_embeddings.shape(), &[1, 3]);
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Clone)]
 pub struct USif<'w, 'p, W, P> {
@@ -218,10 +242,17 @@ where
     W: WordEmbeddings,
     P: WordProbabilities,
 {
+    /// Returns the number of dimensions for sentence embeddings,
+    /// which is the same as the number of dimensions for word embeddings.
     fn embedding_size(&self) -> usize {
         self.word_embeddings.embedding_size()
     }
 
+    /// Fits the model with input sentences.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `sentences` is empty.
     fn fit<S>(mut self, sentences: &[S]) -> Result<Self>
     where
         S: AsRef<str>,
@@ -246,6 +277,11 @@ where
         Ok(self)
     }
 
+    /// Computes embeddings for input sentences using the fitted model.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the model is not fitted.
     fn embeddings<I, S>(&self, sentences: I) -> Result<Array2<Float>>
     where
         I: IntoIterator<Item = S>,

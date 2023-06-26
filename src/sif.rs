@@ -31,11 +31,10 @@ pub const DEFAULT_N_COMPONENTS: usize = 1;
 /// 1. Compute sentence embeddings with the SIF weighting.
 /// 2. Remove the common components from the sentence embeddings.
 ///
-/// The common components are computed from input sentences and will represent non-semantic information
-/// such as syntactic information or common words.
+/// The common components are computed from input sentences.
 ///
 /// Our API is designed to allow reuse of common components once computed
-/// because it is not always possible to obtain a sufficient number of sentences as queries to compute the common components.
+/// because it is not always possible to obtain a sufficient number of sentences as queries to compute.
 ///
 /// [`Sif::fit`] computes the common components from input sentences and returns a fitted instance of [`Sif`].
 /// [`Sif::embeddings`] computes sentence embeddings with the fitted components.
