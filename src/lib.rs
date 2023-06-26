@@ -188,18 +188,19 @@ pub trait SentenceEmbedder: Sized {
     /// Returns the number of dimensions for sentence embeddings.
     fn embedding_size(&self) -> usize;
 
-    /// Trains the model with input sentences.
+    /// Fits the model with input sentences.
     fn fit<S>(self, sentences: &[S]) -> Result<Self>
     where
         S: AsRef<str>;
 
-    /// Computes embeddings for input sentences using the trained model.
+    /// Computes embeddings for input sentences using the fitted model.
     fn embeddings<I, S>(&self, sentences: I) -> Result<Array2<Float>>
     where
         I: IntoIterator<Item = S>,
         S: AsRef<str>;
 
-    /// Trains the model with input sentences and computes embeddings using it.
+    /// Fits the model with input sentences and computes embeddings using it,
+    /// providing the same behavior as performing [`Self::fit`] and then [`Self::embeddings`].
     fn fit_embeddings<S>(self, sentences: &[S]) -> Result<(Array2<Float>, Self)>
     where
         S: AsRef<str>,
