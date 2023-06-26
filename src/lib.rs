@@ -177,7 +177,8 @@ pub trait WordProbabilities {
 /// However, it estimates common components from input sentences, and these can be regarded as models.
 ///
 /// If you want to use the estimated components for other sentences,
-/// use [`Self::embeddings`] for the model obtained using [`Self::fit`].
+/// compute a model using [`Self::fit`] and then use [`Self::embeddings`].
+///
 /// If you want to perform straightforward embeddings as described in the papers,
 /// use [`Self::fit_embeddings`].
 pub trait SentenceEmbedder: Sized {
