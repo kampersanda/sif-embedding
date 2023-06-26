@@ -86,7 +86,7 @@ members = [
     "evaluations/law-ai",
     "evaluations/livedoor-news",
     "evaluations/senteval",
-    "examples/tutorial",
+    "tutorial",
 ]
 
 [package.metadata.docs.rs]
