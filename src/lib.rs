@@ -26,6 +26,7 @@
 //! The following code shows an example to compute sentence embeddings using finalfusion and wordfreq.
 //!
 //! ```
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! use std::io::BufReader;
 //!
 //! use finalfusion::compat::text::ReadText;
@@ -37,7 +38,7 @@
 //! // Loads word embeddings from a pretrained model.
 //! let word_embeddings_text = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
 //! let mut reader = BufReader::new(word_embeddings_text.as_bytes());
-//! let word_embeddings = Embeddings::read_text(&mut reader).unwrap();
+//! let word_embeddings = Embeddings::read_text(&mut reader)?;
 //!
 //! // Loads word probabilities from a pretrained model.
 //! let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
@@ -45,8 +46,10 @@
 //! // Computes sentence embeddings in shape (n, m),
 //! // where n is the number of sentences and m is the number of dimensions.
 //! let model = Sif::new(&word_embeddings, &word_probs);
-//! let (sent_embeddings, _) = model.fit_embeddings(&["las vegas", "mega vegas"]).unwrap();
+//! let (sent_embeddings, _) = model.fit_embeddings(&["las vegas", "mega vegas"])?;
 //! assert_eq!(sent_embeddings.shape(), &[2, 3]);
+//! # Ok(())
+//! # }
 //! ```
 //!
 //! ## Instructions: Backend specifications
