@@ -47,22 +47,22 @@ pub const DEFAULT_N_COMPONENTS: usize = 1;
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
 /// ```
 #[derive(Clone)]
-pub struct Sif<'w, 'u, W, U> {
+pub struct Sif<'w, 'p, W, P> {
     word_embeddings: &'w W,
-    unigram_lm: &'u U,
+    unigram_lm: &'p P,
     param_a: Float,
     n_components: usize,
     common_components: Option<Array2<Float>>,
     separator: char,
 }
 
-impl<'w, 'u, W, U> Sif<'w, 'u, W, U>
+impl<'w, 'p, W, P> Sif<'w, 'p, W, P>
 where
     W: WordEmbeddings,
-    U: WordProbabilities,
+    P: WordProbabilities,
 {
     /// Creates a new instance.
-    pub fn new(word_embeddings: &'w W, unigram_lm: &'u U) -> Self {
+    pub fn new(word_embeddings: &'w W, unigram_lm: &'p P) -> Self {
         Self {
             word_embeddings,
             unigram_lm,
@@ -76,7 +76,7 @@ where
     /// Creates a new instance.
     pub fn with_parameters(
         word_embeddings: &'w W,
-        unigram_lm: &'u U,
+        unigram_lm: &'p P,
         param_a: Float,
         n_components: usize,
     ) -> Result<Self> {
@@ -132,10 +132,10 @@ where
     }
 }
 
-impl<'w, 'u, W, U> SentenceEmbedder for Sif<'w, 'u, W, U>
+impl<'w, 'p, W, P> SentenceEmbedder for Sif<'w, 'p, W, P>
 where
     W: WordEmbeddings,
-    U: WordProbabilities,
+    P: WordProbabilities,
 {
     fn embedding_size(&self) -> usize {
         self.word_embeddings.embedding_size()

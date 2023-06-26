@@ -44,9 +44,9 @@ pub const DEFAULT_N_COMPONENTS: usize = 5;
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
 /// ```
 #[derive(Clone)]
-pub struct USif<'w, 'u, W, U> {
+pub struct USif<'w, 'p, W, P> {
     word_embeddings: &'w W,
-    unigram_lm: &'u U,
+    unigram_lm: &'p P,
     n_components: usize,
     param_a: Option<Float>,
     weights: Option<Array1<Float>>,
@@ -54,13 +54,13 @@ pub struct USif<'w, 'u, W, U> {
     separator: char,
 }
 
-impl<'w, 'u, W, U> USif<'w, 'u, W, U>
+impl<'w, 'p, W, P> USif<'w, 'p, W, P>
 where
     W: WordEmbeddings,
-    U: WordProbabilities,
+    P: WordProbabilities,
 {
     /// Creates a new instance.
-    pub const fn new(word_embeddings: &'w W, unigram_lm: &'u U) -> Self {
+    pub const fn new(word_embeddings: &'w W, unigram_lm: &'p P) -> Self {
         Self {
             word_embeddings,
             unigram_lm,
@@ -75,7 +75,7 @@ where
     /// Creates a new instance.
     pub const fn with_parameters(
         word_embeddings: &'w W,
-        unigram_lm: &'u U,
+        unigram_lm: &'p P,
         n_components: usize,
     ) -> Self {
         Self {
@@ -197,10 +197,10 @@ where
     }
 }
 
-impl<'w, 'u, W, U> SentenceEmbedder for USif<'w, 'u, W, U>
+impl<'w, 'p, W, P> SentenceEmbedder for USif<'w, 'p, W, P>
 where
     W: WordEmbeddings,
-    U: WordProbabilities,
+    P: WordProbabilities,
 {
     fn embedding_size(&self) -> usize {
         self.word_embeddings.embedding_size()
