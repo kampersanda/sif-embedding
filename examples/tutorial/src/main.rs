@@ -29,23 +29,32 @@ struct Args {
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
+    // Loads word embeddings from a pretrained model.
     let word_embeddings = {
-        let mut reader = BufReader::new(File::open(&args.input_fifu)?);
+        let mut reader = BufReader::new(File::open(args.input_fifu)?);
         Embeddings::<VocabWrap, StorageWrap>::mmap_embeddings(&mut reader)?
     };
 
-    let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
+    // Loads word probabilities from a pretrained model.
+    let word_probs = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
 
+    // Prepare input sentences.
     let sentences = vec![
         "This is a sentence.",
         "This is another sentence.",
         "This is a third sentence.",
     ];
 
-    let sif = Sif::new(&word_embeddings, &unigram_lm);
-    let (sent_embeddings, _) = sif.fit_embeddings(&sentences)?;
+    // Computes sentence embeddings in shape (n, m),
+    // where n is the number of sentences and m is the number of dimensions.
+    let model = Sif::new(&word_embeddings, &word_probs);
+    let (sent_embeddings, model) = model.fit_embeddings(&sentences)?;
+    println!("{:?}", sent_embeddings);
 
-    println!("Sentence embeddings: {:?}", sent_embeddings);
+    // The fitted model can be used to compute sentence embeddings for new sentences.
+    let sent_embeddings =
+        model.embeddings(["This is a new sentence.", "This is another new sentence."])?;
+    println!("{:?}", sent_embeddings);
 
     Ok(())
 }
