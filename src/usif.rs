@@ -110,6 +110,7 @@ where
     }
 
     /// Estimates the parameter `a` for the weight function.
+    /// The returned value is always a positive number.
     /// (Lines 5--7 in Algorithm 1)
     fn estimate_param_a(&self, sent_len: Float) -> Float {
         debug_assert!(sent_len > 0.);
@@ -122,7 +123,8 @@ where
             .count() as Float;
         let alpha = n_greater / vocab_size;
         let partiion = 0.5 * vocab_size;
-        (1. - alpha) / (alpha * partiion + Float::EPSILON) // avoid division by zero.
+        let param_a = (1. - alpha) / (alpha * partiion + Float::EPSILON); // avoid division by zero.
+        param_a.max(Float::EPSILON) // avoid returning zero.
     }
 
     /// Applies SIF-weighting for sentences.
@@ -218,7 +220,7 @@ where
         if sent_len == 0. {
             return Err(anyhow!("Input sentences must not be empty."));
         }
-        let param_a = self.estimate_param_a(sent_len).max(Float::EPSILON); // avoid 0.0.
+        let param_a = self.estimate_param_a(sent_len);
         let sent_embeddings = self.weighted_embeddings(sentences, param_a);
         self.param_a = Some(param_a);
         // Common component removal.
