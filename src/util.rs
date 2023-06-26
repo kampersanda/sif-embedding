@@ -71,11 +71,11 @@ pub(crate) fn remove_principal_components<S>(
 where
     S: Data<Elem = Float>,
 {
-    debug_assert_eq!(vectors.ncols(), components.ncols());
     // Principal components can be empty if the input matrix is zero.
-    if components.is_empty() {
-        return vectors.to_owned();
-    }
+    // But, it is not assumed in this crate.
+    debug_assert!(!components.is_empty());
+    debug_assert_eq!(vectors.ncols(), components.ncols());
+
     // weighted_components of shape (k, m)
     let weighted_components = if let Some(weights) = weights {
         debug_assert_eq!(components.nrows(), weights.len());
@@ -84,6 +84,7 @@ where
     } else {
         components.to_owned()
     };
+
     // (n,m).dot((m,k).t()).dot((k,m) = (n,m)
     let projection = vectors
         .dot(&weighted_components.t())
