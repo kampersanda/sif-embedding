@@ -14,6 +14,8 @@ use crate::DEFAULT_SEPARATOR;
 /// following the original setting.
 pub const DEFAULT_N_COMPONENTS: usize = 5;
 
+const FLOAT_0_5: Float = 0.5;
+
 /// An implementation of *Unsupervised Smooth Inverse Frequency* and *Piecewise Common Component Removal*,
 /// simple but pewerful techniques for sentence embeddings described in the paper:
 /// Kawin Ethayarajh,
@@ -161,7 +163,7 @@ where
             .count() as Float;
         let alpha = n_greater / vocab_size;
         let partiion = 0.5 * vocab_size;
-        let param_a = (1. - alpha) / (alpha * partiion + Float::EPSILON); // avoid division by zero.
+        let param_a = (1. - alpha) / alpha.mul_add(partiion, Float::EPSILON); // avoid division by zero.
         param_a.max(Float::EPSILON) // avoid returning zero.
     }
 
@@ -195,7 +197,8 @@ where
         for word in sent.split(self.separator) {
             if let Some(word_embedding) = self.word_embeddings.embedding(word) {
                 word_embeddings.extend(word_embedding.iter());
-                word_weights.push(param_a / (self.word_probs.probability(word) + 0.5 * param_a));
+                word_weights
+                    .push(param_a / FLOAT_0_5.mul_add(param_a, self.word_probs.probability(word)));
                 n_words += 1;
             }
         }
@@ -230,8 +233,8 @@ where
         sent_embeddings: &Array2<Float>,
     ) -> (Array1<Float>, Array2<Float>) {
         let (singular_values, singular_vectors) =
-            util::principal_components(&sent_embeddings, self.n_components);
-        let singular_weights = singular_values.mapv(|v| v.powf(2.0));
+            util::principal_components(sent_embeddings, self.n_components);
+        let singular_weights = singular_values.mapv(|v| v.powi(2));
         let singular_weights = singular_weights.to_owned() / singular_weights.sum();
         (singular_weights, singular_vectors)
     }

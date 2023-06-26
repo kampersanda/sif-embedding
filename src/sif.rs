@@ -131,7 +131,7 @@ where
     ///
     /// * `word_embeddings` - Word embeddings.
     /// * `word_probs` - Word probabilities.
-    pub fn new(word_embeddings: &'w W, word_probs: &'p P) -> Self {
+    pub const fn new(word_embeddings: &'w W, word_probs: &'p P) -> Self {
         Self {
             word_embeddings,
             word_probs,

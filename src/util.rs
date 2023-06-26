@@ -77,13 +77,14 @@ where
     debug_assert_eq!(vectors.ncols(), components.ncols());
 
     // weighted_components of shape (k, m)
-    let weighted_components = if let Some(weights) = weights {
-        debug_assert_eq!(components.nrows(), weights.len());
-        let weights = weights.to_owned().insert_axis(Axis(1));
-        components * &weights
-    } else {
-        components.to_owned()
-    };
+    let weighted_components = weights.map_or_else(
+        || components.to_owned(),
+        |weights| {
+            debug_assert_eq!(components.nrows(), weights.len());
+            let weights = weights.to_owned().insert_axis(Axis(1));
+            components * &weights
+        },
+    );
 
     // (n,m).dot((m,k).t()).dot((k,m) = (n,m)
     let projection = vectors
