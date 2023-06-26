@@ -150,6 +150,9 @@ use ndarray::{Array2, CowArray, Ix1};
 /// Common type of floating numbers.
 pub type Float = f32;
 
+/// Default separator for splitting sentences into words.
+pub const DEFAULT_SEPARATOR: char = ' ';
+
 /// Word embeddings.
 pub trait WordEmbeddings {
     /// Returns the embedding of a word.

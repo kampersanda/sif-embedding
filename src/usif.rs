@@ -8,8 +8,10 @@ use crate::Float;
 use crate::SentenceEmbedder;
 use crate::WordEmbeddings;
 use crate::WordProbabilities;
+use crate::DEFAULT_SEPARATOR;
 
-/// A default value of the number of common components.
+/// Default value of the number of principal components,
+/// following the original setting.
 pub const DEFAULT_N_COMPONENTS: usize = 5;
 
 /// An implementation of *Unsupervised Smooth Inverse Frequency* and *Piecewise Common Component Removal*,
@@ -59,7 +61,13 @@ where
     W: WordEmbeddings,
     P: WordProbabilities,
 {
-    /// Creates a new instance.
+    /// Creates a new instance with default parameters defined by
+    /// [`DEFAULT_N_COMPONENTS`].
+    ///
+    /// # Arguments
+    ///
+    /// * `word_embeddings` - Word embeddings.
+    /// * `word_probs` - Word probabilities.
     pub const fn new(word_embeddings: &'w W, word_probs: &'p P) -> Self {
         Self {
             word_embeddings,
@@ -68,11 +76,17 @@ where
             param_a: None,
             weights: None,
             common_components: None,
-            separator: ' ',
+            separator: DEFAULT_SEPARATOR,
         }
     }
 
-    /// Creates a new instance.
+    /// Creates a new instance with manually specified parameters.
+    ///
+    /// # Arguments
+    ///
+    /// * `word_embeddings` - Word embeddings.
+    /// * `word_probs` - Word probabilities.
+    /// * `n_components` - The number of principal components to remove.
     pub const fn with_parameters(
         word_embeddings: &'w W,
         word_probs: &'p P,
@@ -85,11 +99,11 @@ where
             param_a: None,
             weights: None,
             common_components: None,
-            separator: ' ',
+            separator: DEFAULT_SEPARATOR,
         }
     }
 
-    /// Sets a separator for sentence segmentation (default: ASCII whitespace).
+    /// Sets a separator for sentence segmentation (default: [`DEFAULT_SEPARATOR`]).
     pub const fn separator(mut self, separator: char) -> Self {
         self.separator = separator;
         self

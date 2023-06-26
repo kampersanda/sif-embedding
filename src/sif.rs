@@ -8,11 +8,14 @@ use crate::Float;
 use crate::SentenceEmbedder;
 use crate::WordEmbeddings;
 use crate::WordProbabilities;
+use crate::DEFAULT_SEPARATOR;
 
-/// A default value of the SIF-weighting parameter `a`.
+/// Default value of the SIF-weighting parameter `a`,
+/// following the original setting.
 pub const DEFAULT_PARAM_A: Float = 1e-3;
 
-/// A default value of the number of common components.
+/// Default value of the number of principal components to remove,
+/// following the original setting.
 pub const DEFAULT_N_COMPONENTS: usize = 1;
 
 /// An implementation of *Smooth Inverse Frequency* and *Common Component Removal*,
@@ -61,7 +64,13 @@ where
     W: WordEmbeddings,
     P: WordProbabilities,
 {
-    /// Creates a new instance.
+    /// Creates a new instance with default parameters defined by
+    /// [`DEFAULT_PARAM_A`] and [`DEFAULT_N_COMPONENTS`].
+    ///
+    /// # Arguments
+    ///
+    /// * `word_embeddings` - Word embeddings.
+    /// * `word_probs` - Word probabilities.
     pub fn new(word_embeddings: &'w W, word_probs: &'p P) -> Self {
         Self {
             word_embeddings,
@@ -69,11 +78,22 @@ where
             param_a: DEFAULT_PARAM_A,
             n_components: DEFAULT_N_COMPONENTS,
             common_components: None,
-            separator: ' ',
+            separator: DEFAULT_SEPARATOR,
         }
     }
 
-    /// Creates a new instance.
+    /// Creates a new instance with manually specified parameters.
+    ///
+    /// # Arguments
+    ///
+    /// * `word_embeddings` - Word embeddings.
+    /// * `word_probs` - Word probabilities.
+    /// * `param_a` - A parameter `a` for SIF-weighting that should be positive.
+    /// * `n_components` - The number of principal components to remove.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `param_a` is not positive.
     pub fn with_parameters(
         word_embeddings: &'w W,
         word_probs: &'p P,
@@ -89,11 +109,11 @@ where
             param_a,
             n_components,
             common_components: None,
-            separator: ' ',
+            separator: DEFAULT_SEPARATOR,
         })
     }
 
-    /// Sets a separator for sentence segmentation (default: ASCII whitespace).
+    /// Sets a separator for sentence segmentation (default: [`DEFAULT_SEPARATOR`]).
     pub const fn separator(mut self, separator: char) -> Self {
         self.separator = separator;
         self
