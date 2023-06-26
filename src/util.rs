@@ -196,4 +196,13 @@ mod tests {
         let result = remove_principal_components(&vectors, &components, Some(&weights));
         assert_eq!(result.shape(), &[7, 5]);
     }
+
+    #[test]
+    fn test_remove_principal_components_d1() {
+        let vectors = ndarray::arr2(&[[1.], [2.], [3.]]);
+        let components = ndarray::arr2(&[[1.]]);
+        let weights = ndarray::arr1(&[1.]);
+        let result = remove_principal_components(&vectors, &components, Some(&weights));
+        assert_eq!(result.shape(), &[3, 1]);
+    }
 }
