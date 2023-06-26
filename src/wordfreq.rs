@@ -1,4 +1,4 @@
-//! UnigramLanguageModel implementations for [`wordfreq::WordFreq`].
+//! WordProbabilities implementations for [`wordfreq::WordFreq`].
 use crate::Float;
 use crate::WordProbabilities;
 

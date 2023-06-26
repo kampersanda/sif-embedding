@@ -49,7 +49,7 @@ pub const DEFAULT_N_COMPONENTS: usize = 1;
 #[derive(Clone)]
 pub struct Sif<'w, 'p, W, P> {
     word_embeddings: &'w W,
-    unigram_lm: &'p P,
+    word_probs: &'p P,
     param_a: Float,
     n_components: usize,
     common_components: Option<Array2<Float>>,
@@ -62,10 +62,10 @@ where
     P: WordProbabilities,
 {
     /// Creates a new instance.
-    pub fn new(word_embeddings: &'w W, unigram_lm: &'p P) -> Self {
+    pub fn new(word_embeddings: &'w W, word_probs: &'p P) -> Self {
         Self {
             word_embeddings,
-            unigram_lm,
+            word_probs,
             param_a: DEFAULT_PARAM_A,
             n_components: DEFAULT_N_COMPONENTS,
             common_components: None,
@@ -76,7 +76,7 @@ where
     /// Creates a new instance.
     pub fn with_parameters(
         word_embeddings: &'w W,
-        unigram_lm: &'p P,
+        word_probs: &'p P,
         param_a: Float,
         n_components: usize,
     ) -> Result<Self> {
@@ -85,7 +85,7 @@ where
         }
         Ok(Self {
             word_embeddings,
-            unigram_lm,
+            word_probs,
             param_a,
             n_components,
             common_components: None,
@@ -114,7 +114,7 @@ where
             let mut sent_embedding = Array1::zeros(self.embedding_size());
             for word in sent.split(self.separator) {
                 if let Some(word_embedding) = self.word_embeddings.embedding(word) {
-                    let weight = self.param_a / (self.param_a + self.unigram_lm.probability(word));
+                    let weight = self.param_a / (self.param_a + self.word_probs.probability(word));
                     sent_embedding += &(word_embedding.to_owned() * weight);
                     n_words += 1;
                 }
@@ -210,9 +210,9 @@ mod tests {
         }
     }
 
-    struct SimpleUnigramLanguageModel {}
+    struct SimpleWordProbabilities {}
 
-    impl WordProbabilities for SimpleUnigramLanguageModel {
+    impl WordProbabilities for SimpleWordProbabilities {
         fn probability(&self, word: &str) -> Float {
             match word {
                 "A" => 0.6,
@@ -239,9 +239,9 @@ mod tests {
     #[test]
     fn test_basic() {
         let word_embeddings = SimpleWordEmbeddings {};
-        let unigram_lm = SimpleUnigramLanguageModel {};
+        let word_probs = SimpleWordProbabilities {};
 
-        let sif = Sif::new(&word_embeddings, &unigram_lm)
+        let sif = Sif::new(&word_embeddings, &word_probs)
             .fit(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
             .unwrap();
 
@@ -260,12 +260,12 @@ mod tests {
     #[test]
     fn test_separator() {
         let word_embeddings = SimpleWordEmbeddings {};
-        let unigram_lm = SimpleUnigramLanguageModel {};
+        let word_probs = SimpleWordProbabilities {};
 
         let sentences_1 = &["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
         let sentences_2 = &["A,BB,CCC,DDDD", "BB,CCC", "A,B,C", "Z", ""];
 
-        let sif = Sif::new(&word_embeddings, &unigram_lm);
+        let sif = Sif::new(&word_embeddings, &word_probs);
 
         let sif = sif.fit(sentences_1).unwrap();
         let embeddings_1 = sif.embeddings(sentences_1).unwrap();
@@ -279,20 +279,20 @@ mod tests {
     #[test]
     fn test_invalid_param_a() {
         let word_embeddings = SimpleWordEmbeddings {};
-        let unigram_lm = SimpleUnigramLanguageModel {};
+        let word_probs = SimpleWordProbabilities {};
 
-        let sif = Sif::with_parameters(&word_embeddings, &unigram_lm, 0., DEFAULT_N_COMPONENTS);
+        let sif = Sif::with_parameters(&word_embeddings, &word_probs, 0., DEFAULT_N_COMPONENTS);
         assert!(sif.is_err());
     }
 
     #[test]
     fn test_no_fitted() {
         let word_embeddings = SimpleWordEmbeddings {};
-        let unigram_lm = SimpleUnigramLanguageModel {};
+        let word_probs = SimpleWordProbabilities {};
 
         let sentences = &["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
 
-        let sif = Sif::new(&word_embeddings, &unigram_lm);
+        let sif = Sif::new(&word_embeddings, &word_probs);
         let embeddings = sif.embeddings(sentences);
         assert!(embeddings.is_err());
     }
@@ -300,9 +300,9 @@ mod tests {
     #[test]
     fn test_empty_fit() {
         let word_embeddings = SimpleWordEmbeddings {};
-        let unigram_lm = SimpleUnigramLanguageModel {};
+        let word_probs = SimpleWordProbabilities {};
 
-        let sif = Sif::new(&word_embeddings, &unigram_lm);
+        let sif = Sif::new(&word_embeddings, &word_probs);
         let sif = sif.fit(&Vec::<&str>::new());
         assert!(sif.is_err());
     }
