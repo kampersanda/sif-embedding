@@ -13,10 +13,7 @@ use std::str::FromStr;
 
 use clap::Parser;
 use finalfusion::prelude::*;
-use ndarray::Array2;
-use ndarray_stats::CorrelationExt;
 use sif_embedding::util;
-use sif_embedding::Float;
 use sif_embedding::SentenceEmbedder;
 use sif_embedding::Sif;
 use sif_embedding::USif;
@@ -177,7 +174,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             corrs.push(corr);
             println!("{file}\t{corr}");
         }
-        let mean = corrs.iter().sum::<Float>() / corrs.len() as Float;
+        let mean = corrs.iter().sum::<f64>() / corrs.len() as f64;
         println!("Avg.\t{mean}");
         println!();
     }
@@ -188,7 +185,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn load_sts_data(
     gs_path: &str,
     input_path: &str,
-) -> Result<(Vec<Float>, Vec<String>), Box<dyn Error>> {
+) -> Result<(Vec<f64>, Vec<String>), Box<dyn Error>> {
     let gs_lines: Vec<String> = BufReader::new(File::open(gs_path)?)
         .lines()
         .map(|l| l.unwrap())
@@ -205,7 +202,7 @@ fn load_sts_data(
         if gs_line.is_empty() {
             continue;
         }
-        gold_scores.push(gs_line.parse::<Float>()?);
+        gold_scores.push(gs_line.parse::<f64>()?);
         let cols: Vec<_> = input_line.split('\t').collect();
         assert_eq!(cols.len(), 2);
         sentences.push(cols[0].to_string());
@@ -214,11 +211,7 @@ fn load_sts_data(
     Ok((gold_scores, sentences))
 }
 
-fn evaluate<M>(
-    model: M,
-    gold_scores: &[Float],
-    sentences: &[String],
-) -> Result<Float, Box<dyn Error>>
+fn evaluate<M>(model: M, gold_scores: &[f64], sentences: &[String]) -> Result<f64, Box<dyn Error>>
 where
     M: SentenceEmbedder,
 {
@@ -228,16 +221,17 @@ where
     for i in 0..n_examples {
         let e1 = &sent_embeddings.row(i * 2);
         let e2 = &sent_embeddings.row(i * 2 + 1);
-        let score = util::cosine_similarity(e1, e2).unwrap_or(0.); // ok?
+        let score = util::cosine_similarity(e1, e2).unwrap_or(0.) as f64; // ok?
         pred_scores.push(score);
     }
     Ok(pearson_correlation(&pred_scores, gold_scores))
 }
 
-fn pearson_correlation(s1: &[Float], s2: &[Float]) -> Float {
+fn pearson_correlation(s1: &[f64], s2: &[f64]) -> f64 {
     assert_eq!(s1.len(), s2.len());
-    let concat = [s1, s2].concat();
-    let scores = Array2::from_shape_vec((2, s1.len()), concat).unwrap();
-    let corr = scores.pearson_correlation().unwrap();
-    corr[[0, 1]]
+    // let concat = [s1, s2].concat();
+    // let scores = Array2::from_shape_vec((2, s1.len()), concat).unwrap();
+    // let corr = scores.pearson_correlation().unwrap();
+    // corr[[0, 1]]
+    rgsl::statistics::correlation(s1, 1, s2, 1, s1.len())
 }
