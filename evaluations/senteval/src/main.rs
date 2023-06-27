@@ -62,12 +62,9 @@ struct Preprocessor {
 
 impl Preprocessor {
     fn new() -> Self {
-        let analyzer = TextAnalyzer::builder(SimpleTokenizer::default())
-            .filter(RemoveLongFilter::limit(40))
-            .filter(LowerCaser)
-            // .filter(StopWordFilter::new(Language::English).unwrap())
-            // .filter(Stemmer::new(Language::English))
-            .build();
+        // NOTE: Since senteval.tar provided at https://huggingface.co/datasets/princeton-nlp/datasets-for-simcse
+        // has been preprocessed (such as lowercasing), we only need simple tokenization for punctuation.
+        let analyzer = TextAnalyzer::builder(SimpleTokenizer::default()).build();
         Self { analyzer }
     }
 
@@ -105,7 +102,16 @@ fn main() -> Result<(), Box<dyn Error>> {
                 "surprise.SMTnews",
             ],
         ),
-        ("STS13-en-test", vec!["FNWN", "headlines", "OnWN"]),
+        (
+            "STS13-en-test",
+            vec![
+                "FNWN",
+                "headlines",
+                "OnWN",
+                // This dataset is not provided due to the license issue.
+                // "SMT",
+            ],
+        ),
         (
             "STS14-en-test",
             vec![
@@ -140,6 +146,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     ];
 
     let mut preprocessor = Preprocessor::new();
+
     for (year, files) in corpora {
         println!("{year}");
         let mut corrs = vec![];
