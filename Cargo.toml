@@ -1,6 +1,6 @@
 [package]
 name = "sif-embedding"
-# NOTE(kampersanda): Do not forget to update the version number in `lib.rs` as well.
+# NOTE(kampersanda): Do not forget to update the version number in `lib.rs` and `README` in tutorial as well.
 version = "0.4.0"
 authors = ["Shunsuke Kanda (kampersanda) <shnsk.knd@gmail.com>"]
 description = "Smooth inverse frequency (SIF), a simple but powerful embedding technique for sentences"
@@ -46,9 +46,9 @@ test = ["finalfusion", "wordfreq", "openblas-system"]
 [dependencies]
 anyhow = "1.0"
 # NOTE(kampersanda): Do not forget to update the version number in `lib.rs` as well.
-finalfusion = { version = "0.17", optional = true }
+finalfusion = { version = "0.17.2", optional = true }
 # NOTE(kampersanda): Do not forget to update the version number in `lib.rs` as well.
-wordfreq = { version = "0.2", optional = true }
+wordfreq = { version = "0.2.3", optional = true }
 
 [dependencies.ndarray]
 version = "0.15.6"
@@ -86,7 +86,7 @@ members = [
     "evaluations/law-ai",
     "evaluations/livedoor-news",
     "evaluations/senteval",
-    "examples/tutorial",
+    "tutorial",
 ]
 
 [package.metadata.docs.rs]

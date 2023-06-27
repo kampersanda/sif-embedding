@@ -1,4 +1,4 @@
-//! SIF: Smooth Inverse Frequency + Common Component Removal.
+//! uSIF: Unsupervised Smooth Inverse Frequency + Piecewise Common Component Removal.
 use anyhow::{anyhow, Result};
 use ndarray::Array1;
 use ndarray::Array2;
@@ -10,36 +10,34 @@ use crate::WordEmbeddings;
 use crate::WordProbabilities;
 use crate::DEFAULT_SEPARATOR;
 
-/// Default value of the SIF-weighting parameter `a`,
+/// Default value of the number of principal components,
 /// following the original setting.
-pub const DEFAULT_PARAM_A: Float = 1e-3;
+pub const DEFAULT_N_COMPONENTS: usize = 5;
 
-/// Default value of the number of principal components to remove,
-/// following the original setting.
-pub const DEFAULT_N_COMPONENTS: usize = 1;
+const FLOAT_0_5: Float = 0.5;
 
-/// An implementation of *Smooth Inverse Frequency* and *Common Component Removal*,
+/// An implementation of *Unsupervised Smooth Inverse Frequency* and *Piecewise Common Component Removal*,
 /// simple but pewerful techniques for sentence embeddings described in the paper:
-/// Sanjeev Arora, Yingyu Liang, and Tengyu Ma,
-/// [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
-/// ICLR 2017.
+/// Kawin Ethayarajh,
+/// [Unsupervised Random Walk Sentence Embeddings: A Strong but Simple Baseline](https://aclanthology.org/W18-3012/),
+/// RepL4NLP 2018.
 ///
 /// # Brief description of API
 ///
 /// The algorithm consists of two steps:
 ///
-/// 1. Compute sentence embeddings with the SIF weighting.
+/// 1. Compute sentence embeddings with the uSIF weighting.
 /// 2. Remove the common components from the sentence embeddings.
 ///
-/// The common components are computed from input sentences.
+/// The weighting parameter and common components are computed from input sentences.
 ///
-/// Our API is designed to allow reuse of common components once computed
+/// Our API is designed to allow reuse of these values once computed
 /// because it is not always possible to obtain a sufficient number of sentences as queries to compute.
 ///
-/// [`Sif::fit`] computes the common components from input sentences and returns a fitted instance of [`Sif`].
-/// [`Sif::embeddings`] computes sentence embeddings with the fitted components.
+/// [`USif::fit`] computes these values from input sentences and returns a fitted instance of [`USif`].
+/// [`USif::embeddings`] computes sentence embeddings with the fitted values.
 ///
-/// If you find these two steps annoying, you can use [`Sif::fit_embeddings`].
+/// If you find these two steps annoying, you can use [`USif::fit_embeddings`].
 ///
 /// # Examples
 ///
@@ -51,7 +49,7 @@ pub const DEFAULT_N_COMPONENTS: usize = 1;
 /// use finalfusion::embeddings::Embeddings;
 /// use wordfreq::WordFreq;
 ///
-/// use sif_embedding::{Sif, SentenceEmbedder};
+/// use sif_embedding::{USif, SentenceEmbedder};
 ///
 /// // Loads word embeddings from a pretrained model.
 /// let word_embeddings_text = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
@@ -63,7 +61,7 @@ pub const DEFAULT_N_COMPONENTS: usize = 1;
 ///
 /// // Computes sentence embeddings in shape (n, m),
 /// // where n is the number of sentences and m is the number of dimensions.
-/// let model = Sif::new(&word_embeddings, &word_probs);
+/// let model = USif::new(&word_embeddings, &word_probs);
 /// let (sent_embeddings, model) = model.fit_embeddings(&["las vegas", "mega vegas"])?;
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
 ///
@@ -73,59 +71,24 @@ pub const DEFAULT_N_COMPONENTS: usize = 1;
 /// # Ok(())
 /// # }
 /// ```
-///
-/// ## Only SIF weighting
-///
-/// If you want to manually set the parameters, use [`Sif::with_parameters`].
-///
-/// The following example shows the case setting `n_components = 0` and not removing the common components.
-/// In other words, only the SIF weighting is applied to the input sentences.
-/// In this case, you can skip [`Sif::fit`] and directly perform [`Sif::embeddings`]
-/// (although the quarity of the embeddings may be worse).
-///
-/// ```
-/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-/// use std::io::BufReader;
-///
-/// use finalfusion::compat::text::ReadText;
-/// use finalfusion::embeddings::Embeddings;
-/// use wordfreq::WordFreq;
-///
-/// use sif_embedding::{Sif, SentenceEmbedder};
-///
-/// // Loads word embeddings from a pretrained model.
-/// let word_embeddings_text = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
-/// let mut reader = BufReader::new(word_embeddings_text.as_bytes());
-/// let word_embeddings = Embeddings::read_text(&mut reader)?;
-///
-/// // Loads word probabilities from a pretrained model.
-/// let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
-///
-/// // When setting `n_components = 0`, the common components are not removed, and
-/// // the sentence embeddings are computed without `fit`.
-/// let model = Sif::with_parameters(&word_embeddings, &word_probs, 1e-3, 0)?;
-/// let sent_embeddings = model.embeddings(["las vegas", "mega vegas"])?;
-/// assert_eq!(sent_embeddings.shape(), &[2, 3]);
-/// # Ok(())
-/// # }
-/// ```
 #[derive(Clone)]
-pub struct Sif<'w, 'p, W, P> {
+pub struct USif<'w, 'p, W, P> {
     word_embeddings: &'w W,
     word_probs: &'p P,
-    param_a: Float,
     n_components: usize,
+    param_a: Option<Float>,
+    weights: Option<Array1<Float>>,
     common_components: Option<Array2<Float>>,
     separator: char,
 }
 
-impl<'w, 'p, W, P> Sif<'w, 'p, W, P>
+impl<'w, 'p, W, P> USif<'w, 'p, W, P>
 where
     W: WordEmbeddings,
     P: WordProbabilities,
 {
     /// Creates a new instance with default parameters defined by
-    /// [`DEFAULT_PARAM_A`] and [`DEFAULT_N_COMPONENTS`].
+    /// [`DEFAULT_N_COMPONENTS`].
     ///
     /// # Arguments
     ///
@@ -135,8 +98,9 @@ where
         Self {
             word_embeddings,
             word_probs,
-            param_a: DEFAULT_PARAM_A,
             n_components: DEFAULT_N_COMPONENTS,
+            param_a: None,
+            weights: None,
             common_components: None,
             separator: DEFAULT_SEPARATOR,
         }
@@ -148,29 +112,21 @@ where
     ///
     /// * `word_embeddings` - Word embeddings.
     /// * `word_probs` - Word probabilities.
-    /// * `param_a` - A parameter `a` for SIF-weighting that should be positive.
     /// * `n_components` - The number of principal components to remove.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if `param_a` is not positive.
-    pub fn with_parameters(
+    pub const fn with_parameters(
         word_embeddings: &'w W,
         word_probs: &'p P,
-        param_a: Float,
         n_components: usize,
-    ) -> Result<Self> {
-        if param_a <= 0. {
-            return Err(anyhow!("param_a must be positive."));
-        }
-        Ok(Self {
+    ) -> Self {
+        Self {
             word_embeddings,
             word_probs,
-            param_a,
             n_components,
+            param_a: None,
+            weights: None,
             common_components: None,
             separator: DEFAULT_SEPARATOR,
-        })
+        }
     }
 
     /// Sets a separator for sentence segmentation (default: [`DEFAULT_SEPARATOR`]).
@@ -179,40 +135,112 @@ where
         self
     }
 
-    /// Applies SIF-weighting.
-    /// (Lines 1--3 in Algorithm 1)
-    fn weighted_embeddings<I, S>(&self, sentences: I) -> Array2<Float>
+    /// Computes the average length of sentences.
+    /// (Line 3 in Algorithm 1)
+    fn average_sentence_length<S>(&self, sentences: &[S]) -> Float
+    where
+        S: AsRef<str>,
+    {
+        let mut n_words = 0;
+        for sent in sentences {
+            let sent = sent.as_ref();
+            n_words += sent.split(self.separator).count();
+        }
+        n_words as Float / sentences.len() as Float
+    }
+
+    /// Estimates the parameter `a` for the weight function.
+    /// The returned value is always a positive number.
+    /// (Lines 5--7 in Algorithm 1)
+    fn estimate_param_a(&self, sent_len: Float) -> Float {
+        debug_assert!(sent_len > 0.);
+        let vocab_size = self.word_probs.n_words() as Float;
+        let threshold = 1. - (1. - (1. / vocab_size)).powf(sent_len);
+        let n_greater = self
+            .word_probs
+            .entries()
+            .filter(|(_, prob)| *prob > threshold)
+            .count() as Float;
+        let alpha = n_greater / vocab_size;
+        let partiion = 0.5 * vocab_size;
+        let param_a = (1. - alpha) / alpha.mul_add(partiion, Float::EPSILON); // avoid division by zero.
+        param_a.max(Float::EPSILON) // avoid returning zero.
+    }
+
+    /// Applies SIF-weighting for sentences.
+    /// (Line 8 in Algorithm 1)
+    fn weighted_embeddings<I, S>(&self, sentences: I, param_a: Float) -> Array2<Float>
     where
         I: IntoIterator<Item = S>,
         S: AsRef<str>,
     {
+        debug_assert!(param_a > 0.);
         let mut sent_embeddings = vec![];
         let mut n_sentences = 0;
         for sent in sentences {
-            let sent = sent.as_ref();
-            let mut n_words = 0;
-            let mut sent_embedding = Array1::zeros(self.embedding_size());
-            for word in sent.split(self.separator) {
-                if let Some(word_embedding) = self.word_embeddings.embedding(word) {
-                    let weight = self.param_a / (self.param_a + self.word_probs.probability(word));
-                    sent_embedding += &(word_embedding.to_owned() * weight);
-                    n_words += 1;
-                }
-            }
-            if n_words != 0 {
-                sent_embedding /= n_words as Float;
-            } else {
-                // If no parseable tokens, return a vector of a's
-                sent_embedding += self.param_a;
-            }
+            let sent_embedding = self.weighted_embedding(sent.as_ref(), param_a);
             sent_embeddings.extend(sent_embedding.iter());
             n_sentences += 1;
         }
         Array2::from_shape_vec((n_sentences, self.embedding_size()), sent_embeddings).unwrap()
     }
+
+    /// Applies SIF-weighting for a sentence.
+    /// (Line 8 in Algorithm 1)
+    fn weighted_embedding(&self, sent: &str, param_a: Float) -> Array1<Float> {
+        debug_assert!(param_a > 0.);
+
+        // 1. Extract word embeddings and weights.
+        let mut n_words = 0;
+        let mut word_embeddings: Vec<Float> = vec![];
+        let mut word_weights: Vec<Float> = vec![];
+        for word in sent.split(self.separator) {
+            if let Some(word_embedding) = self.word_embeddings.embedding(word) {
+                word_embeddings.extend(word_embedding.iter());
+                word_weights
+                    .push(param_a / FLOAT_0_5.mul_add(param_a, self.word_probs.probability(word)));
+                n_words += 1;
+            }
+        }
+
+        // If no parseable tokens, return a vector of a's
+        if n_words == 0 {
+            return Array1::zeros(self.embedding_size()) + param_a;
+        }
+
+        // 2. Convert to nd-arrays.
+        let word_embeddings =
+            Array2::from_shape_vec((n_words, self.embedding_size()), word_embeddings).unwrap();
+        let word_weights = Array2::from_shape_vec((n_words, 1), word_weights).unwrap();
+
+        // 3. Normalize word embeddings.
+        let axis = ndarray_linalg::norm::NormalizeAxis::Column; // equivalent to Axis(0)
+        let (word_embeddings, _) = ndarray_linalg::norm::normalize(word_embeddings, axis);
+
+        // 4. Weight word embeddings.
+        let word_embeddings = word_embeddings * &word_weights;
+
+        // 5. Average word embeddings.
+        word_embeddings.mean_axis(ndarray::Axis(0)).unwrap()
+    }
+
+    /// Estimates the principal components of sentence embeddings.
+    /// (Lines 11--17 in Algorithm 1)
+    ///
+    /// NOTE: Principal components can be empty iff sentence embeddings are all zeros.
+    fn estimate_principal_components(
+        &self,
+        sent_embeddings: &Array2<Float>,
+    ) -> (Array1<Float>, Array2<Float>) {
+        let (singular_values, singular_vectors) =
+            util::principal_components(sent_embeddings, self.n_components);
+        let singular_weights = singular_values.mapv(|v| v.powi(2));
+        let singular_weights = singular_weights.to_owned() / singular_weights.sum();
+        (singular_weights, singular_vectors)
+    }
 }
 
-impl<'w, 'p, W, P> SentenceEmbedder for Sif<'w, 'p, W, P>
+impl<'w, 'p, W, P> SentenceEmbedder for USif<'w, 'p, W, P>
 where
     W: WordEmbeddings,
     P: WordProbabilities,
@@ -228,10 +256,6 @@ where
     /// # Errors
     ///
     /// Returns an error if `sentences` is empty.
-    ///
-    /// # Notes
-    ///
-    /// If `n_components` is 0, does nothing and returns `self`.
     fn fit<S>(mut self, sentences: &[S]) -> Result<Self>
     where
         S: AsRef<str>,
@@ -239,16 +263,20 @@ where
         if sentences.is_empty() {
             return Err(anyhow!("Input sentences must not be empty."));
         }
-        if self.n_components == 0 {
-            eprintln!("Warning: Nothing to fit since n_components is 0.");
-            return Ok(self);
-        }
         // SIF-weighting.
-        let sent_embeddings = self.weighted_embeddings(sentences);
+        let sent_len = self.average_sentence_length(sentences);
+        if sent_len == 0. {
+            return Err(anyhow!("Input sentences must not be empty."));
+        }
+        let param_a = self.estimate_param_a(sent_len);
+        let sent_embeddings = self.weighted_embeddings(sentences, param_a);
+        self.param_a = Some(param_a);
         // Common component removal.
-        let (_, common_components) =
-            util::principal_components(&sent_embeddings, self.n_components);
-        self.common_components = Some(common_components);
+        if self.n_components != 0 {
+            let (weights, common_components) = self.estimate_principal_components(&sent_embeddings);
+            self.weights = Some(weights);
+            self.common_components = Some(common_components);
+        }
         Ok(self)
     }
 
@@ -257,20 +285,16 @@ where
     /// # Errors
     ///
     /// Returns an error if the model is not fitted.
-    ///
-    /// # Notes
-    ///
-    /// If `n_components` is 0, the fitting is not required.
     fn embeddings<I, S>(&self, sentences: I) -> Result<Array2<Float>>
     where
         I: IntoIterator<Item = S>,
         S: AsRef<str>,
     {
-        if self.n_components != 0 && self.common_components.is_none() {
+        if self.param_a.is_none() {
             return Err(anyhow!("The model is not fitted."));
         }
         // SIF-weighting.
-        let sent_embeddings = self.weighted_embeddings(sentences);
+        let sent_embeddings = self.weighted_embeddings(sentences, self.param_a.unwrap());
         if sent_embeddings.is_empty() {
             return Ok(sent_embeddings);
         }
@@ -278,9 +302,10 @@ where
             return Ok(sent_embeddings);
         }
         // Common component removal.
+        let weights = self.weights.as_ref().unwrap();
         let common_components = self.common_components.as_ref().unwrap();
         let sent_embeddings =
-            util::remove_principal_components(&sent_embeddings, common_components, None);
+            util::remove_principal_components(&sent_embeddings, common_components, Some(weights));
         Ok(sent_embeddings)
     }
 }
@@ -341,7 +366,7 @@ mod tests {
         let word_embeddings = SimpleWordEmbeddings {};
         let word_probs = SimpleWordProbabilities {};
 
-        let sif = Sif::new(&word_embeddings, &word_probs)
+        let sif = USif::new(&word_embeddings, &word_probs)
             .fit(&["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""])
             .unwrap();
 
@@ -365,7 +390,7 @@ mod tests {
         let sentences_1 = &["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
         let sentences_2 = &["A,BB,CCC,DDDD", "BB,CCC", "A,B,C", "Z", ""];
 
-        let sif = Sif::new(&word_embeddings, &word_probs);
+        let sif = USif::new(&word_embeddings, &word_probs);
 
         let sif = sif.fit(sentences_1).unwrap();
         let embeddings_1 = sif.embeddings(sentences_1).unwrap();
@@ -377,23 +402,15 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_param_a() {
-        let word_embeddings = SimpleWordEmbeddings {};
-        let word_probs = SimpleWordProbabilities {};
-
-        let sif = Sif::with_parameters(&word_embeddings, &word_probs, 0., DEFAULT_N_COMPONENTS);
-        assert!(sif.is_err());
-    }
-
-    #[test]
     fn test_no_fitted() {
         let word_embeddings = SimpleWordEmbeddings {};
         let word_probs = SimpleWordProbabilities {};
 
         let sentences = &["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
 
-        let sif = Sif::new(&word_embeddings, &word_probs);
+        let sif = USif::new(&word_embeddings, &word_probs);
         let embeddings = sif.embeddings(sentences);
+
         assert!(embeddings.is_err());
     }
 
@@ -402,8 +419,9 @@ mod tests {
         let word_embeddings = SimpleWordEmbeddings {};
         let word_probs = SimpleWordProbabilities {};
 
-        let sif = Sif::new(&word_embeddings, &word_probs);
+        let sif = USif::new(&word_embeddings, &word_probs);
         let sif = sif.fit(&Vec::<&str>::new());
+
         assert!(sif.is_err());
     }
 }

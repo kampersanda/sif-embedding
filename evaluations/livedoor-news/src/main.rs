@@ -11,16 +11,36 @@ use std::cell::RefCell;
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
+use std::str::FromStr;
 
 use clap::Parser;
 use finalfusion::prelude::*;
 use sif_embedding::util;
+use sif_embedding::SentenceEmbedder;
 use sif_embedding::Sif;
+use sif_embedding::USif;
 use unicode_normalization::UnicodeNormalization;
 use vibrato::dictionary::Dictionary;
 use vibrato::tokenizer::worker::Worker as VibratoWorker;
 use vibrato::Tokenizer;
 use wordfreq_model::{self, ModelKind};
+
+#[derive(Clone, Debug)]
+enum MethodKind {
+    Sif,
+    USif,
+}
+
+impl FromStr for MethodKind {
+    type Err = &'static str;
+    fn from_str(mode: &str) -> Result<Self, Self::Err> {
+        match mode {
+            "sif" => Ok(Self::Sif),
+            "usif" => Ok(Self::USif),
+            _ => Err("Could not parse a mode"),
+        }
+    }
+}
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -33,6 +53,9 @@ struct Args {
 
     #[arg(short = 'v', long)]
     input_vibrato_zst: String,
+
+    #[arg(short = 'm', long, default_value = "sif")]
+    method: MethodKind,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -46,7 +69,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     eprintln!("word_embeddings.dims() = {}", word_embeddings.dims());
 
     let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeJa)?;
-    let sif = Sif::new(&word_embeddings, &unigram_lm);
 
     let tokenizer = {
         let reader = zstd::Decoder::new(File::open(args.input_vibrato_zst)?)?;
@@ -64,8 +86,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     let worker = RefCell::new(tokenizer.new_worker());
     let tokenized: Vec<String> = sentences.iter().map(|s| tokenize(s, &worker)).collect();
 
-    // Compute sentence embeddings.
-    let sent_embeddings = sif.embeddings(&tokenized);
+    let sent_embeddings = match args.method {
+        MethodKind::Sif => {
+            eprintln!("SIF");
+            let model = Sif::new(&word_embeddings, &unigram_lm);
+            model.fit_embeddings(&tokenized)?.0
+        }
+        MethodKind::USif => {
+            eprintln!("USIF");
+            let model = USif::new(&word_embeddings, &unigram_lm);
+            model.fit_embeddings(&tokenized)?.0
+        }
+    };
     eprintln!("sent_embeddings.shape() = {:?}", sent_embeddings.shape());
 
     // NN scores.

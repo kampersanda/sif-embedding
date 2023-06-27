@@ -31,10 +31,10 @@ intel-mkl-system = [
 [dependencies]
 clap = { version = "4.2.7", features = ["derive"] }
 finalfusion = "0.17.2"
-wordfreq-model = { version = "0.2", features = ["large-en"] }
+wordfreq-model = { version = "0.2.3", features = ["large-en"] }
 
 [dependencies.sif-embedding]
-path = "../../"
+path = "../"
 # To use finalfusion and wordfreq, specify the features.
 features = ["finalfusion", "wordfreq"]
 default-features = false

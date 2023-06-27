@@ -10,14 +10,34 @@ use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Read, Write};
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 
 use clap::Parser;
 use finalfusion::prelude::*;
 use ndarray::Array2;
 use ndarray_stats::CorrelationExt;
+use sif_embedding::SentenceEmbedder;
 use sif_embedding::Sif;
+use sif_embedding::USif;
 use tantivy::tokenizer::*;
 use wordfreq_model::{self, ModelKind};
+
+#[derive(Clone, Debug)]
+enum MethodKind {
+    Sif,
+    USif,
+}
+
+impl FromStr for MethodKind {
+    type Err = &'static str;
+    fn from_str(mode: &str) -> Result<Self, Self::Err> {
+        match mode {
+            "sif" => Ok(Self::Sif),
+            "usif" => Ok(Self::USif),
+            _ => Err("Could not parse a mode"),
+        }
+    }
+}
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -30,6 +50,9 @@ struct Args {
 
     #[arg(short = 'o', long)]
     output_tsv: Option<PathBuf>,
+
+    #[arg(short = 'm', long, default_value = "sif")]
+    method: MethodKind,
 }
 
 struct Preprocessor {
@@ -111,15 +134,31 @@ fn main() -> Result<(), Box<dyn Error>> {
         Embeddings::<VocabWrap, StorageWrap>::mmap_embeddings(&mut reader)?
     };
     let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
-    let sif = Sif::new(&word_embeddings, &unigram_lm);
 
     let mut preprocessor = Preprocessor::new();
-    let sent_embeddings = sif.embeddings(dataset.document_files.iter().map(|file| {
-        let mut reader = BufReader::new(File::open(file).unwrap());
-        let mut text = String::new();
-        reader.read_to_string(&mut text).unwrap();
-        preprocessor.apply(&text)
-    }));
+    let sentences = dataset
+        .document_files
+        .iter()
+        .map(|file| {
+            let mut reader = BufReader::new(File::open(file).unwrap());
+            let mut text = String::new();
+            reader.read_to_string(&mut text).unwrap();
+            preprocessor.apply(&text)
+        })
+        .collect::<Vec<_>>();
+
+    let sent_embeddings = match args.method {
+        MethodKind::Sif => {
+            eprintln!("SIF");
+            let model = Sif::new(&word_embeddings, &unigram_lm);
+            model.fit_embeddings(&sentences)?.0
+        }
+        MethodKind::USif => {
+            eprintln!("USIF");
+            let model = USif::new(&word_embeddings, &unigram_lm);
+            model.fit_embeddings(&sentences)?.0
+        }
+    };
 
     let mut pred_scores = vec![];
     let mut gold_scores = vec![];

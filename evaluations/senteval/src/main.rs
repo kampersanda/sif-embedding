@@ -7,16 +7,38 @@ extern crate openblas_src as _src;
 
 use std::error::Error;
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::BufRead;
+use std::io::BufReader;
+use std::str::FromStr;
 
 use clap::Parser;
 use finalfusion::prelude::*;
 use ndarray::Array2;
 use ndarray_stats::CorrelationExt;
 use sif_embedding::util;
-use sif_embedding::{Float, Sif, UnigramLanguageModel, WordEmbeddings};
+use sif_embedding::Float;
+use sif_embedding::SentenceEmbedder;
+use sif_embedding::Sif;
+use sif_embedding::USif;
 use tantivy::tokenizer::*;
-use wordfreq_model::{self, ModelKind};
+use wordfreq_model::ModelKind;
+
+#[derive(Clone, Debug)]
+enum MethodKind {
+    Sif,
+    USif,
+}
+
+impl FromStr for MethodKind {
+    type Err = &'static str;
+    fn from_str(mode: &str) -> Result<Self, Self::Err> {
+        match mode {
+            "sif" => Ok(Self::Sif),
+            "usif" => Ok(Self::USif),
+            _ => Err("Could not parse a mode"),
+        }
+    }
+}
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -26,6 +48,12 @@ struct Args {
 
     #[arg(short = 'f', long)]
     input_fifu: String,
+
+    #[arg(short = 'm', long, default_value = "sif")]
+    method: MethodKind,
+
+    #[arg(short = 'n', long)]
+    n_components: Option<usize>,
 }
 
 struct Preprocessor {
@@ -37,7 +65,7 @@ impl Preprocessor {
         let analyzer = TextAnalyzer::builder(SimpleTokenizer::default())
             .filter(RemoveLongFilter::limit(40))
             .filter(LowerCaser)
-            .filter(StopWordFilter::new(Language::English).unwrap())
+            // .filter(StopWordFilter::new(Language::English).unwrap())
             // .filter(Stemmer::new(Language::English))
             .build();
         Self { analyzer }
@@ -64,7 +92,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     eprintln!("word_embeddings.dims() = {}", word_embeddings.dims());
 
     let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
-    let sif = Sif::new(&word_embeddings, &unigram_lm);
 
     let data_dir = args.data_dir;
     let corpora = vec![
@@ -122,7 +149,24 @@ fn main() -> Result<(), Box<dyn Error>> {
             let (gold_scores, sentences) = load_sts_data(&gs_file, &input_file)?;
             eprintln!("file = {}, n_examples = {}", file, gold_scores.len());
             let sentences: Vec<_> = sentences.iter().map(|s| preprocessor.apply(s)).collect();
-            let corr = evaluate(&sif, &gold_scores, &sentences)?;
+            let corr = match args.method {
+                MethodKind::Sif => {
+                    let param_a = sif_embedding::sif::DEFAULT_PARAM_A;
+                    let n_components = args
+                        .n_components
+                        .unwrap_or(sif_embedding::sif::DEFAULT_N_COMPONENTS);
+                    let model =
+                        Sif::with_parameters(&word_embeddings, &unigram_lm, param_a, n_components)?;
+                    evaluate(model, &gold_scores, &sentences)?
+                }
+                MethodKind::USif => {
+                    let n_components = args
+                        .n_components
+                        .unwrap_or(sif_embedding::usif::DEFAULT_N_COMPONENTS);
+                    let model = USif::with_parameters(&word_embeddings, &unigram_lm, n_components);
+                    evaluate(model, &gold_scores, &sentences)?
+                }
+            };
             corrs.push(corr);
             println!("{file}\t{corr}");
         }
@@ -163,17 +207,16 @@ fn load_sts_data(
     Ok((gold_scores, sentences))
 }
 
-fn evaluate<W, U>(
-    sif: &Sif<W, U>,
+fn evaluate<M>(
+    model: M,
     gold_scores: &[Float],
     sentences: &[String],
 ) -> Result<Float, Box<dyn Error>>
 where
-    W: WordEmbeddings,
-    U: UnigramLanguageModel,
+    M: SentenceEmbedder,
 {
+    let (sent_embeddings, _) = model.fit_embeddings(sentences)?;
     let n_examples = gold_scores.len();
-    let sent_embeddings = sif.embeddings(sentences);
     let mut pred_scores = Vec::with_capacity(n_examples);
     for i in 0..n_examples {
         let e1 = &sent_embeddings.row(i * 2);
