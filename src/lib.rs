@@ -127,7 +127,7 @@
 //! ```
 //!
 //! A tutorial to learn how to use external pre-trained models in finalfusion and wordfreq can be found
-//! [here](https://github.com/kampersanda/sif-embedding/tree/main/examples/tutorial).
+//! [here](https://github.com/kampersanda/sif-embedding/tree/main/tutorial).
 #![deny(missing_docs)]
 
 // These declarations are required to recognize the backend.
