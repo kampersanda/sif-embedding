@@ -35,6 +35,10 @@ $ cargo run --release --features openblas -- -d data/STS -f glove.42B.300d.fifu 
 
 This command will report the Pearson correlation coefficient between the cosine similarity of the sentence embeddings and the gold scores.
 
+```
+$ sudo apt install libgsl0-dev
+```
+
 ## Experimental results
 
 We show the actual results obtained by the above procedure using `glove.42B.300d.fifu` (GloVe+WR) or `cc.en.300.bin.fifu` (fastText+WR).
@@ -47,42 +51,42 @@ We note that the mean result in 2013 does not contain that of SMT because the SM
 
 ### Pearson correlation coefficient ($\times 100$)
 
-| 2012              | sif-embedding<br>(fastText+WR) | sif-embedding<br>(GloVe+WR) | SIF-ICLR17<br>(GloVe+WR) | SimCSE<br>(unsup-simcse-<br>bert-base-uncased) | SimCSE<br>(sup-simcse-<br>bert-base-uncased) |
-| ----------------- | -----------------------------: | --------------------------: | -----------------------: | ---------------------------------------------: | -------------------------------------------: |
-| MSRpar            |                           35.4 |                        39.5 |                     35.6 |                                           63.1 |                                         62.0 |
-| MSRvid            |                           84.6 |                        84.1 |                     83.8 |                                           85.7 |                                         92.6 |
-| SMTeuroparl       |                           49.7 |                        51.2 |                     49.9 |                                           52.6 |                                         49.9 |
-| surprise.OnWN     |                           72.7 |                        71.6 |                     66.2 |                                           73.7 |                                         76.6 |
-| surprise.SMTnews  |                           54.7 |                        53.4 |                     45.6 |                                           65.5 |                                         72.9 |
-| Mean              |                           59.4 |                        60.0 |                     56.2 |                                           68.1 |                                         70.8 |
-|                   |                                |                             |                          |                                                |                                              |
-| 2013              | sif-embedding<br>(fastText+WR) | sif-embedding<br>(GloVe+WR) | SIF-ICLR17<br>(GloVe+WR) | SimCSE<br>(unsup-simcse-<br>bert-base-uncased) | SimCSE<br>(sup-simcse-<br>bert-base-uncased) |
-| FNWN              |                           54.3 |                        48.9 |                     39.4 |                                           62.2 |                                         62.9 |
-| headlines         |                           72.4 |                        73.3 |                     69.2 |                                           78.5 |                                         80.1 |
-| OnWN              |                           84.7 |                        83.6 |                     82.8 |                                           86.5 |                                         87.7 |
-| Mean              |                           70.5 |                        68.6 |                     63.8 |                                           75.7 |                                         76.9 |
-|                   |                                |                             |                          |                                                |                                              |
-| 2014              | sif-embedding<br>(fastText+WR) | sif-embedding<br>(GloVe+WR) | SIF-ICLR17<br>(GloVe+WR) | SimCSE<br>(unsup-simcse-<br>bert-base-uncased) | SimCSE<br>(sup-simcse-<br>bert-base-uncased) |
-| deft-forum        |                           46.8 |                        47.8 |                     41.2 |                                           59.2 |                                         64.8 |
-| deft-news         |                           69.8 |                        70.8 |                     69.4 |                                           78.8 |                                         82.4 |
-| headlines         |                           69.1 |                        69.7 |                     64.7 |                                           76.9 |                                         79.3 |
-| images            |                           83.8 |                        83.0 |                     82.6 |                                           81.5 |                                         89.4 |
-| OnWN              |                           85.6 |                        85.3 |                     82.8 |                                           87.9 |                                         89.5 |
-| tweet-news        |                           78.4 |                        77.6 |                     70.1 |                                           79.6 |                                         83.6 |
-| Mean              |                           72.2 |                        72.4 |                     68.5 |                                           77.3 |                                         81.5 |
-|                   |                                |                             |                          |                                                |                                              |
-| 2015              | sif-embedding<br>(fastText+WR) | sif-embedding<br>(GloVe+WR) | SIF-ICLR17<br>(GloVe+WR) | SimCSE<br>(unsup-simcse-<br>bert-base-uncased) | SimCSE<br>(sup-simcse-<br>bert-base-uncased) |
-| answers-forums    |                           69.5 |                        69.1 |                     63.9 |                                           77.2 |                                         74.5 |
-| answers-students  |                           73.3 |                        71.7 |                     70.4 |                                           73.2 |                                         74.4 |
-| belief            |                           75.6 |                        75.6 |                     71.8 |                                           81.5 |                                         85.2 |
-| headlines         |                           74.1 |                        75.3 |                     70.7 |                                           81.4 |                                         82.1 |
-| images            |                           82.5 |                        82.8 |                     81.5 |                                           84.7 |                                         92.7 |
-| Mean              |                           75.0 |                        74.9 |                     71.7 |                                           79.6 |                                         81.8 |
-|                   |                                |                             |                          |                                                |                                              |
-| 2016              | sif-embedding<br>(fastText+WR) | sif-embedding<br>(GloVe+WR) | SIF-ICLR17<br>(GloVe+WR) | SimCSE<br>(unsup-simcse-<br>bert-base-uncased) | SimCSE<br>(sup-simcse-<br>bert-base-uncased) |
-| answer-answer     |                           55.6 |                        50.4 |                          |                                           68.3 |                                         76.3 |
-| headlines         |                           72.3 |                        72.7 |                          |                                           80.1 |                                         79.5 |
-| plagiarism        |                           82.4 |                        81.3 |                          |                                           84.8 |                                         84.3 |
-| postediting       |                           83.0 |                        80.8 |                          |                                           84.9 |                                         84.5 |
-| question-question |                           72.1 |                        70.4 |                          |                                           70.4 |                                         72.9 |
-| Mean              |                           73.1 |                        71.1 |                          |                                           77.7 |                                         79.5 |
+| 2012              | Sif<br>(GloVe) | USif<br>(GloVe) | Sif<br>(fastText) | USif<br>(fastText) | SimCSE<br>(unsup-simcse-<br>bert-base-uncased) | SimCSE<br>(sup-simcse-<br>bert-base-uncased) |
+| ----------------- | -------------: | --------------: | ----------------: | -----------------: | ---------------------------------------------: | -------------------------------------------: |
+| MSRpar            |           40.7 |            42.2 |              36.9 |               43.0 |                                           63.1 |                                         62.0 |
+| MSRvid            |           84.0 |            84.1 |              84.4 |               85.2 |                                           85.7 |                                         92.6 |
+| SMTeuroparl       |           52.7 |            54.2 |              49.7 |               54.7 |                                           52.6 |                                         49.9 |
+| surprise.OnWN     |           71.8 |            70.2 |              72.8 |               71.8 |                                           73.7 |                                         76.6 |
+| surprise.SMTnews  |           53.5 |            57.0 |              54.6 |               60.7 |                                           65.5 |                                         72.9 |
+| Avg.              |           60.5 |            61.5 |              59.7 |               63.1 |                                           68.1 |                                         70.8 |
+|                   |                |                 |                   |                    |                                                |                                              |
+| 2013              | Sif<br>(GloVe) | USif<br>(GloVe) | Sif<br>(fastText) | USif<br>(fastText) | SimCSE<br>(unsup-simcse-<br>bert-base-uncased) | SimCSE<br>(sup-simcse-<br>bert-base-uncased) |
+| FNWN              |           49.0 |            53.9 |              54.6 |               55.6 |                                           62.2 |                                         62.9 |
+| headlines         |           73.3 |            74.0 |              72.4 |               74.7 |                                           78.5 |                                         80.1 |
+| OnWN              |           83.4 |            84.0 |              84.2 |               85.5 |                                           86.5 |                                         87.7 |
+| Avg.              |           68.5 |            70.6 |              70.4 |               71.9 |                                           75.7 |                                         76.9 |
+|                   |                |                 |                   |                    |                                                |                                              |
+| 2014              | Sif<br>(GloVe) | USif<br>(GloVe) | Sif<br>(fastText) | USif<br>(fastText) | SimCSE<br>(unsup-simcse-<br>bert-base-uncased) | SimCSE<br>(sup-simcse-<br>bert-base-uncased) |
+| deft-forum        |           47.9 |            48.1 |              47.1 |               48.9 |                                           59.2 |                                         64.8 |
+| deft-news         |           70.6 |            75.3 |              69.4 |               75.6 |                                           78.8 |                                         82.4 |
+| headlines         |           69.7 |            69.3 |              69.0 |               70.4 |                                           76.9 |                                         79.3 |
+| images            |           83.0 |            82.3 |              83.8 |               83.7 |                                           81.5 |                                         89.4 |
+| OnWN              |           85.1 |            85.5 |              85.2 |               87.0 |                                           87.9 |                                         89.5 |
+| tweet-news        |           77.6 |            77.1 |              78.3 |               78.2 |                                           79.6 |                                         83.6 |
+| Avg.              |           72.3 |            72.9 |              72.2 |               74.0 |                                           77.3 |                                         81.5 |
+|                   |                |                 |                   |                    |                                                |                                              |
+| 2015              | Sif<br>(GloVe) | USif<br>(GloVe) | Sif<br>(fastText) | USif<br>(fastText) | SimCSE<br>(unsup-simcse-<br>bert-base-uncased) | SimCSE<br>(sup-simcse-<br>bert-base-uncased) |
+| answers-forums    |           69.3 |            71.2 |              69.8 |               73.4 |                                           77.2 |                                         74.5 |
+| answers-students  |           73.1 |            71.0 |              74.8 |               71.0 |                                           73.2 |                                         74.4 |
+| belief            |           75.6 |            75.3 |              75.6 |               76.9 |                                           81.5 |                                         85.2 |
+| headlines         |           75.3 |            76.2 |              74.0 |               75.7 |                                           81.4 |                                         82.1 |
+| images            |           82.6 |            83.3 |              82.2 |               83.6 |                                           84.7 |                                         92.7 |
+| Avg.              |           75.2 |            75.4 |              75.3 |               76.1 |                                           79.6 |                                         81.8 |
+|                   |                |                 |                   |                    |                                                |                                              |
+| 2016              | Sif<br>(GloVe) | USif<br>(GloVe) | Sif<br>(fastText) | USif<br>(fastText) | SimCSE<br>(unsup-simcse-<br>bert-base-uncased) | SimCSE<br>(sup-simcse-<br>bert-base-uncased) |
+| answer-answer     |           50.6 |            49.5 |              56.9 |               52.8 |                                           68.3 |                                         76.3 |
+| headlines         |           72.6 |            73.0 |              72.1 |               73.5 |                                           80.1 |                                         79.5 |
+| plagiarism        |           81.8 |            82.6 |              83.0 |               84.9 |                                           84.8 |                                         84.3 |
+| postediting       |           80.4 |            81.3 |              82.6 |               83.9 |                                           84.9 |                                         84.5 |
+| question-question |           70.1 |            71.5 |              71.5 |               73.8 |                                           70.4 |                                         72.9 |
+| Avg.              |           71.1 |            71.6 |              73.2 |               73.8 |                                           77.7 |                                         79.5 |

@@ -144,16 +144,17 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut preprocessor = Preprocessor::new();
 
+    println!("year\tfile\tpearson\tspearman");
     for (year, files) in corpora {
-        println!("{year}");
-        let mut corrs = vec![];
+        let mut pearsons = vec![];
+        let mut spearmans = vec![];
         for &file in &files {
             let gs_file = format!("{data_dir}/{year}/STS.gs.{file}.txt");
             let input_file = format!("{data_dir}/{year}/STS.input.{file}.txt");
             let (gold_scores, sentences) = load_sts_data(&gs_file, &input_file)?;
             eprintln!("file = {}, n_examples = {}", file, gold_scores.len());
             let sentences: Vec<_> = sentences.iter().map(|s| preprocessor.apply(s)).collect();
-            let corr = match args.method {
+            let (pearson, spearman) = match args.method {
                 MethodKind::Sif => {
                     let param_a = sif_embedding::sif::DEFAULT_PARAM_A;
                     let n_components = args
@@ -171,12 +172,13 @@ fn main() -> Result<(), Box<dyn Error>> {
                     evaluate(model, &gold_scores, &sentences)?
                 }
             };
-            corrs.push(corr);
-            println!("{file}\t{corr}");
+            pearsons.push(pearson);
+            spearmans.push(spearman);
+            println!("{year}\t{file}\t{pearson}\t{spearman}");
         }
-        let mean = corrs.iter().sum::<f64>() / corrs.len() as f64;
-        println!("Avg.\t{mean}");
-        println!();
+        let mean_pearson = pearsons.iter().sum::<f64>() / pearsons.len() as f64;
+        let mean_spearman = spearmans.iter().sum::<f64>() / spearmans.len() as f64;
+        println!("{year}\tAvg.\t{mean_pearson}\t{mean_spearman}");
     }
 
     Ok(())
@@ -211,7 +213,11 @@ fn load_sts_data(
     Ok((gold_scores, sentences))
 }
 
-fn evaluate<M>(model: M, gold_scores: &[f64], sentences: &[String]) -> Result<f64, Box<dyn Error>>
+fn evaluate<M>(
+    model: M,
+    gold_scores: &[f64],
+    sentences: &[String],
+) -> Result<(f64, f64), Box<dyn Error>>
 where
     M: SentenceEmbedder,
 {
@@ -221,17 +227,21 @@ where
     for i in 0..n_examples {
         let e1 = &sent_embeddings.row(i * 2);
         let e2 = &sent_embeddings.row(i * 2 + 1);
-        let score = util::cosine_similarity(e1, e2).unwrap_or(0.) as f64; // ok?
+        let score = util::cosine_similarity(e1, e2).unwrap_or(-1.) as f64; // ok?
         pred_scores.push(score);
     }
-    Ok(pearson_correlation(&pred_scores, gold_scores))
+    let pearson = pearson_correlation(&pred_scores, gold_scores);
+    let spearman = spearman_correlation(&pred_scores, gold_scores);
+    Ok((pearson, spearman))
 }
 
 fn pearson_correlation(s1: &[f64], s2: &[f64]) -> f64 {
     assert_eq!(s1.len(), s2.len());
-    // let concat = [s1, s2].concat();
-    // let scores = Array2::from_shape_vec((2, s1.len()), concat).unwrap();
-    // let corr = scores.pearson_correlation().unwrap();
-    // corr[[0, 1]]
     rgsl::statistics::correlation(s1, 1, s2, 1, s1.len())
+}
+
+fn spearman_correlation(s1: &[f64], s2: &[f64]) -> f64 {
+    assert_eq!(s1.len(), s2.len());
+    let mut work = Vec::with_capacity(2 * s1.len());
+    rgsl::statistics::spearman(s1, 1, s2, 1, s1.len(), &mut work)
 }
