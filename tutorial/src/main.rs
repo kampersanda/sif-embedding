@@ -14,7 +14,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 use finalfusion::prelude::*;
-use wordfreq_model::{self, ModelKind};
+use wordfreq_model::ModelKind;
 
 use sif_embedding::SentenceEmbedder;
 use sif_embedding::Sif;

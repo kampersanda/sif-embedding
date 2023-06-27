@@ -1,30 +1,61 @@
 # Tutorial on sif-embedding
 
-This directory provides a tutorial for getting started with sif-embedding.
+This directory provides an example crate and aims to at least get you started with sif-embedding by looking here.
+This tutorial assumes that you will compute embeddings for English sentences using several public resources.
 
-This tutorial focuses on preparing input models and providing a simple example code of sentence embeddings.
-See the [documentation](https://docs.rs/sif-embedding/) for the specifications in `Cargo.toml`.
+Note that the specifications of this and related libraries are not described here.
 
 ## Preparation
 
-sif-embedding, or the SIF algorithm, requires the following two components as input:
+sif-embedding requires the following two components as input:
 
 1. Word embeddings
 2. Word probabilities (or unigram language models)
 
-Here, we describe how to use [finalfusion](https://docs.rs/finalfusion/) and [wordfreq](https://docs.rs/wordfreq/latest/wordfreq/) for these components, respectively.
-You can prepare the pre-trained models as follows.
+We describe how to use [finalfusion](https://docs.rs/finalfusion/) and [wordfreq](https://docs.rs/wordfreq/latest/wordfreq/) for these components, respectively.
 
 ### Word embeddings
 
-[finalfusion](https://docs.rs/finalfusion/) is a library to handle different types of word embeddings such as Glove and fastText.
+[finalfusion](https://docs.rs/finalfusion/) is a library to handle different types of word embeddings such as GloVe and fastText.
 [finalfusion-tools](../../finalfusion-tools) provides instructions to download and compile those pre-trained word embeddings.
+Follow the instructions and prepare a model of pre-trained word embeddings in the finalfusion format.
+
+Here, we assume that you have prepared a GloVe model `glove.42B.300d.fifu` in the current directory.
+Specify the dependency in `Cargo.toml` as follows:
+
+```toml
+[dependencies]
+finalfusion = "0.17.2"
+```
+
+Then, the model can be loaded with few lines of code as follows:
+
+```rust
+use finalfusion::prelude::*;
+
+let mut reader = BufReader::new(File::open("glove.42B.300d.fifu")?);
+let word_embeddings = Embeddings::<VocabWrap, StorageWrap>::mmap_embeddings(&mut reader)?;
+```
 
 ### Word probabilities
 
 [wordfreq](https://docs.rs/wordfreq/latest/wordfreq/) is a library to look up the frequencies of words.
 [wordfreq-model](https://docs.rs/wordfreq-model/) allows you to load pre-compiled models in many languages trained from various resources.
-See the [documentation](https://docs.rs/wordfreq-model/) for getting started.
+
+If you want to use the English model, specify the dependency in `Cargo.toml` as follows:
+
+```toml
+[dependencies]
+wordfreq-model = { version = "0.2.3", features = ["large-en"] }
+```
+
+Then, the model can be loaded with few lines of code as follows:
+
+```rust
+use wordfreq_model::ModelKind;
+
+let word_probs = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
+```
 
 ## Sentence embedding
 
