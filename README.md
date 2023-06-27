@@ -20,7 +20,7 @@ https://docs.rs/sif-embedding/
 
 ## Getting started
 
-See [examples/tutorial](./examples/tutorial).
+See [tutorial](./tutorial).
 
 ## Evaluations
 
