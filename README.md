@@ -24,7 +24,7 @@ See [tutorial](./tutorial).
 
 ## Evaluations
 
-[evaluations](./evaluations/) provides tools to evaluate sif-embedding on several evaluation tasks.
+[evaluations](./evaluations/) provides tools to evaluate sif-embedding on several tasks.
 
 ## Wiki
 
