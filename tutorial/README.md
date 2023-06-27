@@ -57,21 +57,82 @@ use wordfreq_model::ModelKind;
 let word_probs = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
 ```
 
-## Sentence embedding
+## Basic usage of sif-embedding
 
-Assuming that you have prepared word embedding model `glove.42B.300d.fifu` and specified `features = ["large-en"]`  in wordfreq-model,
-sentence embeddings can be performed for input lines as follows:
+### Plugging in external libraries
 
-```shell
-$ cargo run --release --features openblas -- -f glove.42B.300d.fifu
-[[0.0015605423, -0.009350954, 0.0045850407, -0.0023774623, -0.005104989, ..., -0.0021531796, -0.0049471697, -0.0047046337, 0.00046235695, 0.007420418],
- [0.00095811766, 0.0077166725, -0.0046481024, 0.0014976687, 0.0034232885, ..., -0.0023950897, -0.0035641948, -0.00756339, -0.0003676638, -0.0021527726],
- [-0.0028154051, -0.00013797358, 0.0011601038, 0.0005516759, 0.000922475, ..., 0.0052407943, 0.009591073, 0.014395955, -1.0702759e-5, -0.004908829]], shape=[3, 300], strides=[300, 1], layout=Cc (0x5), const ndim=2
-[[0.00035341084, -0.0054921675, 0.0015013912, -0.0015475352, -0.0036347732, ..., -0.006240675, -0.0066263573, -0.004742044, 0.008010669, 0.00335777],
- [-9.8407036e-5, 0.0073085483, -0.0054234676, 0.0013588136, 0.0027614273, ..., -0.0064221052, -0.0055891275, -0.0068861144, 0.007388141, -0.00382212]], shape=[2, 300], strides=[300, 1], layout=Cc (0x5), const ndim=2
+By enabling the `finalfusion` and `wordfreq` features, the above external libraries can be plugged into sif-embedding.
+
+```toml
+[dependencies.sif-embedding]
+version = "0.4.0"
+features = ["finalfusion", "wordfreq"]
+default-features = false
 ```
 
-[src/main.rs](./src/main.rs) will be a good example to understand how to handle the models and compute sentence embeddings.
+### Specifying a backend for linear algebra
+
+You also need to specify a backend option for linear algebra from one of [openblas-src](https://github.com/blas-lapack-rs/openblas-src), [netlib-src](https://github.com/blas-lapack-rs/netlib-src), and [intel-mkl-src](https://github.com/rust-math/intel-mkl-src).
+
+If you want to use openblas-src with static linking, specify the dependencies in `Cargo.toml` as follows:
+
+```toml
+[dependencies.sif-embedding]
+version = "0.4.0"
+features = ["finalfusion", "wordfreq", "openblas-static"]
+default-features = false
+
+[dependencies.openblas-src]
+version = "0.10.4"
+features = ["cblas", "static"]
+default-features = false
+```
+
+Then, declare it to be recognized at the root of your crate.
+
+```rust
+extern crate openblas_src as _src;
+```
+
+### Computing sentence embeddings
+
+You can compute sentence embeddings as follows:
+
+```rust
+use sif_embedding::SentenceEmbedder;
+use sif_embedding::Sif;
+
+let sentences = vec![
+    "This is a sentence.",
+    "This is another sentence.",
+    "This is a third sentence.",
+];
+let model = Sif::new(&word_embeddings, &word_probs);
+let (sent_embeddings, model) = model.fit_embeddings(&sentences)?;
+println!("{:?}", sent_embeddings);
+```
+
+`sent_embeddings` is a 2D-array of shape `(#sentences, #dimensions)`.
+
+The returned `model` maintains the parameters estimated from the input sentences.
+You can use it to compute embeddings for new sentences as follows:
+
+```rust
+let new_sentences = vec!["This is a new sentence.", "This is another new sentence."];
+let sent_embeddings = model.embeddings(new_sentences)?;
+println!("{:?}", sent_embeddings);
+```
+
+The fitted model will be useful for handling additional fewer sentences.
+
+## Example
+
+[src/main.rs](./src/main.rs) and [Cargo.toml](./Cargo.toml) are actual examples of the above tutorial.
+You can run it with the following command:
+
+```shell
+$ cargo run --release --features openblas-static -- -f glove.42B.300d.fifu
+```
 
 ## Tips
 

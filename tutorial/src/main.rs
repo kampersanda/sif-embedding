@@ -51,9 +51,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let (sent_embeddings, model) = model.fit_embeddings(&sentences)?;
     println!("{:?}", sent_embeddings);
 
+    // Prepare new input sentences.
+    let new_sentences = vec!["This is a new sentence.", "This is another new sentence."];
+
     // The fitted model can be used to compute sentence embeddings for new sentences.
-    let sent_embeddings =
-        model.embeddings(["This is a new sentence.", "This is another new sentence."])?;
+    let sent_embeddings = model.embeddings(new_sentences)?;
     println!("{:?}", sent_embeddings);
 
     Ok(())

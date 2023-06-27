@@ -1,6 +1,6 @@
 [package]
 name = "sif-embedding"
-# NOTE(kampersanda): Do not forget to update the version number in `lib.rs` as well.
+# NOTE(kampersanda): Do not forget to update the version number in `lib.rs` and `README` in tutorial as well.
 version = "0.4.0"
 authors = ["Shunsuke Kanda (kampersanda) <shnsk.knd@gmail.com>"]
 description = "Smooth inverse frequency (SIF), a simple but powerful embedding technique for sentences"
