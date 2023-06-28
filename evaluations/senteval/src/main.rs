@@ -147,7 +147,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     for (year, files) in corpora {
         let mut pearsons = vec![];
         let mut spearmans = vec![];
-
         println!("year\tfile\tpearson\tspearman");
         for &file in &files {
             let gs_file = format!("{data_dir}/{year}/STS.gs.{file}.txt");
