@@ -144,10 +144,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut preprocessor = Preprocessor::new();
 
-    println!("year\tfile\tpearson\tspearman");
     for (year, files) in corpora {
         let mut pearsons = vec![];
         let mut spearmans = vec![];
+
+        println!("year\tfile\tpearson\tspearman");
         for &file in &files {
             let gs_file = format!("{data_dir}/{year}/STS.gs.{file}.txt");
             let input_file = format!("{data_dir}/{year}/STS.input.{file}.txt");
@@ -179,6 +180,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mean_pearson = pearsons.iter().sum::<f64>() / pearsons.len() as f64;
         let mean_spearman = spearmans.iter().sum::<f64>() / spearmans.len() as f64;
         println!("{year}\tAvg.\t{mean_pearson}\t{mean_spearman}");
+        println!("")
     }
 
     Ok(())
