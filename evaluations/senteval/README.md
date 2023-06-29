@@ -2,6 +2,12 @@
 
 Here, we provide a tool to evaluate this library on [SentEval STS Task](https://github.com/princeton-nlp/SimCSE/tree/main/SentEval) provided by the [SimCSE](https://github.com/princeton-nlp/SimCSE) repository.
 
+## Requirements
+
+This tool employs [rust-GSL](https://github.com/GuillaumeGomez/rust-GSL)
+to compute Pearson's and Spearman's correlation coefficients.
+You need to install the GSL library, following https://crates.io/crates/GSL/6.0.0.
+
 ## Evaluation steps
 
 We show steps to run the evaluation, assuming you are at this directory.
@@ -21,35 +27,28 @@ We will use the data under the `data/STS` directory (STS12-16).
 ### 2. Prepare pretrained word embeddings
 
 You need to prepare pretrained word embeddings in [finalfusion](https://docs.rs/finalfusion/) format.
-Prepare a model following [finalfusion-tools/README.md](../../finalfusion-tools/README.md).
+Prepare a model following [finalfusion-tools](../../finalfusion-tools).
 
 Here, we assume that you have `glove.42B.300d.fifu` in the current directory.
 
 ### 3. Evaluate
 
-Run the following command:
+`src/main.rs` provides evaluation for the SIF and uSIF algorithms.
+Run the following commands:
 
 ```shell
-$ cargo run --release --features openblas -- -d data/STS -f glove.42B.300d.fifu > score.tsv
+$ cargo run --release --features openblas -- -d data/STS -f glove.42B.300d.fifu -m sif > sif-score.tsv
+$ cargo run --release --features openblas -- -d data/STS -f glove.42B.300d.fifu -m usif > usif-score.tsv
 ```
 
-This command will report the Pearson correlation coefficient between the cosine similarity of the sentence embeddings and the gold scores.
-
-```
-$ sudo apt install libgsl0-dev
-```
+This command will report the Pearson's and Spearman's correlation coefficients between the cosine similarity of the sentence embeddings and the gold scores.
 
 ## Experimental results
 
-We show the actual results obtained by the above procedure using `glove.42B.300d.fifu` (GloVe+WR) or `cc.en.300.bin.fifu` (fastText+WR).
+We show the results obtained by the above procedure using `glove.42B.300d.fifu` (GloVe) or `cc.en.300.bin.fifu` (fastText).
 
-As baseline methods, we also show the following results:
-- SIF-ICLR17: Obtained from the original SIF paper (Table 5 in [ICLR 2017](https://openreview.net/forum?id=SyK00v5xx)).
-- SimCSE: Obtained by the evaluation tool in the [SimCSE](https://github.com/princeton-nlp/SimCSE) repository.
-  - unsup-simcse-bert-base-uncased
-  - sup-simcse-bert-base-uncased
-
-We note that the mean result in 2013 does not contain that of SMT because the SMT dataset is not available.
+As baseline methods, we also show the results of SimCSE obtained by the evaluation tool in [original repository](https://github.com/princeton-nlp/SimCSE).
+We evaluated two models: `unsup-simcse-bert-base-uncased` and `sup-simcse-bert-base-uncased`.
 
 ### Pearson's correlation coefficient ($\times 100$)
 
