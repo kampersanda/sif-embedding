@@ -179,7 +179,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mean_pearson = pearsons.iter().sum::<f64>() / pearsons.len() as f64;
         let mean_spearman = spearmans.iter().sum::<f64>() / spearmans.len() as f64;
         println!("{year}\tAvg.\t{mean_pearson}\t{mean_spearman}");
-        println!("")
+        println!()
     }
 
     Ok(())
