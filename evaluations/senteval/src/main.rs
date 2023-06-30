@@ -13,10 +13,7 @@ use std::str::FromStr;
 
 use clap::Parser;
 use finalfusion::prelude::*;
-use ndarray::Array2;
-use ndarray_stats::CorrelationExt;
 use sif_embedding::util;
-use sif_embedding::Float;
 use sif_embedding::SentenceEmbedder;
 use sif_embedding::Sif;
 use sif_embedding::USif;
@@ -62,12 +59,9 @@ struct Preprocessor {
 
 impl Preprocessor {
     fn new() -> Self {
-        let analyzer = TextAnalyzer::builder(SimpleTokenizer::default())
-            .filter(RemoveLongFilter::limit(40))
-            .filter(LowerCaser)
-            // .filter(StopWordFilter::new(Language::English).unwrap())
-            // .filter(Stemmer::new(Language::English))
-            .build();
+        // NOTE: Since senteval.tar provided at https://huggingface.co/datasets/princeton-nlp/datasets-for-simcse
+        // has been preprocessed (such as lowercasing), we only need simple tokenization for punctuation.
+        let analyzer = TextAnalyzer::builder(SimpleTokenizer::default()).build();
         Self { analyzer }
     }
 
@@ -105,7 +99,16 @@ fn main() -> Result<(), Box<dyn Error>> {
                 "surprise.SMTnews",
             ],
         ),
-        ("STS13-en-test", vec!["FNWN", "headlines", "OnWN"]),
+        (
+            "STS13-en-test",
+            vec![
+                "FNWN",
+                "headlines",
+                "OnWN",
+                // This dataset is not provided due to the license issue.
+                // "SMT",
+            ],
+        ),
         (
             "STS14-en-test",
             vec![
@@ -140,16 +143,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     ];
 
     let mut preprocessor = Preprocessor::new();
+
     for (year, files) in corpora {
-        println!("{year}");
-        let mut corrs = vec![];
+        let mut pearsons = vec![];
+        let mut spearmans = vec![];
+        println!("year\tfile\tpearson\tspearman");
         for &file in &files {
             let gs_file = format!("{data_dir}/{year}/STS.gs.{file}.txt");
             let input_file = format!("{data_dir}/{year}/STS.input.{file}.txt");
             let (gold_scores, sentences) = load_sts_data(&gs_file, &input_file)?;
             eprintln!("file = {}, n_examples = {}", file, gold_scores.len());
             let sentences: Vec<_> = sentences.iter().map(|s| preprocessor.apply(s)).collect();
-            let corr = match args.method {
+            let (pearson, spearman) = match args.method {
                 MethodKind::Sif => {
                     let param_a = sif_embedding::sif::DEFAULT_PARAM_A;
                     let n_components = args
@@ -167,12 +172,14 @@ fn main() -> Result<(), Box<dyn Error>> {
                     evaluate(model, &gold_scores, &sentences)?
                 }
             };
-            corrs.push(corr);
-            println!("{file}\t{corr}");
+            pearsons.push(pearson);
+            spearmans.push(spearman);
+            println!("{year}\t{file}\t{pearson}\t{spearman}");
         }
-        let mean = corrs.iter().sum::<Float>() / corrs.len() as Float;
-        println!("Avg.\t{mean}");
-        println!();
+        let mean_pearson = pearsons.iter().sum::<f64>() / pearsons.len() as f64;
+        let mean_spearman = spearmans.iter().sum::<f64>() / spearmans.len() as f64;
+        println!("{year}\tAvg.\t{mean_pearson}\t{mean_spearman}");
+        println!()
     }
 
     Ok(())
@@ -181,7 +188,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn load_sts_data(
     gs_path: &str,
     input_path: &str,
-) -> Result<(Vec<Float>, Vec<String>), Box<dyn Error>> {
+) -> Result<(Vec<f64>, Vec<String>), Box<dyn Error>> {
     let gs_lines: Vec<String> = BufReader::new(File::open(gs_path)?)
         .lines()
         .map(|l| l.unwrap())
@@ -198,7 +205,7 @@ fn load_sts_data(
         if gs_line.is_empty() {
             continue;
         }
-        gold_scores.push(gs_line.parse::<Float>()?);
+        gold_scores.push(gs_line.parse::<f64>()?);
         let cols: Vec<_> = input_line.split('\t').collect();
         assert_eq!(cols.len(), 2);
         sentences.push(cols[0].to_string());
@@ -209,9 +216,9 @@ fn load_sts_data(
 
 fn evaluate<M>(
     model: M,
-    gold_scores: &[Float],
+    gold_scores: &[f64],
     sentences: &[String],
-) -> Result<Float, Box<dyn Error>>
+) -> Result<(f64, f64), Box<dyn Error>>
 where
     M: SentenceEmbedder,
 {
@@ -221,16 +228,21 @@ where
     for i in 0..n_examples {
         let e1 = &sent_embeddings.row(i * 2);
         let e2 = &sent_embeddings.row(i * 2 + 1);
-        let score = util::cosine_similarity(e1, e2).unwrap_or(0.); // ok?
+        let score = util::cosine_similarity(e1, e2).unwrap_or(-1.) as f64; // ok?
         pred_scores.push(score);
     }
-    Ok(pearson_correlation(&pred_scores, gold_scores))
+    let pearson = pearson_correlation(&pred_scores, gold_scores);
+    let spearman = spearman_correlation(&pred_scores, gold_scores);
+    Ok((pearson, spearman))
 }
 
-fn pearson_correlation(s1: &[Float], s2: &[Float]) -> Float {
+fn pearson_correlation(s1: &[f64], s2: &[f64]) -> f64 {
     assert_eq!(s1.len(), s2.len());
-    let concat = [s1, s2].concat();
-    let scores = Array2::from_shape_vec((2, s1.len()), concat).unwrap();
-    let corr = scores.pearson_correlation().unwrap();
-    corr[[0, 1]]
+    rgsl::statistics::correlation(s1, 1, s2, 1, s1.len())
+}
+
+fn spearman_correlation(s1: &[f64], s2: &[f64]) -> f64 {
+    assert_eq!(s1.len(), s2.len());
+    let mut work = Vec::with_capacity(2 * s1.len());
+    rgsl::statistics::spearman(s1, 1, s2, 1, s1.len(), &mut work)
 }
