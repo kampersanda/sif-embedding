@@ -81,13 +81,7 @@ default-features = false
 approx = "0.5.1"
 
 [workspace]
-members = [
-    "finalfusion-tools",
-    "evaluations/law-ai",
-    "evaluations/livedoor-news",
-    "evaluations/senteval",
-    "tutorial",
-]
+members = ["finalfusion-tools", "evaluations/senteval", "tutorial"]
 
 [package.metadata.docs.rs]
 features = ["docs"]
