@@ -182,15 +182,6 @@ pub trait WordProbabilities {
 }
 
 /// Common behavior of our models for sentence embeddings.
-///
-/// Since SIF (or uSIF) is an unsupervised learning algorithm, one might think it odd to have a fitting function.
-/// However, it estimates common components from input sentences, and these can be regarded as models.
-///
-/// If you want to use the estimated components for other sentences,
-/// compute a model using [`Self::fit`] and then use [`Self::embeddings`].
-///
-/// If you want to perform straightforward embeddings as described in the papers,
-/// use [`Self::fit_embeddings`].
 pub trait SentenceEmbedder: Sized {
     /// Returns the number of dimensions for sentence embeddings.
     fn embedding_size(&self) -> usize;
