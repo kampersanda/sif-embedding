@@ -63,8 +63,6 @@ struct Args {
 
 #[derive(Deserialize)]
 struct JstsExample {
-    _sentence_pair_id: String,
-    _yjcaptions_id: String,
     sentence1: String,
     sentence2: String,
     label: f64,
@@ -112,7 +110,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             evaluate(model, &gold_scores, &sentences)?
         }
     };
-    println!("{pearson}\t{spearman}");
+    println!("Pearson  = {pearson:.3}");
+    println!("Spearman = {spearman:.3}");
 
     Ok(())
 }
