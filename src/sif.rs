@@ -76,12 +76,11 @@ pub const DEFAULT_N_COMPONENTS: usize = 1;
 ///
 /// ## Only SIF weighting
 ///
-/// If you want to manually set the parameters, use [`Sif::with_parameters`].
-///
-/// The following example shows the case setting `n_components` to `0` and removing no common components.
-/// In other words, only the SIF weighting is applied to the input sentences.
+/// If you want to apply only the SIF weighting to avoid the computation of common components,
+/// use [`Sif::with_parameters`] and set `n_components` to `0`.
 /// In this case, you can skip [`Sif::fit`] and directly perform [`Sif::embeddings`]
-/// (although the quarity of the embeddings may be worse).
+/// because there is no parameter to fit
+/// (although the quality of the embeddings may be worse).
 ///
 /// ```
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -357,6 +356,29 @@ where
         let sent_embeddings =
             util::remove_principal_components(&sent_embeddings, common_components, None);
         Ok(sent_embeddings)
+    }
+
+    /// Fits the model with input sentences and computes embeddings using it,
+    /// providing the same behavior as performing [`Self::fit`] and then [`Self::embeddings`].
+    fn fit_embeddings<S>(mut self, sentences: &[S]) -> Result<(Array2<Float>, Self)>
+    where
+        S: AsRef<str>,
+    {
+        if sentences.is_empty() {
+            return Err(anyhow!("Input sentences must not be empty."));
+        }
+        // SIF-weighting.
+        let sent_embeddings = self.weighted_embeddings(sentences);
+        if self.n_components == 0 {
+            return Ok((sent_embeddings, self));
+        }
+        // Common component removal.
+        let (_, common_components) =
+            util::principal_components(&sent_embeddings, self.n_components);
+        let sent_embeddings =
+            util::remove_principal_components(&sent_embeddings, &common_components, None);
+        self.common_components = Some(common_components);
+        Ok((sent_embeddings, self))
     }
 }
 
