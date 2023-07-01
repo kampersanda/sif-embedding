@@ -45,6 +45,7 @@ test = ["finalfusion", "wordfreq", "openblas-system"]
 
 [dependencies]
 anyhow = "1.0"
+bincode = "1.3.3"
 # NOTE(kampersanda): Do not forget to update the version number in `lib.rs` as well.
 finalfusion = { version = "0.17.2", optional = true }
 # NOTE(kampersanda): Do not forget to update the version number in `lib.rs` as well.
@@ -52,7 +53,7 @@ wordfreq = { version = "0.2.3", optional = true }
 
 [dependencies.ndarray]
 version = "0.15.6"
-features = ["approx-0_5", "blas", "std"]
+features = ["approx-0_5", "blas", "serde", "std"]
 default-features = false
 
 [dependencies.ndarray-linalg]

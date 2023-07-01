@@ -30,15 +30,6 @@ See [tutorial](./tutorial).
 
 [Trouble shooting](https://github.com/kampersanda/sif-embedding/wiki/Trouble-shooting): Tips on how to resolve errors I faced in my environment.
 
-## TODO
-
-- [x] Add the unsupervised SIF described in [the paper](https://aclanthology.org/W18-3012/).
-- [x] Support [fastText](https://fasttext.cc/) models for word embeddings.
-- [x] Provide pre-compiled unigram language models.
-- [ ] Provide serialization options for trained parameters.
-- [ ] Provide Python binding
-- [ ] Conduct more evaluations.
-
 ## Licensing
 
 Licensed under either of
