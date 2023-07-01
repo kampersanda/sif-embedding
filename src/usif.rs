@@ -355,6 +355,8 @@ where
             self.weights = Some(weights);
             self.common_components = Some(common_components);
         }
+        // NOTE: There is no need to set weights and common_components to None.
+        //       because n_components can be set up only in initialization.
         Ok(self)
     }
 
@@ -385,6 +387,42 @@ where
         let sent_embeddings =
             util::remove_principal_components(&sent_embeddings, common_components, Some(weights));
         Ok(sent_embeddings)
+    }
+
+    /// Fits the model with input sentences and computes embeddings using it,
+    /// providing the same behavior as performing [`Self::fit`] and then [`Self::embeddings`].
+    fn fit_embeddings<S>(mut self, sentences: &[S]) -> Result<(Array2<Float>, Self)>
+    where
+        S: AsRef<str>,
+    {
+        if sentences.is_empty() {
+            return Err(anyhow!("Input sentences must not be empty."));
+        }
+        // SIF-weighting.
+        let sent_len = self.average_sentence_length(sentences);
+        if sent_len == 0. {
+            return Err(anyhow!("Input sentences must not be empty."));
+        }
+        let param_a = self.estimate_param_a(sent_len);
+        let sent_embeddings = self.weighted_embeddings(sentences, param_a);
+        self.param_a = Some(param_a);
+        // Common component removal.
+        let sent_embeddings = if self.n_components != 0 {
+            let (weights, common_components) = self.estimate_principal_components(&sent_embeddings);
+            let sent_embeddings = util::remove_principal_components(
+                &sent_embeddings,
+                &common_components,
+                Some(&weights),
+            );
+            self.weights = Some(weights);
+            self.common_components = Some(common_components);
+            sent_embeddings
+        } else {
+            // NOTE: There is no need to set weights and common_components to None.
+            //       because n_components can be set up only in initialization.
+            sent_embeddings
+        };
+        Ok((sent_embeddings, self))
     }
 }
 
