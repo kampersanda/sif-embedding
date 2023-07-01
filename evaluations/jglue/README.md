@@ -59,7 +59,7 @@ This command will report the Pearson's and Spearman's correlation coefficients b
 
 We show the results obtained by the above procedure for the `valid-v1.1.json` file.
 
-| Alg. | Pearson's | Spearman's |
-| ---- | --------: | ---------: |
-| SIF  |     0.793 |      0.746 |
-| uSIF |     0.813 |      0.760 |
+| Method | Pearson's | Spearman's |
+| ------ | --------: | ---------: |
+| SIF    |     0.793 |      0.746 |
+| uSIF   |     0.813 |      0.760 |
