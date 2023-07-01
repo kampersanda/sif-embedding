@@ -358,6 +358,29 @@ where
             util::remove_principal_components(&sent_embeddings, common_components, None);
         Ok(sent_embeddings)
     }
+
+    /// Fits the model with input sentences and computes embeddings using it,
+    /// providing the same behavior as performing [`Self::fit`] and then [`Self::embeddings`].
+    fn fit_embeddings<S>(mut self, sentences: &[S]) -> Result<(Array2<Float>, Self)>
+    where
+        S: AsRef<str>,
+    {
+        if sentences.is_empty() {
+            return Err(anyhow!("Input sentences must not be empty."));
+        }
+        // SIF-weighting.
+        let sent_embeddings = self.weighted_embeddings(sentences);
+        if self.n_components == 0 {
+            return Ok((sent_embeddings, self));
+        }
+        // Common component removal.
+        let (_, common_components) =
+            util::principal_components(&sent_embeddings, self.n_components);
+        let sent_embeddings =
+            util::remove_principal_components(&sent_embeddings, &common_components, None);
+        self.common_components = Some(common_components);
+        Ok((sent_embeddings, self))
+    }
 }
 
 #[cfg(test)]
