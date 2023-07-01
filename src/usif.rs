@@ -72,6 +72,37 @@ const FLOAT_0_5: Float = 0.5;
 /// # }
 /// ```
 ///
+/// ## Only uSIF weighting
+///
+/// If you want to apply only the uSIF weighting to avoid the computation of common components,
+/// use [`USif::with_parameters`] and set `n_components` to `0`.
+///
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use std::io::BufReader;
+///
+/// use finalfusion::compat::text::ReadText;
+/// use finalfusion::embeddings::Embeddings;
+/// use wordfreq::WordFreq;
+///
+/// use sif_embedding::{USif, SentenceEmbedder};
+///
+/// // Loads word embeddings from a pretrained model.
+/// let word_embeddings_text = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
+/// let mut reader = BufReader::new(word_embeddings_text.as_bytes());
+/// let word_embeddings = Embeddings::read_text(&mut reader)?;
+///
+/// // Loads word probabilities from a pretrained model.
+/// let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
+///
+/// // When setting `n_components` to `0`, no common components are removed.
+/// let model = USif::with_parameters(&word_embeddings, &word_probs, 0);
+/// let (sent_embeddings, _) = model.fit_embeddings(&["las vegas", "mega vegas"])?;
+/// assert_eq!(sent_embeddings.shape(), &[2, 3]);
+/// # Ok(())
+/// # }
+/// ```
+///
 /// ## Serialization of fitted parameters
 ///
 /// If you want to serialize and deserialize the fitted parameters,

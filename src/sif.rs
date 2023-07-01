@@ -76,12 +76,11 @@ pub const DEFAULT_N_COMPONENTS: usize = 1;
 ///
 /// ## Only SIF weighting
 ///
-/// If you want to manually set the parameters, use [`Sif::with_parameters`].
-///
-/// The following example shows the case setting `n_components` to `0` and removing no common components.
-/// In other words, only the SIF weighting is applied to the input sentences.
+/// If you want to apply only the SIF weighting to avoid the computation of common components,
+/// use [`Sif::with_parameters`] and set `n_components` to `0`.
 /// In this case, you can skip [`Sif::fit`] and directly perform [`Sif::embeddings`]
-/// (although the quarity of the embeddings may be worse).
+/// because there is no parameter to fit
+/// (although the quality of the embeddings may be worse).
 ///
 /// ```
 /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
