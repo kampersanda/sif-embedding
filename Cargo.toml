@@ -85,6 +85,7 @@ approx = "0.5.1"
 members = [
     "finalfusion-tools",
     "evaluations/jglue",
+    "evaluations/livedoor-news",
     "evaluations/senteval",
     "tutorial",
 ]
