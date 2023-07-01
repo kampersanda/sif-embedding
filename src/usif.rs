@@ -238,6 +238,36 @@ where
         let singular_weights = singular_weights.to_owned() / singular_weights.sum();
         (singular_weights, singular_vectors)
     }
+
+    /// Serializes the model.
+    pub fn serialize(&self) -> Result<Vec<u8>> {
+        let mut bytes = Vec::new();
+        bincode::serialize_into(&mut bytes, &self.n_components)?;
+        bincode::serialize_into(&mut bytes, &self.param_a)?;
+        bincode::serialize_into(&mut bytes, &self.weights)?;
+        bincode::serialize_into(&mut bytes, &self.common_components)?;
+        bincode::serialize_into(&mut bytes, &self.separator)?;
+        Ok(bytes)
+    }
+
+    /// Deserializes the model.
+    pub fn deserialize(bytes: &[u8], word_embeddings: &'w W, word_probs: &'p P) -> Result<Self> {
+        let mut bytes = bytes;
+        let n_components = bincode::deserialize_from(&mut bytes)?;
+        let param_a = bincode::deserialize_from(&mut bytes)?;
+        let weights = bincode::deserialize_from(&mut bytes)?;
+        let common_components = bincode::deserialize_from(&mut bytes)?;
+        let separator = bincode::deserialize_from(&mut bytes)?;
+        Ok(Self {
+            word_embeddings,
+            word_probs,
+            n_components,
+            param_a,
+            weights,
+            common_components,
+            separator,
+        })
+    }
 }
 
 impl<'w, 'p, W, P> SentenceEmbedder for USif<'w, 'p, W, P>
@@ -423,5 +453,23 @@ mod tests {
         let sif = sif.fit(&Vec::<&str>::new());
 
         assert!(sif.is_err());
+    }
+
+    #[test]
+    fn test_io() {
+        let word_embeddings = SimpleWordEmbeddings {};
+        let word_probs = SimpleWordProbabilities {};
+
+        let sentences = ["A BB CCC DDDD", "BB CCC", "A B C", "Z", ""];
+        let model_a = USif::new(&word_embeddings, &word_probs)
+            .fit(&sentences)
+            .unwrap();
+        let bytes = model_a.serialize().unwrap();
+        let model_b = USif::deserialize(&bytes, &word_embeddings, &word_probs).unwrap();
+
+        let embeddings_a = model_a.embeddings(sentences).unwrap();
+        let embeddings_b = model_b.embeddings(sentences).unwrap();
+
+        assert_relative_eq!(embeddings_a, embeddings_b);
     }
 }
