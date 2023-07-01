@@ -78,7 +78,7 @@ pub const DEFAULT_N_COMPONENTS: usize = 1;
 ///
 /// If you want to manually set the parameters, use [`Sif::with_parameters`].
 ///
-/// The following example shows the case setting `n_components = 0` and not removing the common components.
+/// The following example shows the case setting `n_components` to `0` and removing no common components.
 /// In other words, only the SIF weighting is applied to the input sentences.
 /// In this case, you can skip [`Sif::fit`] and directly perform [`Sif::embeddings`]
 /// (although the quarity of the embeddings may be worse).
@@ -101,8 +101,8 @@ pub const DEFAULT_N_COMPONENTS: usize = 1;
 /// // Loads word probabilities from a pretrained model.
 /// let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
 ///
-/// // When setting `n_components = 0`, the common components are not removed, and
-/// // the sentence embeddings are computed without `fit`.
+/// // When setting `n_components` to `0`, no common components are removed, and
+/// // the sentence embeddings can be computed without `fit`.
 /// let model = Sif::with_parameters(&word_embeddings, &word_probs, 1e-3, 0)?;
 /// let sent_embeddings = model.embeddings(["las vegas", "mega vegas"])?;
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
@@ -188,6 +188,8 @@ where
     /// * `word_probs` - Word probabilities.
     /// * `param_a` - A parameter `a` for SIF-weighting that should be positive.
     /// * `n_components` - The number of principal components to remove.
+    ///
+    /// When setting `n_components` to `0`, no principal components are removed.
     ///
     /// # Errors
     ///

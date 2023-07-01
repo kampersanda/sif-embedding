@@ -71,6 +71,44 @@ const FLOAT_0_5: Float = 0.5;
 /// # Ok(())
 /// # }
 /// ```
+///
+/// ## Serialization of fitted parameters
+///
+/// If you want to serialize and deserialize the fitted parameters,
+/// use [`USif::serialize`] and [`USif::deserialize`].
+///
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use std::io::BufReader;
+///
+/// use approx::assert_relative_eq;
+/// use finalfusion::compat::text::ReadText;
+/// use finalfusion::embeddings::Embeddings;
+/// use wordfreq::WordFreq;
+///
+/// use sif_embedding::{USif, SentenceEmbedder};
+///
+/// // Loads word embeddings from a pretrained model.
+/// let word_embeddings_text = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
+/// let mut reader = BufReader::new(word_embeddings_text.as_bytes());
+/// let word_embeddings = Embeddings::read_text(&mut reader)?;
+///
+/// // Loads word probabilities from a pretrained model.
+/// let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
+///
+/// // Computes sentence embeddings in shape (n, m),
+/// // where n is the number of sentences and m is the number of dimensions.
+/// let model = USif::new(&word_embeddings, &word_probs);
+/// let (sent_embeddings, model) = model.fit_embeddings(&["las vegas", "mega vegas"])?;
+///
+/// // Serializes and deserializes the fitted parameters.
+/// let bytes = model.serialize()?;
+/// let other = USif::deserialize(&bytes, &word_embeddings, &word_probs)?;
+/// let other_embeddings = other.embeddings(["las vegas", "mega vegas"])?;
+/// assert_relative_eq!(sent_embeddings, other_embeddings);
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Clone)]
 pub struct USif<'w, 'p, W, P> {
     word_embeddings: &'w W,
@@ -113,6 +151,8 @@ where
     /// * `word_embeddings` - Word embeddings.
     /// * `word_probs` - Word probabilities.
     /// * `n_components` - The number of principal components to remove.
+    ///
+    /// When setting `n_components` to `0`, no principal components are removed.
     pub const fn with_parameters(
         word_embeddings: &'w W,
         word_probs: &'p P,
@@ -251,6 +291,14 @@ where
     }
 
     /// Deserializes the model.
+    ///
+    /// # Arguments
+    ///
+    /// * `bytes` - Byte sequence exported by [`Self::serialize`].
+    /// * `word_embeddings` - Word embeddings.
+    /// * `word_probs` - Word probabilities.
+    ///
+    /// `word_embeddings` and `word_probs` must be the same as those used in serialization.
     pub fn deserialize(bytes: &[u8], word_embeddings: &'w W, word_probs: &'p P) -> Result<Self> {
         let mut bytes = bytes;
         let n_components = bincode::deserialize_from(&mut bytes)?;
