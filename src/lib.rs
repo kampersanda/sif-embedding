@@ -1,6 +1,6 @@
 //! # sif-embedding
 //!
-//! This crate provides simple but powerful sentence embedding techniques based on
+//! This crate provides simple but powerful sentence embedding algorithms based on
 //! *Smooth Inverse Frequency* and *Common Component Removal* described in the following papers:
 //!
 //! - Sanjeev Arora, Yingyu Liang, and Tengyu Ma,
@@ -9,6 +9,11 @@
 //! - Kawin Ethayarajh,
 //!   [Unsupervised Random Walk Sentence Embeddings: A Strong but Simple Baseline](https://aclanthology.org/W18-3012/),
 //!   RepL4NLP 2018
+//!
+//! This library will help you if
+//!
+//! - NN-based sentence embeddings are too slow for your application, or
+//! - you do not have an option using GPUs.
 //!
 //! ## Getting started
 //!
@@ -21,7 +26,7 @@
 //! because these libraries can handle various pre-trained models and are pluged into this crate.
 //! See [the instructions](#instructions-pre-trained-models) to install the libraries in this crate.
 //!
-//! [`Sif`] or [`USif`] implements the techniques of sentence embeddings.
+//! [`Sif`] or [`USif`] implements the algorithms of sentence embeddings.
 //! [`SentenceEmbedder`] defines the behavior of sentence embeddings.
 //! The following code shows an example to compute sentence embeddings using finalfusion and wordfreq.
 //!
