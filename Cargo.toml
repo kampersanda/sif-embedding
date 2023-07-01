@@ -82,7 +82,12 @@ default-features = false
 approx = "0.5.1"
 
 [workspace]
-members = ["finalfusion-tools", "evaluations/senteval", "tutorial"]
+members = [
+    "finalfusion-tools",
+    "evaluations/jglue",
+    "evaluations/senteval",
+    "tutorial",
+]
 
 [package.metadata.docs.rs]
 features = ["docs"]
