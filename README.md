@@ -4,7 +4,7 @@
 [![Documentation](https://docs.rs/sif-embedding/badge.svg)](https://docs.rs/sif-embedding)
 [![Crates.io](https://img.shields.io/crates/v/sif-embedding.svg)](https://crates.io/crates/sif-embedding)
 
-This is a Rust implementation of simple but powerful sentence embedding techniques based on
+This is a Rust implementation of simple but powerful sentence embedding algorithms based on
 *Smooth Inverse Frequency* and *Common Component Removal* described in the following papers:
 
  - Sanjeev Arora, Yingyu Liang, and Tengyu Ma,
@@ -13,6 +13,11 @@ This is a Rust implementation of simple but powerful sentence embedding techniqu
  - Kawin Ethayarajh,
    [Unsupervised Random Walk Sentence Embeddings: A Strong but Simple Baseline](https://aclanthology.org/W18-3012/),
    RepL4NLP 2018
+
+This library will help you if
+
+ - NN-based sentence embeddings are too slow for your application, or
+ - you do not have an option using GPUs.
 
 ## Documentation
 
