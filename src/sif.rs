@@ -109,6 +109,44 @@ pub const DEFAULT_N_COMPONENTS: usize = 1;
 /// # Ok(())
 /// # }
 /// ```
+///
+/// ## Serialization of fitted parameters
+///
+/// If you want to serialize and deserialize the fitted parameters,
+/// use [`Sif::serialize`] and [`Sif::deserialize`].
+///
+/// ```
+/// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// use std::io::BufReader;
+///
+/// use approx::assert_relative_eq;
+/// use finalfusion::compat::text::ReadText;
+/// use finalfusion::embeddings::Embeddings;
+/// use wordfreq::WordFreq;
+///
+/// use sif_embedding::{Sif, SentenceEmbedder};
+///
+/// // Loads word embeddings from a pretrained model.
+/// let word_embeddings_text = "las 0.0 1.0 2.0\nvegas -3.0 -4.0 -5.0\n";
+/// let mut reader = BufReader::new(word_embeddings_text.as_bytes());
+/// let word_embeddings = Embeddings::read_text(&mut reader)?;
+///
+/// // Loads word probabilities from a pretrained model.
+/// let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
+///
+/// // Computes sentence embeddings in shape (n, m),
+/// // where n is the number of sentences and m is the number of dimensions.
+/// let model = Sif::new(&word_embeddings, &word_probs);
+/// let (sent_embeddings, model) = model.fit_embeddings(&["las vegas", "mega vegas"])?;
+///
+/// // Serializes and deserializes the fitted parameters.
+/// let bytes = model.serialize()?;
+/// let other = Sif::deserialize(&bytes, &word_embeddings, &word_probs)?;
+/// let other_embeddings = other.embeddings(["las vegas", "mega vegas"])?;
+/// assert_relative_eq!(sent_embeddings, other_embeddings);
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Clone)]
 pub struct Sif<'w, 'p, W, P> {
     word_embeddings: &'w W,
@@ -222,6 +260,14 @@ where
     }
 
     /// Deserializes the model.
+    ///
+    /// # Arguments
+    ///
+    /// * `bytes` - Byte sequence exported by [`Self::serialize`].
+    /// * `word_embeddings` - Word embeddings.
+    /// * `word_probs` - Word probabilities.
+    ///
+    /// `word_embeddings` and `word_probs` must be the same as those used in serialization.
     pub fn deserialize(bytes: &[u8], word_embeddings: &'w W, word_probs: &'p P) -> Result<Self> {
         let mut bytes = bytes;
         let param_a = bincode::deserialize_from(&mut bytes)?;
