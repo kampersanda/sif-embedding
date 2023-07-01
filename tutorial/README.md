@@ -1,9 +1,11 @@
 # Tutorial on sif-embedding
 
 This directory provides an example crate and aims to at least get you started with sif-embedding by looking here.
+In this tutorial, you will understand this example crate and be able to use sif-embedding for your own project.
 This tutorial assumes that you will compute embeddings for English sentences using several public resources.
 
 Note that the specifications of this and related libraries are not described here.
+See the [API documentation](https://docs.rs/sif-embedding/) for them.
 
 ## Preparation
 
@@ -127,7 +129,7 @@ The fitted model will be useful for handling additional fewer sentences.
 
 ## Example
 
-[src/main.rs](./src/main.rs) and [Cargo.toml](./Cargo.toml) are actual examples of the above tutorial.
+This crate is an example of reproducing the above steps.
 You can run it with the following command:
 
 ```shell
