@@ -15,10 +15,12 @@ use std::str::FromStr;
 
 use clap::Parser;
 use finalfusion::prelude::*;
-use linfa::Dataset;
+use linfa::prelude::*;
+use linfa_logistic::MultiLogisticRegression;
+// use linfa_svm::Svm;
 use ndarray::Array1;
+use polars::prelude::*;
 use sif_embedding::SentenceEmbedder;
-use sif_embedding::Sif;
 use sif_embedding::USif;
 use unicode_normalization::UnicodeNormalization;
 use vibrato::dictionary::Dictionary;
@@ -68,44 +70,82 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let word_probs = wordfreq_model::load_wordfreq(ModelKind::LargeJa)?;
 
-    let tokenizer = {
-        let reader = zstd::Decoder::new(File::open(args.input_vibrato)?)?;
-        let dict = Dictionary::read(reader)?;
-        Tokenizer::new(dict)
-            .ignore_space(true)?
-            .max_grouping_len(24)
-    };
-    let vibrato_worker = RefCell::new(tokenizer.new_worker());
+    // Load dataset
+    let mut df = dataset::load_livedoor_data(&args.data_dir)?;
 
-    let records = {
-        let mut records = dataset::load_livedoor_data(&args.data_dir, true)?;
-        for record in &mut records {
-            record.sentence = tokenize(&record.sentence, &vibrato_worker);
-        }
-        records
-    };
-    eprintln!("records.len() = {}", records.len());
+    // Tokenize sentences
+    {
+        let tokenizer = {
+            let reader = zstd::Decoder::new(File::open(args.input_vibrato)?)?;
+            let dict = Dictionary::read(reader)?;
+            Tokenizer::new(dict)
+                .ignore_space(true)?
+                .max_grouping_len(24)
+        };
+        let vibrato_worker = RefCell::new(tokenizer.new_worker());
+        let tokenized = df
+            .column("sentence")?
+            .utf8()?
+            .into_iter()
+            .map(|s| tokenize(s.unwrap(), &vibrato_worker))
+            .collect::<Vec<_>>();
+        let tokenized = Series::new("tokenized", tokenized);
+        df.hstack_mut(&[tokenized])?;
+    }
 
-    let train_size = (records.len() as f64 * 0.75) as usize;
-    let test_size = records.len() - train_size;
-    eprintln!("train_size = {}", train_size);
-    eprintln!("test_size = {}", test_size);
+    eprintln!("{:?}", df);
 
-    let sentences = records
-        .iter()
-        .map(|r| r.sentence.as_str())
+    let train_size = (df.height() as f64 * 0.75) as usize;
+    let test_size = df.height() - train_size;
+    let train_df = df.slice(0, train_size);
+    let test_df = df.slice(train_size as i64, test_size);
+
+    let sent_embedder = USif::new(&word_embeddings, &word_probs);
+
+    // Train
+    let train_tokenized = train_df
+        .column("tokenized")?
+        .utf8()?
+        .into_iter()
+        .map(|s| s.unwrap())
         .collect::<Vec<_>>();
+    let (train_embeddings, sent_embedder) = sent_embedder.fit_embeddings(&train_tokenized)?;
+    let train_targets = Array1::from_iter(
+        train_df
+            .column("label")?
+            .u32()?
+            .into_iter()
+            .map(|t| t.unwrap()),
+    );
+    let train_dataset = Dataset::new(train_embeddings, train_targets);
 
-    let targets = Array1::from_iter(records.iter().map(|r| r.label));
-    let train_targets = targets.slice(ndarray::s![..train_size]);
-    let test_targets = targets.slice(ndarray::s![train_size..]);
-    eprintln!("train_targets.len() = {}", train_targets.len());
-    eprintln!("test_targets.len() = {}", test_targets.len());
+    // Test
+    let test_tokenized = test_df
+        .column("tokenized")?
+        .utf8()?
+        .into_iter()
+        .map(|s| s.unwrap())
+        .collect::<Vec<_>>();
+    let test_embeddings = sent_embedder.embeddings(&test_tokenized)?;
+    let test_targets = Array1::from_iter(
+        test_df
+            .column("label")?
+            .u32()?
+            .into_iter()
+            .map(|t| t.unwrap()),
+    );
+    let test_dataset = Dataset::new(test_embeddings, test_targets);
 
-    let (train_embeddings, sent_embedder) =
-        USif::new(&word_embeddings, &word_probs).fit_embeddings(&sentences[..train_size])?;
-    let train_dataset = Dataset::new(train_embeddings, train_targets.to_owned());
-    eprintln!("train_dataset.ntargets() = {}", train_dataset.ntargets());
+    // Training
+    eprintln!("Training...");
+    let classifier = MultiLogisticRegression::default()
+        .max_iterations(150)
+        .fit(&train_dataset)?;
+
+    // Prediction
+    eprintln!("Predicting...");
+    let predicted = classifier.predict(test_dataset);
+    println!("predicted = {:?}", predicted);
 
     Ok(())
 }

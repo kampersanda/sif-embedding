@@ -3,7 +3,9 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
-use rand::seq::SliceRandom;
+use polars::prelude::*;
+use rand::prelude::*;
+use rand_chacha::ChaCha8Rng;
 
 const CATEGORIES: &[&str] = &[
     "dokujo-tsushin",
@@ -17,27 +19,28 @@ const CATEGORIES: &[&str] = &[
     "topic-news",
 ];
 
-pub struct Record {
-    pub sentence: String,
-    pub label: usize,
-}
-
-pub fn load_livedoor_data(
-    data_dir: &str,
-    with_shuffle: bool,
-) -> Result<Vec<Record>, Box<dyn Error>> {
-    let mut records = vec![];
+pub fn load_livedoor_data(data_dir: &str) -> Result<DataFrame, Box<dyn Error>> {
+    let mut files = vec![];
     for (label, &cate) in CATEGORIES.iter().enumerate() {
         for filepath in glob::glob(&format!("{data_dir}/{cate}/{cate}-*.txt"))? {
             let filepath = filepath?;
-            let sentence = read_sentence(&filepath)?;
-            records.push(Record { sentence, label });
+            files.push((label, filepath));
         }
     }
-    if with_shuffle {
-        records.shuffle(&mut rand::thread_rng());
+
+    let mut rng = ChaCha8Rng::seed_from_u64(334);
+    files.shuffle(&mut rng);
+
+    let mut labels = vec![];
+    let mut sentences = vec![];
+    for (label, filepath) in files {
+        let sentence = read_sentence(&filepath)?;
+        labels.push(label as u32);
+        sentences.push(sentence);
     }
-    Ok(records)
+    let labels = Series::new("label", labels);
+    let sentences = Series::new("sentence", sentences);
+    Ok(DataFrame::new(vec![labels, sentences])?)
 }
 
 fn read_sentence<P: AsRef<Path>>(filepath: P) -> Result<String, Box<dyn Error>> {
