@@ -61,6 +61,24 @@
 //! # }
 //! ```
 //!
+//! ## Feature specifications
+//!
+//! This crate provides the following features:
+//!
+//! - Backend features
+//!   - `openblas-static` (or alias `openblas`)
+//!   - `openblas-system`
+//!   - `netlib-static` (or alias `netlib`)
+//!   - `netlib-system`
+//!   - `intel-mkl-static` (or alias `intel-mkl`)
+//!   - `intel-mkl-system`
+//! - Pre-trained model features
+//!   - `finalfusion`
+//!   - `wordfreq`
+//!
+//! No feature is enabled by default.
+//! The descriptions of the features can be found below.
+//!
 //! ## Instructions: Backend specifications
 //!
 //! This crate depends on [ndarray-linalg](https://github.com/rust-ndarray/ndarray-linalg) and
