@@ -12,7 +12,7 @@
 //!
 //! This library will help you if
 //!
-//! - NN-based sentence embeddings are too slow for your application, or
+//! - DNN-based sentence embeddings are too slow for your application, or
 //! - you do not have an option using GPUs.
 //!
 //! ## Getting started
