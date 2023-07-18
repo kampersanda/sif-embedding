@@ -12,7 +12,7 @@
 //!
 //! This library will help you if
 //!
-//! - NN-based sentence embeddings are too slow for your application, or
+//! - DNN-based sentence embeddings are too slow for your application, or
 //! - you do not have an option using GPUs.
 //!
 //! ## Getting started
@@ -60,6 +60,24 @@
 //! # Ok(())
 //! # }
 //! ```
+//!
+//! ## Feature specifications
+//!
+//! This crate provides the following features:
+//!
+//! - Backend features
+//!   - `openblas-static` (or alias `openblas`)
+//!   - `openblas-system`
+//!   - `netlib-static` (or alias `netlib`)
+//!   - `netlib-system`
+//!   - `intel-mkl-static` (or alias `intel-mkl`)
+//!   - `intel-mkl-system`
+//! - Pre-trained model features
+//!   - `finalfusion`
+//!   - `wordfreq`
+//!
+//! No feature is enabled by default.
+//! The descriptions of the features can be found below.
 //!
 //! ## Instructions: Backend specifications
 //!

@@ -16,7 +16,7 @@ This is a Rust implementation of simple but powerful sentence embedding algorith
 
 This library will help you if
 
- - NN-based sentence embeddings are too slow for your application, or
+ - DNN-based sentence embeddings are too slow for your application, or
  - you do not have an option using GPUs.
 
 ## Documentation

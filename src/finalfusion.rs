@@ -1,4 +1,5 @@
 //! WordEmbeddings implementations for [`finalfusion::embeddings::Embeddings`].
+//! This module is available if the `finalfusion` feature is enabled.
 use crate::Float;
 use crate::WordEmbeddings;
 
