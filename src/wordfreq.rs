@@ -1,4 +1,5 @@
 //! WordProbabilities implementations for [`wordfreq::WordFreq`].
+//! This module is available if the `wordfreq` feature is enabled.
 use crate::Float;
 use crate::WordProbabilities;
 
