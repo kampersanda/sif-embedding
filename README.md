@@ -1,17 +1,11 @@
 # sif-embedding
 
 <p align="left">
-  <a href="https://github.com/kampersanda/sif-embedding/actions/workflows/rust.yml?query=branch%3Amain">
-    <img src="https://img.shields.io/github/actions/workflow/status/kampersanda/sif-embedding/rust.yml?branch=main&style=flat-square" alt="actions status" />
-  </a>
+  <a href="https://github.com/kampersanda/sif-embedding/actions/workflows/rust.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/kampersanda/sif-embedding/rust.yml?branch=main&style=flat-square" alt="actions status" /></a>
   &nbsp;
-  <a href="https://crates.io/crates/sif-embedding">
-    <img src="https://img.shields.io/crates/v/sif-embedding.svg?style=flat-square" alt="Crates.io version" />
-  </a>
+  <a href="https://crates.io/crates/sif-embedding"><img src="https://img.shields.io/crates/v/sif-embedding.svg?style=flat-square" alt="Crates.io version" /></a>
   &nbsp;
-  <a href="https://docs.rs/sif-embedding">
-    <img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square" alt="docs.rs docs" />
-  </a>
+  <a href="https://docs.rs/sif-embedding"><img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square" alt="docs.rs docs" /></a>
 </p>
 
 This is a Rust implementation of simple but powerful sentence embedding algorithms based on
