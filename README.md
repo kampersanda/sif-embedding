@@ -1,6 +1,6 @@
 # sif-embedding
 
-<p align="left">
+<p align="center">
   <a href="https://github.com/kampersanda/sif-embedding/actions/workflows/rust.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/kampersanda/sif-embedding/rust.yml?branch=main&style=flat-square" alt="actions status" /></a>
   &nbsp;
   <a href="https://crates.io/crates/sif-embedding"><img src="https://img.shields.io/crates/v/sif-embedding.svg?style=flat-square" alt="Crates.io version" /></a>
