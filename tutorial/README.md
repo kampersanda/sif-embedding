@@ -67,7 +67,7 @@ By enabling the `finalfusion` and `wordfreq` features, the above external librar
 
 ```toml
 [dependencies.sif-embedding]
-version = "0.5.0"
+version = "0.5"
 features = ["finalfusion", "wordfreq"]
 default-features = false
 ```
@@ -80,7 +80,7 @@ If you want to use openblas-src with static linking, specify the dependencies in
 
 ```toml
 [dependencies.sif-embedding]
-version = "0.5.0"
+version = "0.5"
 features = ["finalfusion", "wordfreq", "openblas-static"]
 default-features = false
 
