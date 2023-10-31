@@ -1,8 +1,19 @@
 # sif-embedding
 
-![](https://github.com/kampersanda/sif-embedding/actions/workflows/rust.yml/badge.svg)
-[![Documentation](https://docs.rs/sif-embedding/badge.svg)](https://docs.rs/sif-embedding)
-[![Crates.io](https://img.shields.io/crates/v/sif-embedding.svg)](https://crates.io/crates/sif-embedding)
+<p align="left">
+  <!-- Github Actions -->
+  <a href="https://github.com/kampersanda/sif-embedding/actions/workflows/rust.yml?query=branch%3Amain">
+    <img src="https://img.shields.io/github/actions/workflow/status/kampersanda/sif-embedding/rust.yml?branch=main&style=flat-square" alt="actions status" />
+  </a>
+  <!-- Version -->
+  <a href="https://crates.io/crates/sif-embedding">
+    <img src="https://img.shields.io/crates/v/sif-embedding.svg?style=flat-square" alt="Crates.io version" />
+  </a>
+  <!-- Docs -->
+  <a href="https://docs.rs/sif-embedding">
+    <img src="https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square" alt="docs.rs docs" />
+  </a>
+</p>
 
 This is a Rust implementation of simple but powerful sentence embedding algorithms based on
 *Smooth Inverse Frequency* and *Common Component Removal* described in the following papers:
