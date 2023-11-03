@@ -15,6 +15,10 @@ use std::path::PathBuf;
 
 use clap::Parser;
 use finalfusion::prelude::*;
+use qdrant_client::prelude::*;
+use qdrant_client::qdrant::vectors_config::Config;
+use qdrant_client::qdrant::VectorParams;
+use qdrant_client::qdrant::VectorsConfig;
 use sif_embedding::SentenceEmbedder;
 use sif_embedding::USif;
 use sif_embedding::WordProbabilities;
@@ -39,8 +43,8 @@ const CATEGORIES: &[&str] = &[
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    #[arg(short = 'i', long)]
-    input_dir: PathBuf,
+    #[arg(short = 'd', long)]
+    dataset_dir: PathBuf,
 
     #[arg(short = 'f', long)]
     fifu_model: PathBuf,
@@ -49,9 +53,27 @@ struct Args {
     vibrato_model: PathBuf,
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
+    // 1. Load dataset
+    let (sentences, labels) = load_livedoor_data(&args.dataset_dir)?;
+    eprintln!("{} sentences", sentences.len());
+    eprintln!("{} labels", labels.len());
+
+    // 2. Tokenize sentences
+    let tokenizer = {
+        let reader = zstd::Decoder::new(File::open(args.vibrato_model)?)?;
+        let dict = Dictionary::read(reader)?;
+        Tokenizer::new(dict)
+            .ignore_space(true)?
+            .max_grouping_len(24)
+    };
+    let worker = RefCell::new(tokenizer.new_worker());
+    let tokenized: Vec<String> = sentences.iter().map(|s| tokenize(s, &worker)).collect();
+
+    // 3. Load models
     let word_embeddings = {
         let mut reader = BufReader::new(File::open(&args.fifu_model)?);
         Embeddings::<VocabWrap, StorageWrap>::mmap_embeddings(&mut reader)?
@@ -62,30 +84,33 @@ fn main() -> Result<(), Box<dyn Error>> {
     let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeJa)?;
     eprintln!("unigram_lm.n_words() = {}", unigram_lm.n_words());
 
-    let tokenizer = {
-        let reader = zstd::Decoder::new(File::open(args.vibrato_model)?)?;
-        let dict = Dictionary::read(reader)?;
-        Tokenizer::new(dict)
-            .ignore_space(true)?
-            .max_grouping_len(24)
-    };
-
-    let (sentences, labels) = load_livedoor_data(&args.input_dir)?;
-    eprintln!("{} sentences", sentences.len());
-    eprintln!("{} labels", labels.len());
-
-    // Tokenize sentences.
-    let worker = RefCell::new(tokenizer.new_worker());
-    let tokenized: Vec<String> = sentences.iter().map(|s| tokenize(s, &worker)).collect();
-
-    let sif = USif::new(&word_embeddings, &unigram_lm);
-    let sent_embeddings = sif.embeddings(&tokenized)?;
+    let model = USif::new(&word_embeddings, &unigram_lm);
+    let (sent_embeddings, model) = model.fit_embeddings(&tokenized)?;
     eprintln!("sent_embeddings.shape() = {:?}", sent_embeddings.shape());
+
+    // 4. Upload embeddings
+    let client = QdrantClient::from_url("http://localhost:6334").build()?;
+    let collection_name = "livedoor";
+    let collection = CreateCollection {
+        collection_name: collection_name.into(),
+        vectors_config: Some(VectorsConfig {
+            config: Some(Config::Params(VectorParams {
+                size: model.embedding_size() as u64,
+                distance: Distance::Cosine.into(),
+                ..Default::default()
+            })),
+        }),
+        ..Default::default()
+    };
+    client.create_collection(&collection).await?;
+
+    let collection_info = client.collection_info(collection_name).await?;
+    dbg!(collection_info);
 
     Ok(())
 }
 
-pub fn load_livedoor_data<P: AsRef<Path>>(
+fn load_livedoor_data<P: AsRef<Path>>(
     data_dir: P,
 ) -> Result<(Vec<String>, Vec<usize>), Box<dyn Error>> {
     let data_dir = data_dir.as_ref().to_str().unwrap();

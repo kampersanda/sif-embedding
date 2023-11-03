@@ -33,6 +33,7 @@ clap = { version = "4.2.7", features = ["derive"] }
 finalfusion = "0.17.2"
 glob = "0.3.1"
 qdrant-client = "1.6.0"
+tokio = { version = "1", features = ["full"] }
 unicode-normalization = "0.1.22"
 vibrato = { version = "0.5.1", default-features = false }
 wordfreq-model = { version = "0.2.3", features = ["large-ja"] }
