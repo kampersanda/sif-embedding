@@ -27,7 +27,7 @@ use sif_embedding::USif;
 use sif_embedding::WordProbabilities;
 use unicode_normalization::UnicodeNormalization;
 use vibrato::dictionary::Dictionary;
-use vibrato::tokenizer::worker::Worker as VibratoWorker;
+use vibrato::tokenizer::worker::Worker;
 use vibrato::Tokenizer;
 use wordfreq_model::ModelKind;
 
@@ -62,8 +62,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // 1. Load dataset
     let (sentences, categories) = load_livedoor_dataset(&args.dataset_dir)?;
-    eprintln!("sentences.len()={}", sentences.len());
-    eprintln!("categories.len()={}", categories.len());
+    eprintln!("sentences.len() = {}", sentences.len());
+    eprintln!("categories.len() = {}", categories.len());
 
     let reader = zstd::Decoder::new(File::open(args.vibrato_model)?)?;
     let dict = Dictionary::read(reader)?;
@@ -89,7 +89,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // 3. Upload embeddings
     let client = QdrantClient::from_url("http://localhost:6334").build()?;
-    let collection_name = "livedoor";
+    let collection_name = "livedoor-news";
     client.delete_collection(collection_name).await?;
 
     // 4. Upload embeddings
@@ -167,10 +167,10 @@ fn read_sentence<P: AsRef<Path>>(filepath: P) -> Result<String, Box<dyn Error>> 
     Ok(lines[3..].join("\n"))
 }
 
-fn tokenize(sentence: &str, worker: &RefCell<VibratoWorker>) -> String {
+fn tokenize(sentence: &str, worker: &RefCell<Worker>) -> String {
     let mut surfaces = vec![];
     for line in sentence.split('\n') {
-        let line = line.nfkc().collect::<String>();
+        let line: String = line.nfkc().collect();
         let mut worker = worker.borrow_mut();
         worker.reset_sentence(line);
         worker.tokenize();
