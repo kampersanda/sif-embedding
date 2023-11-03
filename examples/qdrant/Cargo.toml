@@ -34,7 +34,7 @@ finalfusion = "0.17.2"
 glob = "0.3.1"
 ndarray = "0.15.6"
 qdrant-client = "1.6.0"
-# serde = { version = "1", features = ["derive"] }
+rand = "0.8.5"
 serde_json = { version = "1" }
 tokio = { version = "1", features = ["full"] }
 unicode-normalization = "0.1.22"

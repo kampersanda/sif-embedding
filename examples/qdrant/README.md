@@ -24,4 +24,6 @@ docker run -p 6333:6333 -p 6334:6334 \
     qdrant/qdrant
 ```
 
+https://github.com/qdrant/rust-client
+
 https://dev.classmethod.jp/articles/qdrant-first-step/

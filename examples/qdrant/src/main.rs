@@ -20,6 +20,7 @@ use qdrant_client::prelude::*;
 use qdrant_client::qdrant::vectors_config::Config;
 use qdrant_client::qdrant::VectorParams;
 use qdrant_client::qdrant::VectorsConfig;
+use rand::prelude::*;
 use serde_json::json;
 use sif_embedding::SentenceEmbedder;
 use sif_embedding::USif;
@@ -64,22 +65,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
     eprintln!("{} sentences", sentences.len());
     eprintln!("{} categories", categories.len());
 
-    // 2. Tokenize sentences
-    let tokenizer = {
-        let reader = zstd::Decoder::new(File::open(args.vibrato_model)?)?;
-        let dict = Dictionary::read(reader)?;
-        Tokenizer::new(dict)
-            .ignore_space(true)?
-            .max_grouping_len(24)
-    };
+    let reader = zstd::Decoder::new(File::open(args.vibrato_model)?)?;
+    let dict = Dictionary::read(reader)?;
+    let tokenizer = Tokenizer::new(dict)
+        .ignore_space(true)?
+        .max_grouping_len(24);
+
     let worker = RefCell::new(tokenizer.new_worker());
     let tokenized: Vec<String> = sentences.iter().map(|s| tokenize(s, &worker)).collect();
 
     // 3. Load models
-    let word_embeddings = {
-        let mut reader = BufReader::new(File::open(&args.fifu_model)?);
-        Embeddings::<VocabWrap, StorageWrap>::mmap_embeddings(&mut reader)?
-    };
+    let mut reader = BufReader::new(File::open(&args.fifu_model)?);
+    let word_embeddings = Embeddings::<VocabWrap, StorageWrap>::mmap_embeddings(&mut reader)?;
     eprintln!("word_embeddings.len() = {}", word_embeddings.len());
     eprintln!("word_embeddings.dims() = {}", word_embeddings.dims());
 
@@ -90,9 +87,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let (sent_embeddings, model) = model.fit_embeddings(&tokenized)?;
     eprintln!("sent_embeddings.shape() = {:?}", sent_embeddings.shape());
 
-    // 4. Upload embeddings
+    // 3. Upload embeddings
     let client = QdrantClient::from_url("http://localhost:6334").build()?;
     let collection_name = "livedoor";
+    client.delete_collection(collection_name).await?;
+
+    // 4. Upload embeddings
     let collection = CreateCollection {
         collection_name: collection_name.into(),
         vectors_config: Some(VectorsConfig {
@@ -106,13 +106,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     };
     client.create_collection(&collection).await?;
 
-    let collection_info = client.collection_info(collection_name).await?;
-    dbg!(collection_info);
-
     let mut points = vec![];
     for (id, (embedding, (sentence, category))) in sent_embeddings
         .axis_iter(Axis(0))
-        .zip(tokenized.iter().zip(categories.iter()))
+        .zip(sentences.iter().zip(categories.iter()))
         .enumerate()
     {
         let payload: Payload = json!({
@@ -127,6 +124,32 @@ async fn main() -> Result<(), Box<dyn Error>> {
     client
         .upsert_points_blocking(collection_name, points, None)
         .await?;
+
+    // Search
+    let mut rng = thread_rng();
+    for _ in 0..5 {
+        let idx = rng.gen_range(0..sentences.len());
+        let sentence = sentences[idx].replace('\n', " ");
+        println!("[Query] idx={}, text={}", idx, sentence);
+
+        let embedding = &sent_embeddings.row(idx);
+        let search_point = SearchPoints {
+            collection_name: collection_name.into(),
+            vector: embedding.to_vec(),
+            filter: None,
+            limit: 5,
+            with_payload: Some(true.into()),
+            ..Default::default()
+        };
+        let search_result = client.search_points(&search_point).await?;
+        for (i, point) in search_result.result.iter().enumerate() {
+            let sentence = point.payload["sentence"]
+                .as_str()
+                .unwrap()
+                .replace('\n', " ");
+            println!("[Result] rank={}, text={}", i + 1, sentence);
+        }
+    }
 
     Ok(())
 }
