@@ -126,30 +126,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .await?;
 
     // Search
-    let mut rng = thread_rng();
-    for _ in 0..5 {
-        let idx = rng.gen_range(0..sentences.len());
-        let sentence = sentences[idx].replace('\n', " ");
-        println!("[Query] idx={}, text={}", idx, sentence);
-
-        let embedding = &sent_embeddings.row(idx);
-        let search_point = SearchPoints {
-            collection_name: collection_name.into(),
-            vector: embedding.to_vec(),
-            filter: None,
-            limit: 5,
-            with_payload: Some(true.into()),
-            ..Default::default()
-        };
-        let search_result = client.search_points(&search_point).await?;
-        for (i, point) in search_result.result.iter().enumerate() {
-            let sentence = point.payload["sentence"]
-                .as_str()
-                .unwrap()
-                .replace('\n', " ");
-            println!("[Result] rank={}, text={}", i + 1, sentence);
-        }
-    }
+    let idx = thread_rng().gen_range(0..sentences.len());
+    let embedding = &sent_embeddings.row(idx);
+    let search_point = SearchPoints {
+        collection_name: collection_name.into(),
+        vector: embedding.to_vec(),
+        limit: 4, // Top3 + itself
+        with_payload: Some(true.into()),
+        ..Default::default()
+    };
+    let search_result = client.search_points(&search_point).await?;
+    println!("search_result = {:#?}", search_result);
 
     Ok(())
 }
