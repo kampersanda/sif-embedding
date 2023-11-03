@@ -15,10 +15,12 @@ use std::path::PathBuf;
 
 use clap::Parser;
 use finalfusion::prelude::*;
+use ndarray::Axis;
 use qdrant_client::prelude::*;
 use qdrant_client::qdrant::vectors_config::Config;
 use qdrant_client::qdrant::VectorParams;
 use qdrant_client::qdrant::VectorsConfig;
+use serde_json::json;
 use sif_embedding::SentenceEmbedder;
 use sif_embedding::USif;
 use sif_embedding::WordProbabilities;
@@ -58,9 +60,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
     // 1. Load dataset
-    let (sentences, labels) = load_livedoor_data(&args.dataset_dir)?;
+    let (sentences, categories) = load_livedoor_data(&args.dataset_dir)?;
     eprintln!("{} sentences", sentences.len());
-    eprintln!("{} labels", labels.len());
+    eprintln!("{} categories", categories.len());
 
     // 2. Tokenize sentences
     let tokenizer = {
@@ -107,25 +109,44 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let collection_info = client.collection_info(collection_name).await?;
     dbg!(collection_info);
 
+    let mut points = vec![];
+    for (id, (embedding, (sentence, category))) in sent_embeddings
+        .axis_iter(Axis(0))
+        .zip(tokenized.iter().zip(categories.iter()))
+        .enumerate()
+    {
+        let payload: Payload = json!({
+            "sentence": sentence,
+            "category": category,
+        })
+        .try_into()
+        .unwrap();
+        points.push(PointStruct::new(id as u64, embedding.to_vec(), payload));
+    }
+
+    client
+        .upsert_points_blocking(collection_name, points, None)
+        .await?;
+
     Ok(())
 }
 
 fn load_livedoor_data<P: AsRef<Path>>(
     data_dir: P,
-) -> Result<(Vec<String>, Vec<usize>), Box<dyn Error>> {
+) -> Result<(Vec<String>, Vec<&'static str>), Box<dyn Error>> {
     let data_dir = data_dir.as_ref().to_str().unwrap();
 
     let mut sentences = vec![];
-    let mut labels = vec![];
-    for (label, &cate) in CATEGORIES.iter().enumerate() {
-        for filepath in glob::glob(&format!("{data_dir}/{cate}/{cate}-*.txt"))? {
+    let mut categories = vec![];
+    for &categorty in CATEGORIES {
+        for filepath in glob::glob(&format!("{data_dir}/{categorty}/{categorty}-*.txt"))? {
             let filepath = filepath?;
             let sentence = read_sentence(&filepath)?;
             sentences.push(sentence);
-            labels.push(label);
+            categories.push(categorty);
         }
     }
-    Ok((sentences, labels))
+    Ok((sentences, categories))
 }
 
 fn read_sentence<P: AsRef<Path>>(filepath: P) -> Result<String, Box<dyn Error>> {
