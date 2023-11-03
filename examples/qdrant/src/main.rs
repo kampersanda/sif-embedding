@@ -61,9 +61,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let args = Args::parse();
 
     // 1. Load dataset
-    let (sentences, categories) = load_livedoor_data(&args.dataset_dir)?;
-    eprintln!("{} sentences", sentences.len());
-    eprintln!("{} categories", categories.len());
+    let (sentences, categories) = load_livedoor_dataset(&args.dataset_dir)?;
+    eprintln!("sentences.len()={}", sentences.len());
+    eprintln!("categories.len()={}", categories.len());
 
     let reader = zstd::Decoder::new(File::open(args.vibrato_model)?)?;
     let dict = Dictionary::read(reader)?;
@@ -141,7 +141,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn load_livedoor_data<P: AsRef<Path>>(
+fn load_livedoor_dataset<P: AsRef<Path>>(
     data_dir: P,
 ) -> Result<(Vec<String>, Vec<&'static str>), Box<dyn Error>> {
     let data_dir = data_dir.as_ref().to_str().unwrap();
