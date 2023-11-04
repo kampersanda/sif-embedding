@@ -89,6 +89,7 @@ approx = "0.5.1"
 [workspace]
 members = [
     "examples/qdrant",
+    "examples/qdrant-search",
     "finalfusion-tools",
     "evaluations/jglue",
     "evaluations/senteval",
