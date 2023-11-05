@@ -22,7 +22,8 @@ use qdrant_client::qdrant::VectorsConfig;
 use rand::prelude::*;
 use serde_json::json;
 use sif_embedding::SentenceEmbedder;
-use sif_embedding::USif;
+use sif_embedding::Sif;
+// use sif_embedding::USif;
 use sif_embedding::WordProbabilities;
 use wordfreq_model::ModelKind;
 
@@ -41,6 +42,7 @@ async fn main() -> Result<()> {
     let args = Args::parse();
 
     let sentences = load_wiki_article_dataset(&args.dataset_file)?;
+    // let sentences = sentences[..10000].to_vec();
     eprintln!("Loaded {} sentences", sentences.len());
 
     // 3. Load models
@@ -52,9 +54,10 @@ async fn main() -> Result<()> {
     let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeJa)?;
     eprintln!("unigram_lm.n_words() = {}", unigram_lm.n_words());
 
-    let model = USif::new(&word_embeddings, &unigram_lm);
-    let (sent_embeddings, model) = model.fit_embeddings(&sentences)?;
-    eprintln!("sent_embeddings.shape() = {:?}", sent_embeddings.shape());
+    let model = Sif::new(&word_embeddings, &unigram_lm);
+    let model = model.fit(&sentences[..10000])?;
+    // let sent_embeddings = model.embeddings(&sentences)?;
+    // eprintln!("sent_embeddings.shape() = {:?}", sent_embeddings.shape());
 
     // 3. Upload embeddings
     let client = QdrantClient::from_url("http://localhost:6334").build()?;
@@ -75,26 +78,30 @@ async fn main() -> Result<()> {
     };
     client.create_collection(&collection).await?;
 
-    let mut points = vec![];
-    for (id, (embedding, sentence)) in sent_embeddings
-        .axis_iter(Axis(0))
-        .zip(sentences.iter())
-        .enumerate()
-    {
-        let payload: Payload = json!({"sentence": sentence}).try_into().unwrap();
-        points.push(PointStruct::new(id as u64, embedding.to_vec(), payload));
-    }
+    let mut id = 0;
+    let batch_size = 10000;
 
-    client
-        .upsert_points_blocking(collection_name, points, None)
-        .await?;
+    for (i, batch) in sentences.chunks(batch_size).enumerate() {
+        eprintln!("Uploading batch {}/{}", i + 1, sentences.len() / batch_size);
+
+        let sent_embeddings = model.embeddings(batch)?;
+        let mut points = vec![];
+        for (embedding, sentence) in sent_embeddings.axis_iter(Axis(0)).zip(batch.iter()) {
+            let payload: Payload = json!({"sentence": sentence}).try_into().unwrap();
+            points.push(PointStruct::new(id as u64, embedding.to_vec(), payload));
+            id += 1;
+        }
+        client
+            .upsert_points_blocking(collection_name, points, None)
+            .await?;
+    }
 
     // Search
     let idx = thread_rng().gen_range(0..sentences.len());
-    let embedding = &sent_embeddings.row(idx);
+    let sent_embedding = model.embeddings(&sentences[idx..idx + 1])?;
     let search_point = SearchPoints {
         collection_name: collection_name.into(),
-        vector: embedding.to_vec(),
+        vector: sent_embedding.row(0).to_vec(),
         limit: 4, // Top3 + itself
         with_payload: Some(true.into()),
         ..Default::default()
@@ -112,7 +119,11 @@ fn load_wiki_article_dataset<P: AsRef<Path>>(dataset_file: P) -> Result<Vec<Stri
     let mut sentences = vec![];
     for line in reader.lines() {
         let line = line?;
-        sentences.extend(line.split('\t').map(|s| s.to_string()));
+        sentences.extend(
+            line.split('\t')
+                .map(|s| s.to_string())
+                .filter(|s| !s.is_empty()),
+        );
     }
     Ok(sentences)
 }
