@@ -93,6 +93,19 @@ where
     vectors.to_owned() - &projection
 }
 
+pub(crate) fn sample_sentences<'a, S>(sentences: &'a [S], sample_size: usize) -> Vec<&'a str>
+where
+    S: AsRef<str> + 'a,
+{
+    let n_sentences = sentences.len();
+    if n_sentences <= sample_size {
+        sentences.iter().map(|s| s.as_ref()).collect()
+    } else {
+        let indices = rand::seq::index::sample(&mut rand::thread_rng(), n_sentences, sample_size);
+        indices.into_iter().map(|i| sentences[i].as_ref()).collect()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -205,5 +218,14 @@ mod tests {
         let weights = ndarray::arr1(&[1.]);
         let result = remove_principal_components(&vectors, &components, Some(&weights));
         assert_eq!(result.shape(), &[3, 1]);
+    }
+
+    #[test]
+    fn test_sample_sentences() {
+        let sentences = vec!["a", "b", "c", "d", "e", "f", "g"];
+        let sample_size = 3;
+        let sampled = sample_sentences(&sentences, sample_size);
+        assert_eq!(sampled.len(), sample_size);
+        assert!(sampled.iter().all(|s| sentences.contains(s)));
     }
 }

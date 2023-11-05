@@ -183,6 +183,9 @@ pub type Float = f32;
 /// Default separator for splitting sentences into words.
 pub const DEFAULT_SEPARATOR: char = ' ';
 
+///
+pub const DEFAULT_N_SAMPLES_TO_FIT: usize = 10000;
+
 /// Word embeddings.
 pub trait WordEmbeddings {
     /// Returns the embedding of a word.

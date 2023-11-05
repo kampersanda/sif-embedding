@@ -8,6 +8,7 @@ use crate::Float;
 use crate::SentenceEmbedder;
 use crate::WordEmbeddings;
 use crate::WordProbabilities;
+use crate::DEFAULT_N_SAMPLES_TO_FIT;
 use crate::DEFAULT_SEPARATOR;
 
 /// Default value of the number of principal components,
@@ -372,8 +373,11 @@ where
         if sentences.is_empty() {
             return Err(anyhow!("Input sentences must not be empty."));
         }
+
+        let sentences = util::sample_sentences(sentences, DEFAULT_N_SAMPLES_TO_FIT);
+
         // SIF-weighting.
-        let sent_len = self.average_sentence_length(sentences);
+        let sent_len = self.average_sentence_length(&sentences);
         if sent_len == 0. {
             return Err(anyhow!("Input sentences must not be empty."));
         }
