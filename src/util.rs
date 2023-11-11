@@ -46,6 +46,8 @@ where
     S: Data<Elem = Float>,
 {
     debug_assert_ne!(n_components, 0);
+    debug_assert!(!vectors.iter().any(|&x| x.is_nan()));
+
     let n_components = n_components.min(vectors.ncols()).min(vectors.nrows());
     let svd = TruncatedSvd::new(vectors.to_owned(), TruncatedOrder::Largest)
         .maxiter(SVD_MAX_ITER)

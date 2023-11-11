@@ -16,7 +16,7 @@ We show steps to run the evaluation, assuming you are at this directory.
 
 Run the following commands:
 
-```
+```shell
 $ git clone https://github.com/yahoojapan/JGLUE.git
 ```
 
@@ -45,7 +45,7 @@ $ tar xf ipadic-mecab-2_7_0.tar.xz
 
 `src/main.rs` provides evaluation for SIF (with `-m sif`) and uSIF (with `-m usif`).
 
-```
+```shell
 $ cargo run --release --features openblas -- \
     -d JGLUE/datasets/jsts-v1.1/valid-v1.1.json \
     -f cc.ja.300.vec.fifu \

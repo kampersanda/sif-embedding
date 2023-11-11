@@ -310,10 +310,14 @@ where
 
         // 3. Normalize word embeddings.
         let axis = ndarray_linalg::norm::NormalizeAxis::Column; // equivalent to Axis(0)
-        let (word_embeddings, _) = ndarray_linalg::norm::normalize(word_embeddings, axis);
+        let (mut word_embeddings, _) = ndarray_linalg::norm::normalize(word_embeddings, axis);
+
+        // NOTE: It appears that the normalization above sometimes produces NaNs.
+        // This is a workaround, but I don't know this is correct.
+        word_embeddings.mapv_inplace(|x| if x.is_nan() { 0. } else { x });
 
         // 4. Weight word embeddings.
-        let word_embeddings = word_embeddings * &word_weights;
+        word_embeddings *= &word_weights;
 
         // 5. Average word embeddings.
         word_embeddings.mean_axis(ndarray::Axis(0)).unwrap()
