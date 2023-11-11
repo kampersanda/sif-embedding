@@ -183,7 +183,7 @@ pub type Float = f32;
 /// Default separator for splitting sentences into words.
 pub const DEFAULT_SEPARATOR: char = ' ';
 
-///
+/// Default number of samples to fit.
 pub const DEFAULT_N_SAMPLES_TO_FIT: usize = 10000;
 
 /// Word embeddings.
@@ -222,15 +222,4 @@ pub trait SentenceEmbedder: Sized {
     where
         I: IntoIterator<Item = S>,
         S: AsRef<str>;
-
-    /// Fits the model with input sentences and computes embeddings using it,
-    /// providing the same behavior as performing [`Self::fit`] and then [`Self::embeddings`].
-    fn fit_embeddings<S>(self, sentences: &[S]) -> Result<(Array2<Float>, Self)>
-    where
-        S: AsRef<str>,
-    {
-        let model = self.fit(sentences)?;
-        let embeddings = model.embeddings(sentences)?;
-        Ok((embeddings, model))
-    }
 }
