@@ -38,8 +38,6 @@ const FLOAT_0_5: Float = 0.5;
 /// [`USif::fit`] computes these values from input sentences and returns a fitted instance of [`USif`].
 /// [`USif::embeddings`] computes sentence embeddings with the fitted values.
 ///
-/// If you find these two steps annoying, you can use [`USif::fit_embeddings`].
-///
 /// # Examples
 ///
 /// ```

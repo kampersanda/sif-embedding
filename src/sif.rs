@@ -40,8 +40,6 @@ pub const DEFAULT_N_COMPONENTS: usize = 1;
 /// [`Sif::fit`] computes the common components from input sentences and returns a fitted instance of [`Sif`].
 /// [`Sif::embeddings`] computes sentence embeddings with the fitted components.
 ///
-/// If you find these two steps annoying, you can use [`Sif::fit_embeddings`].
-///
 /// # Examples
 ///
 /// ```
