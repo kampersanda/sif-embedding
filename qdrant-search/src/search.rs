@@ -64,10 +64,7 @@ async fn main() -> Result<()> {
             break;
         }
 
-        let input = re
-            .split(input)
-            .collect::<Vec<_>>()
-            .join(&sif_embedding::DEFAULT_SEPARATOR.to_string());
+        let input = re.replace(input, &sif_embedding::DEFAULT_SEPARATOR.to_string());
         let sent_embedding = model.embeddings([input])?;
         let search_point = SearchPoints {
             collection_name: collection_name.into(),
