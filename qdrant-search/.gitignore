@@ -1,2 +1,3 @@
-ja.wikipedia_250k.txt
+ja.wikipedia_*.txt
 ja.wikipedia_250k.zip
+model.sif

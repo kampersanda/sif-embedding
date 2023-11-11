@@ -34,7 +34,6 @@ clap = { version = "4.2.7", features = ["derive"] }
 finalfusion = "0.17.2"
 ndarray = "0.15.6"
 qdrant-client = "1.6.0"
-rand = "0.8.5"
 serde_json = { version = "1" }
 tokio = { version = "1", features = ["full"] }
 vibrato = { version = "0.5.1", default-features = false }
@@ -62,3 +61,11 @@ features = ["cblas"]
 version = "0.8.1"
 optional = true
 default-features = false
+
+[[bin]]
+name = "create"
+path = "src/create.rs"
+
+[[bin]]
+name = "search"
+path = "src/search.rs"

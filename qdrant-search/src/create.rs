@@ -8,6 +8,7 @@ extern crate openblas_src as _src;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
+use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -20,7 +21,6 @@ use qdrant_client::qdrant::vectors_config::Config;
 use qdrant_client::qdrant::OptimizersConfigDiff;
 use qdrant_client::qdrant::VectorParams;
 use qdrant_client::qdrant::VectorsConfig;
-use rand::prelude::*;
 use serde_json::json;
 use sif_embedding::SentenceEmbedder;
 use sif_embedding::Sif;
@@ -37,6 +37,9 @@ struct Args {
 
     #[arg(short = 'f', long)]
     fifu_model: PathBuf,
+
+    #[arg(short = 'o', long)]
+    output_model: PathBuf,
 
     #[arg(short = 'b', long)]
     batch_size: Option<usize>,
@@ -97,6 +100,7 @@ async fn main() -> Result<()> {
         let sent_embeddings = model.embeddings(batch)?;
         let mut points = vec![];
         for (embedding, sentence) in sent_embeddings.axis_iter(Axis(0)).zip(batch.iter()) {
+            let sentence = sentence.replace(' ', "");
             let payload: Payload = json!({"sentence": sentence}).try_into().unwrap();
             points.push(PointStruct::new(id as u64, embedding.to_vec(), payload));
             id += 1;
@@ -115,18 +119,23 @@ async fn main() -> Result<()> {
         )
         .await?;
 
+    // 5. Save model
+    let data = model.serialize()?;
+    let mut model = File::create(&args.output_model)?;
+    model.write_all(&data)?;
+
     // Search
-    let idx = thread_rng().gen_range(0..sentences.len());
-    let sent_embedding = model.embeddings(&sentences[idx..idx + 1])?;
-    let search_point = SearchPoints {
-        collection_name: collection_name.into(),
-        vector: sent_embedding.row(0).to_vec(),
-        limit: 4, // Top3 + itself
-        with_payload: Some(true.into()),
-        ..Default::default()
-    };
-    let search_result = client.search_points(&search_point).await?;
-    println!("search_result = {:#?}", search_result);
+    // let idx = thread_rng().gen_range(0..sentences.len());
+    // let sent_embedding = model.embeddings(&sentences[idx..idx + 1])?;
+    // let search_point = SearchPoints {
+    //     collection_name: collection_name.into(),
+    //     vector: sent_embedding.row(0).to_vec(),
+    //     limit: 4, // Top3 + itself
+    //     with_payload: Some(true.into()),
+    //     ..Default::default()
+    // };
+    // let search_result = client.search_points(&search_point).await?;
+    // println!("search_result = {:#?}", search_result);
 
     Ok(())
 }
