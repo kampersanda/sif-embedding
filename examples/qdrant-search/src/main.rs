@@ -119,11 +119,7 @@ fn load_wiki_article_dataset<P: AsRef<Path>>(dataset_file: P) -> Result<Vec<Stri
     let mut sentences = vec![];
     for line in reader.lines() {
         let line = line?;
-        sentences.extend(
-            line.split('\t')
-                .map(|s| s.to_string())
-                .filter(|s| !s.is_empty()),
-        );
+        sentences.extend(line.split('\t').map(|s| s.to_string()));
     }
     Ok(sentences)
 }
