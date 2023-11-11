@@ -8,6 +8,7 @@ extern crate openblas_src as _src;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Read;
+use std::io::Write;
 use std::path::PathBuf;
 
 use anyhow::Result;
@@ -53,6 +54,8 @@ async fn main() -> Result<()> {
 
     loop {
         println!("単語間に空白を入れてクエリ文を入力して下さい");
+        print!("> ");
+        std::io::stdout().flush()?;
 
         let mut input = String::new();
         std::io::stdin().read_line(&mut input)?;
