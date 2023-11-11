@@ -391,6 +391,8 @@ where
 
     /// Fits the model with input sentences.
     ///
+    /// Sentences to fit are randomly sampled from `sentences` with [`Self::n_samples_to_fit`].
+    ///
     /// # Errors
     ///
     /// Returns an error if `sentences` is empty.
