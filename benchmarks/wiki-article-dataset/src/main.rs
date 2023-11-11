@@ -59,7 +59,6 @@ fn main() -> Result<()> {
 
     let sentences = load_wiki_article_dataset(&args.dataset_file)?;
     let avg_sent_len = average_sentence_length(&sentences);
-
     eprintln!("Loaded {} sentences", sentences.len());
     eprintln!("Average sentence length: {:.2}", avg_sent_len);
 
