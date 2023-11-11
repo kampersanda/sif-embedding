@@ -17,6 +17,7 @@ use finalfusion::prelude::*;
 use ndarray::Axis;
 use qdrant_client::prelude::*;
 use qdrant_client::qdrant::vectors_config::Config;
+use qdrant_client::qdrant::OptimizersConfigDiff;
 use qdrant_client::qdrant::VectorParams;
 use qdrant_client::qdrant::VectorsConfig;
 use rand::prelude::*;
@@ -26,7 +27,7 @@ use sif_embedding::Sif;
 use sif_embedding::WordProbabilities;
 use wordfreq_model::ModelKind;
 
-const BATCH_SIZE: usize = 1 << 16;
+const BATCH_SIZE: usize = 10000;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -36,6 +37,9 @@ struct Args {
 
     #[arg(short = 'f', long)]
     fifu_model: PathBuf,
+
+    #[arg(short = 'b', long)]
+    batch_size: Option<usize>,
 }
 
 #[tokio::main]
@@ -43,7 +47,6 @@ async fn main() -> Result<()> {
     let args = Args::parse();
 
     let sentences = load_wiki_article_dataset(&args.dataset_file)?;
-    let sentences = sentences[..10000].to_vec();
     eprintln!("Loaded {} sentences", sentences.len());
 
     let mut reader = BufReader::new(File::open(&args.fifu_model)?);
@@ -71,18 +74,24 @@ async fn main() -> Result<()> {
                 ..Default::default()
             })),
         }),
+        // https://qdrant.tech/documentation/tutorials/bulk-upload/
+        optimizers_config: Some(OptimizersConfigDiff {
+            indexing_threshold: Some(0),
+            ..Default::default()
+        }),
         ..Default::default()
     };
     client.create_collection(&collection).await?;
 
-    let n_batches = if sentences.len() % BATCH_SIZE == 0 {
-        sentences.len() / BATCH_SIZE
+    let batch_size = args.batch_size.unwrap_or(BATCH_SIZE);
+    let n_batches = if sentences.len() % batch_size == 0 {
+        sentences.len() / batch_size
     } else {
-        sentences.len() / BATCH_SIZE + 1
+        sentences.len() / batch_size + 1
     };
 
     let mut id = 0;
-    for (i, batch) in sentences.chunks(BATCH_SIZE).enumerate() {
+    for (i, batch) in sentences.chunks(batch_size).enumerate() {
         eprintln!("Uploading batch {}/{}", i + 1, n_batches);
 
         let sent_embeddings = model.embeddings(batch)?;
@@ -92,10 +101,19 @@ async fn main() -> Result<()> {
             points.push(PointStruct::new(id as u64, embedding.to_vec(), payload));
             id += 1;
         }
-        client
-            .upsert_points_blocking(collection_name, points, None)
-            .await?;
+        client.upsert_points(collection_name, points, None).await?;
     }
+
+    // https://qdrant.tech/documentation/tutorials/bulk-upload/
+    client
+        .update_collection(
+            collection_name,
+            &OptimizersConfigDiff {
+                indexing_threshold: Some(20000),
+                ..Default::default()
+            },
+        )
+        .await?;
 
     // Search
     let idx = thread_rng().gen_range(0..sentences.len());
