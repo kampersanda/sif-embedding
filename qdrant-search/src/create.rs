@@ -124,19 +124,6 @@ async fn main() -> Result<()> {
     let mut model = File::create(&args.output_model)?;
     model.write_all(&data)?;
 
-    // Search
-    // let idx = thread_rng().gen_range(0..sentences.len());
-    // let sent_embedding = model.embeddings(&sentences[idx..idx + 1])?;
-    // let search_point = SearchPoints {
-    //     collection_name: collection_name.into(),
-    //     vector: sent_embedding.row(0).to_vec(),
-    //     limit: 4, // Top3 + itself
-    //     with_payload: Some(true.into()),
-    //     ..Default::default()
-    // };
-    // let search_result = client.search_points(&search_point).await?;
-    // println!("search_result = {:#?}", search_result);
-
     Ok(())
 }
 

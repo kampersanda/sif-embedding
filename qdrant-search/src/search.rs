@@ -14,6 +14,7 @@ use anyhow::Result;
 use clap::Parser;
 use finalfusion::prelude::*;
 use qdrant_client::prelude::*;
+use regex::Regex;
 use sif_embedding::SentenceEmbedder;
 use sif_embedding::Sif;
 use sif_embedding::WordProbabilities;
@@ -48,9 +49,10 @@ async fn main() -> Result<()> {
     let client = QdrantClient::from_url("http://localhost:6334").build()?;
     let collection_name = "wiki-article-dataset";
 
-    // loop for stdin
+    let re = Regex::new(r"\s+").unwrap();
+
     loop {
-        println!("Please input sentence: ");
+        println!("単語間に空白を入れてクエリ文を入力して下さい");
 
         let mut input = String::new();
         std::io::stdin().read_line(&mut input)?;
@@ -59,11 +61,15 @@ async fn main() -> Result<()> {
             break;
         }
 
+        let input = re
+            .split(input)
+            .collect::<Vec<_>>()
+            .join(&sif_embedding::DEFAULT_SEPARATOR.to_string());
         let sent_embedding = model.embeddings([input])?;
         let search_point = SearchPoints {
             collection_name: collection_name.into(),
             vector: sent_embedding.row(0).to_vec(),
-            limit: 5, // Top3 + itself
+            limit: 5,
             with_payload: Some(true.into()),
             ..Default::default()
         };
