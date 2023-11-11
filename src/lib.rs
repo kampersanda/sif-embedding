@@ -186,7 +186,7 @@ pub type Float = f32;
 pub const DEFAULT_SEPARATOR: char = ' ';
 
 /// Default number of samples to fit.
-pub const DEFAULT_N_SAMPLES_TO_FIT: usize = 10000;
+pub const DEFAULT_N_SAMPLES_TO_FIT: usize = 1 << 16;
 
 /// Word embeddings.
 pub trait WordEmbeddings {
