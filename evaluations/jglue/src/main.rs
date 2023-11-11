@@ -152,7 +152,9 @@ fn evaluate<M>(
 where
     M: SentenceEmbedder,
 {
-    let (sent_embeddings, _) = model.fit_embeddings(sentences)?;
+    let model = model.fit(sentences)?;
+    let sent_embeddings = model.embeddings(sentences)?;
+
     let n_examples = gold_scores.len();
     let mut pred_scores = Vec::with_capacity(n_examples);
     for i in 0..n_examples {

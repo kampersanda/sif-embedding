@@ -45,10 +45,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         "This is a third sentence.",
     ];
 
+    // Fits the model with input sentences.
+    let model = Sif::new(&word_embeddings, &word_probs);
+    let model = model.fit(&sentences)?;
+
     // Computes sentence embeddings in shape (n, m),
     // where n is the number of sentences and m is the number of dimensions.
-    let model = Sif::new(&word_embeddings, &word_probs);
-    let (sent_embeddings, model) = model.fit_embeddings(&sentences)?;
+    let sent_embeddings = model.embeddings(sentences)?;
     println!("{:?}", sent_embeddings);
 
     // Prepare new input sentences.

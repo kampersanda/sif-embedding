@@ -48,15 +48,17 @@
 //! // Loads word probabilities from a pretrained model.
 //! let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
 //!
+//! // Prepares input sentences.
+//! let sentences = ["las vegas", "mega vegas"];
+//!
+//! // Fits the model with input sentences.
+//! let model = Sif::new(&word_embeddings, &word_probs);
+//! let model = model.fit(&sentences)?;
+//!
 //! // Computes sentence embeddings in shape (n, m),
 //! // where n is the number of sentences and m is the number of dimensions.
-//! let model = Sif::new(&word_embeddings, &word_probs);
-//! let (sent_embeddings, model) = model.fit_embeddings(&["las vegas", "mega vegas"])?;
+//! let sent_embeddings = model.embeddings(sentences)?;
 //! assert_eq!(sent_embeddings.shape(), &[2, 3]);
-//!
-//! // Once fitted, the parameters can be used to compute sentence embeddings.
-//! let sent_embeddings = model.embeddings(["vegas pro"])?;
-//! assert_eq!(sent_embeddings.shape(), &[1, 3]);
 //! # Ok(())
 //! # }
 //! ```
@@ -183,6 +185,9 @@ pub type Float = f32;
 /// Default separator for splitting sentences into words.
 pub const DEFAULT_SEPARATOR: char = ' ';
 
+/// Default number of samples to fit.
+pub const DEFAULT_N_SAMPLES_TO_FIT: usize = 10000;
+
 /// Word embeddings.
 pub trait WordEmbeddings {
     /// Returns the embedding of a word.
@@ -219,15 +224,4 @@ pub trait SentenceEmbedder: Sized {
     where
         I: IntoIterator<Item = S>,
         S: AsRef<str>;
-
-    /// Fits the model with input sentences and computes embeddings using it,
-    /// providing the same behavior as performing [`Self::fit`] and then [`Self::embeddings`].
-    fn fit_embeddings<S>(self, sentences: &[S]) -> Result<(Array2<Float>, Self)>
-    where
-        S: AsRef<str>,
-    {
-        let model = self.fit(sentences)?;
-        let embeddings = model.embeddings(sentences)?;
-        Ok((embeddings, model))
-    }
 }

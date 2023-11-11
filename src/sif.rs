@@ -8,6 +8,7 @@ use crate::Float;
 use crate::SentenceEmbedder;
 use crate::WordEmbeddings;
 use crate::WordProbabilities;
+use crate::DEFAULT_N_SAMPLES_TO_FIT;
 use crate::DEFAULT_SEPARATOR;
 
 /// Default value of the SIF-weighting parameter `a`,
@@ -39,8 +40,6 @@ pub const DEFAULT_N_COMPONENTS: usize = 1;
 /// [`Sif::fit`] computes the common components from input sentences and returns a fitted instance of [`Sif`].
 /// [`Sif::embeddings`] computes sentence embeddings with the fitted components.
 ///
-/// If you find these two steps annoying, you can use [`Sif::fit_embeddings`].
-///
 /// # Examples
 ///
 /// ```
@@ -61,15 +60,17 @@ pub const DEFAULT_N_COMPONENTS: usize = 1;
 /// // Loads word probabilities from a pretrained model.
 /// let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
 ///
+/// // Prepares input sentences.
+/// let sentences = ["las vegas", "mega vegas"];
+///
+/// // Fits the model with input sentences.
+/// let model = Sif::new(&word_embeddings, &word_probs);
+/// let model = model.fit(&sentences)?;
+///
 /// // Computes sentence embeddings in shape (n, m),
 /// // where n is the number of sentences and m is the number of dimensions.
-/// let model = Sif::new(&word_embeddings, &word_probs);
-/// let (sent_embeddings, model) = model.fit_embeddings(&["las vegas", "mega vegas"])?;
+/// let sent_embeddings = model.embeddings(sentences)?;
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
-///
-/// // Once fitted, the parameters can be used to compute sentence embeddings.
-/// let sent_embeddings = model.embeddings(["vegas pro"])?;
-/// assert_eq!(sent_embeddings.shape(), &[1, 3]);
 /// # Ok(())
 /// # }
 /// ```
@@ -133,15 +134,18 @@ pub const DEFAULT_N_COMPONENTS: usize = 1;
 /// // Loads word probabilities from a pretrained model.
 /// let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
 ///
-/// // Computes sentence embeddings in shape (n, m),
-/// // where n is the number of sentences and m is the number of dimensions.
+/// // Prepares input sentences.
+/// let sentences = ["las vegas", "mega vegas"];
+///
+/// // Fits the model and computes sentence embeddings.
 /// let model = Sif::new(&word_embeddings, &word_probs);
-/// let (sent_embeddings, model) = model.fit_embeddings(&["las vegas", "mega vegas"])?;
+/// let model = model.fit(&sentences)?;
+/// let sent_embeddings = model.embeddings(&sentences)?;
 ///
 /// // Serializes and deserializes the fitted parameters.
 /// let bytes = model.serialize()?;
 /// let other = Sif::deserialize(&bytes, &word_embeddings, &word_probs)?;
-/// let other_embeddings = other.embeddings(["las vegas", "mega vegas"])?;
+/// let other_embeddings = other.embeddings(&sentences)?;
 /// assert_relative_eq!(sent_embeddings, other_embeddings);
 /// # Ok(())
 /// # }
@@ -154,6 +158,7 @@ pub struct Sif<'w, 'p, W, P> {
     n_components: usize,
     common_components: Option<Array2<Float>>,
     separator: char,
+    n_samples_to_fit: usize,
 }
 
 impl<'w, 'p, W, P> Sif<'w, 'p, W, P>
@@ -176,6 +181,7 @@ where
             n_components: DEFAULT_N_COMPONENTS,
             common_components: None,
             separator: DEFAULT_SEPARATOR,
+            n_samples_to_fit: DEFAULT_N_SAMPLES_TO_FIT,
         }
     }
 
@@ -209,6 +215,7 @@ where
             n_components,
             common_components: None,
             separator: DEFAULT_SEPARATOR,
+            n_samples_to_fit: DEFAULT_N_SAMPLES_TO_FIT,
         })
     }
 
@@ -216,6 +223,19 @@ where
     pub const fn separator(mut self, separator: char) -> Self {
         self.separator = separator;
         self
+    }
+
+    /// Sets the number of samples to fit the model (default: [`DEFAULT_N_SAMPLES_TO_FIT`]).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `n_samples_to_fit` is 0.
+    pub fn n_samples_to_fit(mut self, n_samples_to_fit: usize) -> Result<Self> {
+        if n_samples_to_fit == 0 {
+            return Err(anyhow!("n_samples_to_fit must not be 0."));
+        }
+        self.n_samples_to_fit = n_samples_to_fit;
+        Ok(self)
     }
 
     /// Applies SIF-weighting.
@@ -257,6 +277,7 @@ where
         bincode::serialize_into(&mut bytes, &self.n_components)?;
         bincode::serialize_into(&mut bytes, &self.common_components)?;
         bincode::serialize_into(&mut bytes, &self.separator)?;
+        bincode::serialize_into(&mut bytes, &self.n_samples_to_fit)?;
         Ok(bytes)
     }
 
@@ -275,6 +296,7 @@ where
         let n_components = bincode::deserialize_from(&mut bytes)?;
         let common_components = bincode::deserialize_from(&mut bytes)?;
         let separator = bincode::deserialize_from(&mut bytes)?;
+        let n_samples_to_fit = bincode::deserialize_from(&mut bytes)?;
         Ok(Self {
             word_embeddings,
             word_probs,
@@ -282,6 +304,7 @@ where
             n_components,
             common_components,
             separator,
+            n_samples_to_fit,
         })
     }
 }
@@ -298,6 +321,8 @@ where
     }
 
     /// Fits the model with input sentences.
+    ///
+    /// Sentences to fit are randomly sampled from `sentences` with [`Self::n_samples_to_fit`].
     ///
     /// # Errors
     ///
@@ -317,12 +342,17 @@ where
             eprintln!("Warning: Nothing to fit since n_components is 0.");
             return Ok(self);
         }
+
+        let sentences = util::sample_sentences(sentences, self.n_samples_to_fit);
+
         // SIF-weighting.
         let sent_embeddings = self.weighted_embeddings(sentences);
+
         // Common component removal.
         let (_, common_components) =
             util::principal_components(&sent_embeddings, self.n_components);
         self.common_components = Some(common_components);
+
         Ok(self)
     }
 
@@ -356,29 +386,6 @@ where
         let sent_embeddings =
             util::remove_principal_components(&sent_embeddings, common_components, None);
         Ok(sent_embeddings)
-    }
-
-    /// Fits the model with input sentences and computes embeddings using it,
-    /// providing the same behavior as performing [`Self::fit`] and then [`Self::embeddings`].
-    fn fit_embeddings<S>(mut self, sentences: &[S]) -> Result<(Array2<Float>, Self)>
-    where
-        S: AsRef<str>,
-    {
-        if sentences.is_empty() {
-            return Err(anyhow!("Input sentences must not be empty."));
-        }
-        // SIF-weighting.
-        let sent_embeddings = self.weighted_embeddings(sentences);
-        if self.n_components == 0 {
-            return Ok((sent_embeddings, self));
-        }
-        // Common component removal.
-        let (_, common_components) =
-            util::principal_components(&sent_embeddings, self.n_components);
-        let sent_embeddings =
-            util::remove_principal_components(&sent_embeddings, &common_components, None);
-        self.common_components = Some(common_components);
-        Ok((sent_embeddings, self))
     }
 }
 

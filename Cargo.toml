@@ -53,6 +53,8 @@ finalfusion = { version = "0.17.2", optional = true }
 # https://github.com/rust-lang/rust/issues/113152
 proc-macro2 = "1.0.69"
 
+rand = "0.8.5"
+
 # NOTE(kampersanda): Do not forget to update the version number in `lib.rs` as well.
 wordfreq = { version = "0.2.3", optional = true }
 

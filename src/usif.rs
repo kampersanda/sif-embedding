@@ -8,6 +8,7 @@ use crate::Float;
 use crate::SentenceEmbedder;
 use crate::WordEmbeddings;
 use crate::WordProbabilities;
+use crate::DEFAULT_N_SAMPLES_TO_FIT;
 use crate::DEFAULT_SEPARATOR;
 
 /// Default value of the number of principal components,
@@ -37,8 +38,6 @@ const FLOAT_0_5: Float = 0.5;
 /// [`USif::fit`] computes these values from input sentences and returns a fitted instance of [`USif`].
 /// [`USif::embeddings`] computes sentence embeddings with the fitted values.
 ///
-/// If you find these two steps annoying, you can use [`USif::fit_embeddings`].
-///
 /// # Examples
 ///
 /// ```
@@ -59,15 +58,17 @@ const FLOAT_0_5: Float = 0.5;
 /// // Loads word probabilities from a pretrained model.
 /// let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
 ///
+/// // Prepares input sentences.
+/// let sentences = ["las vegas", "mega vegas"];
+///
+/// // Fits the model with input sentences.
+/// let model = USif::new(&word_embeddings, &word_probs);
+/// let model = model.fit(&sentences)?;
+///
 /// // Computes sentence embeddings in shape (n, m),
 /// // where n is the number of sentences and m is the number of dimensions.
-/// let model = USif::new(&word_embeddings, &word_probs);
-/// let (sent_embeddings, model) = model.fit_embeddings(&["las vegas", "mega vegas"])?;
+/// let sent_embeddings = model.embeddings(sentences)?;
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
-///
-/// // Once fitted, the parameters can be used to compute sentence embeddings.
-/// let sent_embeddings = model.embeddings(["vegas pro"])?;
-/// assert_eq!(sent_embeddings.shape(), &[1, 3]);
 /// # Ok(())
 /// # }
 /// ```
@@ -95,9 +96,13 @@ const FLOAT_0_5: Float = 0.5;
 /// // Loads word probabilities from a pretrained model.
 /// let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
 ///
+/// // Prepares input sentences.
+/// let sentences = ["las vegas", "mega vegas"];
+///
 /// // When setting `n_components` to `0`, no common components are removed.
 /// let model = USif::with_parameters(&word_embeddings, &word_probs, 0);
-/// let (sent_embeddings, _) = model.fit_embeddings(&["las vegas", "mega vegas"])?;
+/// let model = model.fit(&sentences)?;
+/// let sent_embeddings = model.embeddings(sentences)?;
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
 /// # Ok(())
 /// # }
@@ -127,15 +132,18 @@ const FLOAT_0_5: Float = 0.5;
 /// // Loads word probabilities from a pretrained model.
 /// let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
 ///
-/// // Computes sentence embeddings in shape (n, m),
-/// // where n is the number of sentences and m is the number of dimensions.
+/// // Prepares input sentences.
+/// let sentences = ["las vegas", "mega vegas"];
+///
+/// // Fits the model and computes sentence embeddings.
 /// let model = USif::new(&word_embeddings, &word_probs);
-/// let (sent_embeddings, model) = model.fit_embeddings(&["las vegas", "mega vegas"])?;
+/// let model = model.fit(&sentences)?;
+/// let sent_embeddings = model.embeddings(&sentences)?;
 ///
 /// // Serializes and deserializes the fitted parameters.
 /// let bytes = model.serialize()?;
 /// let other = USif::deserialize(&bytes, &word_embeddings, &word_probs)?;
-/// let other_embeddings = other.embeddings(["las vegas", "mega vegas"])?;
+/// let other_embeddings = other.embeddings(&sentences)?;
 /// assert_relative_eq!(sent_embeddings, other_embeddings);
 /// # Ok(())
 /// # }
@@ -149,6 +157,7 @@ pub struct USif<'w, 'p, W, P> {
     weights: Option<Array1<Float>>,
     common_components: Option<Array2<Float>>,
     separator: char,
+    n_samples_to_fit: usize,
 }
 
 impl<'w, 'p, W, P> USif<'w, 'p, W, P>
@@ -172,6 +181,7 @@ where
             weights: None,
             common_components: None,
             separator: DEFAULT_SEPARATOR,
+            n_samples_to_fit: DEFAULT_N_SAMPLES_TO_FIT,
         }
     }
 
@@ -197,6 +207,7 @@ where
             weights: None,
             common_components: None,
             separator: DEFAULT_SEPARATOR,
+            n_samples_to_fit: DEFAULT_N_SAMPLES_TO_FIT,
         }
     }
 
@@ -204,6 +215,19 @@ where
     pub const fn separator(mut self, separator: char) -> Self {
         self.separator = separator;
         self
+    }
+
+    /// Sets the number of samples to fit the model (default: [`DEFAULT_N_SAMPLES_TO_FIT`]).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `n_samples_to_fit` is 0.
+    pub fn n_samples_to_fit(mut self, n_samples_to_fit: usize) -> Result<Self> {
+        if n_samples_to_fit == 0 {
+            return Err(anyhow!("n_samples_to_fit must not be 0."));
+        }
+        self.n_samples_to_fit = n_samples_to_fit;
+        Ok(self)
     }
 
     /// Computes the average length of sentences.
@@ -318,6 +342,7 @@ where
         bincode::serialize_into(&mut bytes, &self.weights)?;
         bincode::serialize_into(&mut bytes, &self.common_components)?;
         bincode::serialize_into(&mut bytes, &self.separator)?;
+        bincode::serialize_into(&mut bytes, &self.n_samples_to_fit)?;
         Ok(bytes)
     }
 
@@ -337,6 +362,7 @@ where
         let weights = bincode::deserialize_from(&mut bytes)?;
         let common_components = bincode::deserialize_from(&mut bytes)?;
         let separator = bincode::deserialize_from(&mut bytes)?;
+        let n_samples_to_fit = bincode::deserialize_from(&mut bytes)?;
         Ok(Self {
             word_embeddings,
             word_probs,
@@ -345,6 +371,7 @@ where
             weights,
             common_components,
             separator,
+            n_samples_to_fit,
         })
     }
 }
@@ -362,6 +389,8 @@ where
 
     /// Fits the model with input sentences.
     ///
+    /// Sentences to fit are randomly sampled from `sentences` with [`Self::n_samples_to_fit`].
+    ///
     /// # Errors
     ///
     /// Returns an error if `sentences` is empty.
@@ -372,14 +401,18 @@ where
         if sentences.is_empty() {
             return Err(anyhow!("Input sentences must not be empty."));
         }
+
+        let sentences = util::sample_sentences(sentences, self.n_samples_to_fit);
+
         // SIF-weighting.
-        let sent_len = self.average_sentence_length(sentences);
+        let sent_len = self.average_sentence_length(&sentences);
         if sent_len == 0. {
             return Err(anyhow!("Input sentences must not be empty."));
         }
         let param_a = self.estimate_param_a(sent_len);
         let sent_embeddings = self.weighted_embeddings(sentences, param_a);
         self.param_a = Some(param_a);
+
         // Common component removal.
         if self.n_components != 0 {
             let (weights, common_components) = self.estimate_principal_components(&sent_embeddings);
@@ -388,6 +421,7 @@ where
         }
         // NOTE: There is no need to set weights and common_components to None.
         //       because n_components can be set up only in initialization.
+
         Ok(self)
     }
 
@@ -418,42 +452,6 @@ where
         let sent_embeddings =
             util::remove_principal_components(&sent_embeddings, common_components, Some(weights));
         Ok(sent_embeddings)
-    }
-
-    /// Fits the model with input sentences and computes embeddings using it,
-    /// providing the same behavior as performing [`Self::fit`] and then [`Self::embeddings`].
-    fn fit_embeddings<S>(mut self, sentences: &[S]) -> Result<(Array2<Float>, Self)>
-    where
-        S: AsRef<str>,
-    {
-        if sentences.is_empty() {
-            return Err(anyhow!("Input sentences must not be empty."));
-        }
-        // SIF-weighting.
-        let sent_len = self.average_sentence_length(sentences);
-        if sent_len == 0. {
-            return Err(anyhow!("Input sentences must not be empty."));
-        }
-        let param_a = self.estimate_param_a(sent_len);
-        let sent_embeddings = self.weighted_embeddings(sentences, param_a);
-        self.param_a = Some(param_a);
-        // Common component removal.
-        let sent_embeddings = if self.n_components != 0 {
-            let (weights, common_components) = self.estimate_principal_components(&sent_embeddings);
-            let sent_embeddings = util::remove_principal_components(
-                &sent_embeddings,
-                &common_components,
-                Some(&weights),
-            );
-            self.weights = Some(weights);
-            self.common_components = Some(common_components);
-            sent_embeddings
-        } else {
-            // NOTE: There is no need to set weights and common_components to None.
-            //       because n_components can be set up only in initialization.
-            sent_embeddings
-        };
-        Ok((sent_embeddings, self))
     }
 }
 
