@@ -110,7 +110,8 @@ let sentences = vec![
     "This is a third sentence.",
 ];
 let model = Sif::new(&word_embeddings, &word_probs);
-let (sent_embeddings, model) = model.fit_embeddings(&sentences)?;
+let model = model.fit(&sentences)?;
+let sent_embeddings = model.embeddings(sentences)?;
 println!("{:?}", sent_embeddings);
 ```
 
