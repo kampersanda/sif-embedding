@@ -160,6 +160,7 @@ pub struct Sif<'w, 'p, W, P> {
     n_components: usize,
     common_components: Option<Array2<Float>>,
     separator: char,
+    n_samples_to_fit: usize,
 }
 
 impl<'w, 'p, W, P> Sif<'w, 'p, W, P>
@@ -182,6 +183,7 @@ where
             n_components: DEFAULT_N_COMPONENTS,
             common_components: None,
             separator: DEFAULT_SEPARATOR,
+            n_samples_to_fit: DEFAULT_N_SAMPLES_TO_FIT,
         }
     }
 
@@ -215,6 +217,7 @@ where
             n_components,
             common_components: None,
             separator: DEFAULT_SEPARATOR,
+            n_samples_to_fit: DEFAULT_N_SAMPLES_TO_FIT,
         })
     }
 
@@ -222,6 +225,19 @@ where
     pub const fn separator(mut self, separator: char) -> Self {
         self.separator = separator;
         self
+    }
+
+    /// Sets the number of samples to fit the model (default: [`DEFAULT_N_SAMPLES_TO_FIT`]).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `n_samples_to_fit` is 0.
+    pub fn n_samples_to_fit(mut self, n_samples_to_fit: usize) -> Result<Self> {
+        if n_samples_to_fit == 0 {
+            return Err(anyhow!("n_samples_to_fit must not be 0."));
+        }
+        self.n_samples_to_fit = n_samples_to_fit;
+        Ok(self)
     }
 
     /// Applies SIF-weighting.
@@ -263,6 +279,7 @@ where
         bincode::serialize_into(&mut bytes, &self.n_components)?;
         bincode::serialize_into(&mut bytes, &self.common_components)?;
         bincode::serialize_into(&mut bytes, &self.separator)?;
+        bincode::serialize_into(&mut bytes, &self.n_samples_to_fit)?;
         Ok(bytes)
     }
 
@@ -281,6 +298,7 @@ where
         let n_components = bincode::deserialize_from(&mut bytes)?;
         let common_components = bincode::deserialize_from(&mut bytes)?;
         let separator = bincode::deserialize_from(&mut bytes)?;
+        let n_samples_to_fit = bincode::deserialize_from(&mut bytes)?;
         Ok(Self {
             word_embeddings,
             word_probs,
@@ -288,6 +306,7 @@ where
             n_components,
             common_components,
             separator,
+            n_samples_to_fit,
         })
     }
 }
@@ -324,7 +343,7 @@ where
             return Ok(self);
         }
 
-        let sentences = util::sample_sentences(sentences, DEFAULT_N_SAMPLES_TO_FIT);
+        let sentences = util::sample_sentences(sentences, self.n_samples_to_fit);
 
         // SIF-weighting.
         let sent_embeddings = self.weighted_embeddings(sentences);

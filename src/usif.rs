@@ -159,6 +159,7 @@ pub struct USif<'w, 'p, W, P> {
     weights: Option<Array1<Float>>,
     common_components: Option<Array2<Float>>,
     separator: char,
+    n_samples_to_fit: usize,
 }
 
 impl<'w, 'p, W, P> USif<'w, 'p, W, P>
@@ -182,6 +183,7 @@ where
             weights: None,
             common_components: None,
             separator: DEFAULT_SEPARATOR,
+            n_samples_to_fit: DEFAULT_N_SAMPLES_TO_FIT,
         }
     }
 
@@ -207,6 +209,7 @@ where
             weights: None,
             common_components: None,
             separator: DEFAULT_SEPARATOR,
+            n_samples_to_fit: DEFAULT_N_SAMPLES_TO_FIT,
         }
     }
 
@@ -214,6 +217,19 @@ where
     pub const fn separator(mut self, separator: char) -> Self {
         self.separator = separator;
         self
+    }
+
+    /// Sets the number of samples to fit the model (default: [`DEFAULT_N_SAMPLES_TO_FIT`]).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `n_samples_to_fit` is 0.
+    pub fn n_samples_to_fit(mut self, n_samples_to_fit: usize) -> Result<Self> {
+        if n_samples_to_fit == 0 {
+            return Err(anyhow!("n_samples_to_fit must not be 0."));
+        }
+        self.n_samples_to_fit = n_samples_to_fit;
+        Ok(self)
     }
 
     /// Computes the average length of sentences.
@@ -328,6 +344,7 @@ where
         bincode::serialize_into(&mut bytes, &self.weights)?;
         bincode::serialize_into(&mut bytes, &self.common_components)?;
         bincode::serialize_into(&mut bytes, &self.separator)?;
+        bincode::serialize_into(&mut bytes, &self.n_samples_to_fit)?;
         Ok(bytes)
     }
 
@@ -347,6 +364,7 @@ where
         let weights = bincode::deserialize_from(&mut bytes)?;
         let common_components = bincode::deserialize_from(&mut bytes)?;
         let separator = bincode::deserialize_from(&mut bytes)?;
+        let n_samples_to_fit = bincode::deserialize_from(&mut bytes)?;
         Ok(Self {
             word_embeddings,
             word_probs,
@@ -355,6 +373,7 @@ where
             weights,
             common_components,
             separator,
+            n_samples_to_fit,
         })
     }
 }
@@ -383,7 +402,7 @@ where
             return Err(anyhow!("Input sentences must not be empty."));
         }
 
-        let sentences = util::sample_sentences(sentences, DEFAULT_N_SAMPLES_TO_FIT);
+        let sentences = util::sample_sentences(sentences, self.n_samples_to_fit);
 
         // SIF-weighting.
         let sent_len = self.average_sentence_length(&sentences);
