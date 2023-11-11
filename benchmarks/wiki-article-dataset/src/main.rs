@@ -22,6 +22,8 @@ use sif_embedding::USif;
 use sif_embedding::WordProbabilities;
 use wordfreq_model::ModelKind;
 
+const BATCH_SIZE: usize = 1 << 16;
+
 #[derive(Clone, Debug)]
 enum MethodKind {
     Sif,
@@ -56,8 +58,10 @@ fn main() -> Result<()> {
     let args = Args::parse();
 
     let sentences = load_wiki_article_dataset(&args.dataset_file)?;
-    // let sentences = sentences[..10000].to_vec();
+    let avg_sent_len = average_sentence_length(&sentences);
+
     eprintln!("Loaded {} sentences", sentences.len());
+    eprintln!("Average sentence length: {:.2}", avg_sent_len);
 
     let mut reader = BufReader::new(File::open(&args.fifu_model)?);
     let word_embeddings = Embeddings::<VocabWrap, StorageWrap>::mmap_embeddings(&mut reader)?;
@@ -95,16 +99,27 @@ fn load_wiki_article_dataset<P: AsRef<Path>>(dataset_file: P) -> Result<Vec<Stri
     Ok(sentences)
 }
 
+fn average_sentence_length<S>(sentences: &[S]) -> f32
+where
+    S: AsRef<str>,
+{
+    let mut n_words = 0;
+    for sent in sentences {
+        let sent = sent.as_ref();
+        n_words += sent.split(sif_embedding::DEFAULT_SEPARATOR).count();
+    }
+    n_words as f32 / sentences.len() as f32
+}
+
 fn benchmark<M: SentenceEmbedder>(model: M, sentences: &[String]) -> Result<()> {
-    let batch_size = 1 << 16;
-    let n_batches = if sentences.len() % batch_size == 0 {
-        sentences.len() / batch_size
+    let n_batches = if sentences.len() % BATCH_SIZE == 0 {
+        sentences.len() / BATCH_SIZE
     } else {
-        sentences.len() / batch_size + 1
+        sentences.len() / BATCH_SIZE + 1
     };
 
     let start = Instant::now();
-    for (i, batch) in sentences.chunks(batch_size).enumerate() {
+    for (i, batch) in sentences.chunks(BATCH_SIZE).enumerate() {
         eprintln!("Uploading batch {}/{}", i + 1, n_batches);
 
         let sent_embeddings = model.embeddings(batch)?;
