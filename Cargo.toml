@@ -91,9 +91,10 @@ approx = "0.5.1"
 [workspace]
 members = [
     "benchmarks/wiki-article-dataset",
-    "finalfusion-tools",
     "evaluations/jglue",
     "evaluations/senteval",
+    "finalfusion-tools",
+    "qdrant-search",
     "tutorial",
 ]
 
