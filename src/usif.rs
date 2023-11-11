@@ -60,15 +60,17 @@ const FLOAT_0_5: Float = 0.5;
 /// // Loads word probabilities from a pretrained model.
 /// let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
 ///
+/// // Prepares input sentences.
+/// let sentences = ["las vegas", "mega vegas"];
+///
+/// // Fits the model with input sentences.
+/// let model = USif::new(&word_embeddings, &word_probs);
+/// let model = model.fit(&sentences)?;
+///
 /// // Computes sentence embeddings in shape (n, m),
 /// // where n is the number of sentences and m is the number of dimensions.
-/// let model = USif::new(&word_embeddings, &word_probs);
-/// let (sent_embeddings, model) = model.fit_embeddings(&["las vegas", "mega vegas"])?;
+/// let sent_embeddings = model.embeddings(sentences)?;
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
-///
-/// // Once fitted, the parameters can be used to compute sentence embeddings.
-/// let sent_embeddings = model.embeddings(["vegas pro"])?;
-/// assert_eq!(sent_embeddings.shape(), &[1, 3]);
 /// # Ok(())
 /// # }
 /// ```
@@ -96,9 +98,13 @@ const FLOAT_0_5: Float = 0.5;
 /// // Loads word probabilities from a pretrained model.
 /// let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
 ///
+/// // Prepares input sentences.
+/// let sentences = ["las vegas", "mega vegas"];
+///
 /// // When setting `n_components` to `0`, no common components are removed.
 /// let model = USif::with_parameters(&word_embeddings, &word_probs, 0);
-/// let (sent_embeddings, _) = model.fit_embeddings(&["las vegas", "mega vegas"])?;
+/// let model = model.fit(&sentences)?;
+/// let sent_embeddings = model.embeddings(sentences)?;
 /// assert_eq!(sent_embeddings.shape(), &[2, 3]);
 /// # Ok(())
 /// # }
@@ -128,15 +134,18 @@ const FLOAT_0_5: Float = 0.5;
 /// // Loads word probabilities from a pretrained model.
 /// let word_probs = WordFreq::new([("las", 0.4), ("vegas", 0.6)]);
 ///
-/// // Computes sentence embeddings in shape (n, m),
-/// // where n is the number of sentences and m is the number of dimensions.
+/// // Prepares input sentences.
+/// let sentences = ["las vegas", "mega vegas"];
+///
+/// // Fits the model and computes sentence embeddings.
 /// let model = USif::new(&word_embeddings, &word_probs);
-/// let (sent_embeddings, model) = model.fit_embeddings(&["las vegas", "mega vegas"])?;
+/// let model = model.fit(&sentences)?;
+/// let sent_embeddings = model.embeddings(&sentences)?;
 ///
 /// // Serializes and deserializes the fitted parameters.
 /// let bytes = model.serialize()?;
 /// let other = USif::deserialize(&bytes, &word_embeddings, &word_probs)?;
-/// let other_embeddings = other.embeddings(["las vegas", "mega vegas"])?;
+/// let other_embeddings = other.embeddings(&sentences)?;
 /// assert_relative_eq!(sent_embeddings, other_embeddings);
 /// # Ok(())
 /// # }
