@@ -110,7 +110,7 @@ async fn main() -> Result<()> {
             let sent_embeddings = model.embeddings(proc_batch)?;
             let mut points = vec![];
             for (embedding, sentence) in sent_embeddings.axis_iter(Axis(0)).zip(orig_batch.iter()) {
-                let payload: Payload = json!({"sentence": sentence}).try_into().unwrap();
+                let payload: Payload = json!({ "sentence": sentence }).try_into().unwrap();
                 points.push(PointStruct::new(id as u64, embedding.to_vec(), payload));
                 id += 1;
             }
