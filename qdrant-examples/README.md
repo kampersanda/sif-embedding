@@ -72,12 +72,16 @@ search_result = SearchResponse {
                             "The Monitor Call API was very much ahead of its time, like most of the operating system, and made system programming on DECsystem-10s simple and powerful.",
                         ),
             ...
+            score: 0.73194635,
+            ...
         },
         ScoredPoint {
             ...
                         StringValue(
                             "It was a simple, efficient system, very effective primarily because of its simplicity.",
                         ),
+            ...
+            score: 0.69869876,
             ...
         },
         ScoredPoint {
@@ -86,12 +90,16 @@ search_result = SearchResponse {
                             "Erzya has a simple five-vowel system.",
                         ),
             ...
+            score: 0.68330246,
+            ...
         },
         ScoredPoint {
             ...
                         StringValue(
                             "True BASIC.“ Upon Kemeny's advice, True BASIC was not limited to a single OS or computer system.",
                         ),
+            ...
+            score: 0.6798639,
             ...
         },
         ScoredPoint {
@@ -100,9 +108,11 @@ search_result = SearchResponse {
                             "An open-loop controller is often used in simple processes because of its simplicity and low cost, especially in systems where feedback is not critical.",
                         ),
             ...
+            score: 0.6794525,
+            ...
         },
     ],
-    time: 0.0455188,
+    time: 0.0214875,
 }
 Enter a sentence to search (or empty to exit):
 >
