@@ -60,7 +60,7 @@ async fn main() -> Result<()> {
     eprintln!("word_embeddings.len() = {}", word_embeddings.len());
     eprintln!("word_embeddings.dims() = {}", word_embeddings.dims());
 
-    let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeJa)?;
+    let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
     eprintln!("unigram_lm.n_words() = {}", unigram_lm.n_words());
 
     let model = Sif::new(&word_embeddings, &unigram_lm);
@@ -70,7 +70,6 @@ async fn main() -> Result<()> {
     let collection_name = "wiki1m";
     client.delete_collection(collection_name).await?;
 
-    // 4. Upload embeddings
     let collection = CreateCollection {
         collection_name: collection_name.into(),
         vectors_config: Some(VectorsConfig {
@@ -80,6 +79,7 @@ async fn main() -> Result<()> {
                 ..Default::default()
             })),
         }),
+        // Disable indexing during upload for speed up.
         // https://qdrant.tech/documentation/tutorials/bulk-upload/
         optimizers_config: Some(OptimizersConfigDiff {
             indexing_threshold: Some(0),
@@ -116,6 +116,7 @@ async fn main() -> Result<()> {
             client.upsert_points(collection_name, points, None).await?;
         }
 
+        // Post-create the index.
         // https://qdrant.tech/documentation/tutorials/bulk-upload/
         client
             .update_collection(
@@ -130,7 +131,6 @@ async fn main() -> Result<()> {
     let elapsed = start.elapsed();
     eprintln!("Indexing time: {:?}", elapsed);
 
-    // 5. Save model
     let data = model.serialize()?;
     let mut model = File::create(&args.output_model)?;
     model.write_all(&data)?;

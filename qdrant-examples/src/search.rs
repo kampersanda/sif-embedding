@@ -25,8 +25,8 @@ use wordfreq_model::ModelKind;
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    #[arg(short = 's', long)]
-    sif_model: PathBuf,
+    #[arg(short = 'i', long)]
+    input_model: PathBuf,
 
     #[arg(short = 'f', long)]
     fifu_model: PathBuf,
@@ -41,11 +41,11 @@ async fn main() -> Result<()> {
     eprintln!("word_embeddings.len() = {}", word_embeddings.len());
     eprintln!("word_embeddings.dims() = {}", word_embeddings.dims());
 
-    let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeJa)?;
+    let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
     eprintln!("unigram_lm.n_words() = {}", unigram_lm.n_words());
 
     let mut data = vec![];
-    File::open(&args.sif_model)?.read_to_end(&mut data)?;
+    File::open(&args.input_model)?.read_to_end(&mut data)?;
     let model = Sif::deserialize(&data, &word_embeddings, &unigram_lm)?;
 
     let client = QdrantClient::from_url("http://localhost:6334").build()?;

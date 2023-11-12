@@ -37,7 +37,7 @@ qdrant-client = "1.6.0"
 serde_json = { version = "1" }
 tokio = { version = "1", features = ["full"] }
 vtext = "0.2.0"
-wordfreq-model = { version = "0.2.3", features = ["large-ja"] }
+wordfreq-model = { version = "0.2.3", features = ["large-en"] }
 
 [dependencies.sif-embedding]
 path = "../"
