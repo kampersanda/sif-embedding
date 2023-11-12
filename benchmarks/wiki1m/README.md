@@ -6,7 +6,7 @@ This directory provides speed benchmark using the [wiki1m dataset](https://huggi
 
 ### 1. Download dataset
 
-Run the following commands:
+Run the following command:
 
 ```shell
 $ wget https://huggingface.co/datasets/princeton-nlp/datasets-for-simcse/resolve/main/wiki1m_for_simcse.txt
@@ -36,5 +36,5 @@ $ cargo run --release --features openblas -- \
 
 The following result was obtained by running the above command on a desktop PC (one core of Intel i7, 16 GB RAM).
 
-- SIF: 44,085 sentences per second
-- uSIF: 24,023 sentences per second
+- SIF: 14,101 sentences per second
+- uSIF: 11,616 sentences per second

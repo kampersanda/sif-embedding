@@ -69,7 +69,7 @@ fn main() -> Result<()> {
     eprintln!("word_embeddings.len() = {}", word_embeddings.len());
     eprintln!("word_embeddings.dims() = {}", word_embeddings.dims());
 
-    let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeJa)?;
+    let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
     eprintln!("unigram_lm.n_words() = {}", unigram_lm.n_words());
 
     match args.method {
@@ -130,7 +130,7 @@ fn benchmark<M: SentenceEmbedder>(model: M, sentences: &[String]) -> Result<()> 
 
     let start = Instant::now();
     for (i, batch) in sentences.chunks(BATCH_SIZE).enumerate() {
-        eprintln!("Uploading batch {}/{}", i + 1, n_batches);
+        eprintln!("Processing batch {}/{}", i + 1, n_batches);
         let sent_embeddings = model.embeddings(batch)?;
         eprintln!("sent_embeddings.shape() = {:?}", sent_embeddings.shape());
     }

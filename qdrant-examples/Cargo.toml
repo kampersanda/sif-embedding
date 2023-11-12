@@ -1,5 +1,5 @@
 [package]
-name = "wiki1m"
+name = "qdrant-examples"
 version = "0.1.0"
 edition = "2021"
 
@@ -32,11 +32,15 @@ intel-mkl-system = [
 anyhow = "1.0"
 clap = { version = "4.2.7", features = ["derive"] }
 finalfusion = "0.17.2"
+ndarray = "0.15.6"
+qdrant-client = "1.6.0"
+serde_json = { version = "1" }
+tokio = { version = "1", features = ["full"] }
 vtext = "0.2.0"
 wordfreq-model = { version = "0.2.3", features = ["large-en"] }
 
 [dependencies.sif-embedding]
-path = "../../"
+path = "../"
 features = ["finalfusion", "wordfreq"]
 default-features = false
 
@@ -56,3 +60,11 @@ features = ["cblas"]
 version = "0.8.1"
 optional = true
 default-features = false
+
+[[bin]]
+name = "create"
+path = "src/create.rs"
+
+[[bin]]
+name = "search"
+path = "src/search.rs"

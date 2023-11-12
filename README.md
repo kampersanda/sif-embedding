@@ -36,11 +36,16 @@ See [tutorial](./tutorial).
 [benchmarks](./benchmarks/) provides speed benchmarks.
 
 We observed that, with an English Wikipedia dataset,
-our SIF implementation could process **44,085 sentences per second** on a personal desktop PC.
+our SIF implementation could process ~10K sentences per second
+on a personal desktop PC (one core of Intel i7, 16 GB RAM).
 
 ## Evaluations
 
 [evaluations](./evaluations/) provides tools to evaluate sif-embedding on several tasks.
+
+## Example usage
+
+[qdrant-examples](./qdrant-examples/) provides an example of using sif-embedding with [qdrant/rust-client](https://github.com/qdrant/rust-client).
 
 ## Wiki
 

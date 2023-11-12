@@ -94,6 +94,8 @@ members = [
     "finalfusion-tools",
     "evaluations/jglue",
     "evaluations/senteval",
+    "finalfusion-tools",
+    "qdrant-examples",
     "tutorial",
 ]
 
