@@ -1,6 +1,6 @@
-# Benchmark for wiki-article-dataset
+# Speed benchmark using wiki1m dataset
 
-This directory provides benchmark for [wiki-article-dataset](https://github.com/Hironsan/wiki-article-dataset).
+This directory provides speed benchmark using the [wiki1m dataset](https://huggingface.co/datasets/princeton-nlp/datasets-for-simcse).
 
 ## Evaluation steps
 
@@ -9,9 +9,7 @@ This directory provides benchmark for [wiki-article-dataset](https://github.com/
 Run the following commands:
 
 ```shell
-$ wget https://s3-ap-northeast-1.amazonaws.com/dev.tech-sketch.jp/chakki/public/ja.wikipedia_250k.zip
-$ unzip ja.wikipedia_250k.zip
-$ rm ja.wikipedia_250k.zip
+$ wget https://huggingface.co/datasets/princeton-nlp/datasets-for-simcse/resolve/main/wiki1m_for_simcse.txt
 ```
 
 ### 2. Prepare pretrained word embeddings
@@ -19,7 +17,7 @@ $ rm ja.wikipedia_250k.zip
 You need to prepare pretrained word embeddings in [finalfusion](https://docs.rs/finalfusion/) format.
 Prepare a model following [finalfusion-tools](../../finalfusion-tools).
 
-Here, we assume that you have `cc.ja.300.vec.fifu` in the current directory.
+Here, we assume that you have `glove.42B.300d.fifu` in the current directory.
 
 ### 3. Evaluate
 
@@ -27,7 +25,11 @@ Here, we assume that you have `cc.ja.300.vec.fifu` in the current directory.
 
 ```shell
 $ cargo run --release --features openblas -- \
-    -d ja.wikipedia_250k.txt \
-    -f cc.ja.300.vec.fifu \
+    -d wiki1m_for_simcse.txt \
+    -f glove.42B.300d.fifu \
     -m sif
 ```
+
+## Evaluation results
+
+

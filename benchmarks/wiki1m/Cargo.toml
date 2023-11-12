@@ -1,5 +1,5 @@
 [package]
-name = "wiki-article-dataset"
+name = "wiki1m"
 version = "0.1.0"
 edition = "2021"
 
