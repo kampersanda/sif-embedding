@@ -6,7 +6,7 @@ This directory provides speed benchmark using the [wiki1m dataset](https://huggi
 
 ### 1. Download dataset
 
-Run the following commands:
+Run the following command:
 
 ```shell
 $ wget https://huggingface.co/datasets/princeton-nlp/datasets-for-simcse/resolve/main/wiki1m_for_simcse.txt
