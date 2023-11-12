@@ -20,6 +20,8 @@ use sif_embedding::SentenceEmbedder;
 use sif_embedding::Sif;
 use sif_embedding::USif;
 use sif_embedding::WordProbabilities;
+use vtext::tokenize::Tokenizer;
+use vtext::tokenize::VTextTokenizerParams;
 use wordfreq_model::ModelKind;
 
 const BATCH_SIZE: usize = 1 << 16;
@@ -57,9 +59,9 @@ struct Args {
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    let sentences = load_wiki_article_dataset(&args.dataset_file)?;
+    let sentences = load_wiki1m_dataset(&args.dataset_file)?;
     let avg_sent_len = average_sentence_length(&sentences);
-    eprintln!("Loaded {} sentences", sentences.len());
+    eprintln!("Number of loaded sentences: {}", sentences.len());
     eprintln!("Average sentence length: {:.2}", avg_sent_len);
 
     let mut reader = BufReader::new(File::open(&args.fifu_model)?);
@@ -86,15 +88,24 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-/// https://github.com/Hironsan/wiki-article-dataset
-fn load_wiki_article_dataset<P: AsRef<Path>>(dataset_file: P) -> Result<Vec<String>> {
-    let file = File::open(dataset_file)?;
-    let reader = BufReader::new(file);
+/// https://huggingface.co/datasets/princeton-nlp/datasets-for-simcse
+fn load_wiki1m_dataset<P: AsRef<Path>>(dataset_file: P) -> Result<Vec<String>> {
+    let reader = BufReader::new(File::open(dataset_file)?);
+    let tokenizer = VTextTokenizerParams::default().lang("en").build()?;
+
     let mut sentences = vec![];
+    let separator = sif_embedding::DEFAULT_SEPARATOR.to_string();
+
     for line in reader.lines() {
         let line = line?;
-        sentences.extend(line.split('\t').map(|s| s.to_string()));
+        let sentence = tokenizer
+            .tokenize(&line)
+            .collect::<Vec<_>>()
+            .join(&separator)
+            .to_lowercase();
+        sentences.push(sentence);
     }
+
     Ok(sentences)
 }
 
@@ -120,7 +131,6 @@ fn benchmark<M: SentenceEmbedder>(model: M, sentences: &[String]) -> Result<()> 
     let start = Instant::now();
     for (i, batch) in sentences.chunks(BATCH_SIZE).enumerate() {
         eprintln!("Uploading batch {}/{}", i + 1, n_batches);
-
         let sent_embeddings = model.embeddings(batch)?;
         eprintln!("sent_embeddings.shape() = {:?}", sent_embeddings.shape());
     }
