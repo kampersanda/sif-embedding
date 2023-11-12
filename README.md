@@ -35,7 +35,8 @@ See [tutorial](./tutorial).
 
 [benchmarks](./benchmarks/) provides speed benchmarks.
 
-We observed our SIF implementation could process 44,085 sentences per second on a personal desktop PC.
+We observed that, with a English Wikipedia dataset,
+our SIF implementation could process **44,085 sentences per second** on a personal desktop PC.
 
 ## Evaluations
 
