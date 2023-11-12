@@ -1,10 +1,10 @@
-# Example usage of sif-embedding + qdrant
+# Example usage of sif-embedding + Qdrant
 
 This directory provides an example usage of sif-embedding + [qdrant/rust-client](https://github.com/qdrant/rust-client).
 
 ## Preparation
 
-### Run qdrant server
+### Run Qdrant server
 
 Run a Qdrant server enabling gRPC port with the following commands:
 
