@@ -1,4 +1,4 @@
-# Qdrant
+# Example usage of sif-embedding + qdrant
 
 
 ```shell
