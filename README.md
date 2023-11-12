@@ -31,6 +31,13 @@ https://docs.rs/sif-embedding/
 
 See [tutorial](./tutorial).
 
+## Benchmarks
+
+[benchmarks](./benchmarks/) provides speed benchmarks.
+
+We observed that, with an English Wikipedia dataset,
+our SIF implementation could process **44,085 sentences per second** on a personal desktop PC.
+
 ## Evaluations
 
 [evaluations](./evaluations/) provides tools to evaluate sif-embedding on several tasks.
