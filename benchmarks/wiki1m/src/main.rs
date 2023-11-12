@@ -130,7 +130,7 @@ fn benchmark<M: SentenceEmbedder>(model: M, sentences: &[String]) -> Result<()> 
 
     let start = Instant::now();
     for (i, batch) in sentences.chunks(BATCH_SIZE).enumerate() {
-        eprintln!("Uploading batch {}/{}", i + 1, n_batches);
+        eprintln!("Processing batch {}/{}", i + 1, n_batches);
         let sent_embeddings = model.embeddings(batch)?;
         eprintln!("sent_embeddings.shape() = {:?}", sent_embeddings.shape());
     }
