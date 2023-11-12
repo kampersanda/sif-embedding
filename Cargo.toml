@@ -95,7 +95,7 @@ members = [
     "evaluations/jglue",
     "evaluations/senteval",
     "finalfusion-tools",
-    "qdrant-search",
+    "qdrant-examples",
     "tutorial",
 ]
 
