@@ -11,6 +11,7 @@ use std::io::BufReader;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
+use std::time::Instant;
 
 use anyhow::Result;
 use clap::Parser;
@@ -25,6 +26,8 @@ use serde_json::json;
 use sif_embedding::SentenceEmbedder;
 use sif_embedding::Sif;
 use sif_embedding::WordProbabilities;
+use vtext::tokenize::Tokenizer;
+use vtext::tokenize::VTextTokenizerParams;
 use wordfreq_model::ModelKind;
 
 const BATCH_SIZE: usize = 10000;
@@ -49,8 +52,8 @@ struct Args {
 async fn main() -> Result<()> {
     let args = Args::parse();
 
-    let sentences = load_wiki_article_dataset(&args.dataset_file)?;
-    eprintln!("Loaded {} sentences", sentences.len());
+    let (orig_sentences, proc_sentences) = load_wiki1m_dataset(&args.dataset_file)?;
+    eprintln!("Number of loaded sentences: {}", orig_sentences.len());
 
     let mut reader = BufReader::new(File::open(&args.fifu_model)?);
     let word_embeddings = Embeddings::<VocabWrap, StorageWrap>::mmap_embeddings(&mut reader)?;
@@ -61,10 +64,10 @@ async fn main() -> Result<()> {
     eprintln!("unigram_lm.n_words() = {}", unigram_lm.n_words());
 
     let model = Sif::new(&word_embeddings, &unigram_lm);
-    let model = model.fit(&sentences)?;
+    let model = model.fit(&proc_sentences)?;
 
     let client = QdrantClient::from_url("http://localhost:6334").build()?;
-    let collection_name = "wiki-article-dataset";
+    let collection_name = "wiki1m";
     client.delete_collection(collection_name).await?;
 
     // 4. Upload embeddings
@@ -86,38 +89,46 @@ async fn main() -> Result<()> {
     };
     client.create_collection(&collection).await?;
 
-    let batch_size = args.batch_size.unwrap_or(BATCH_SIZE);
-    let n_batches = if sentences.len() % batch_size == 0 {
-        sentences.len() / batch_size
-    } else {
-        sentences.len() / batch_size + 1
-    };
+    let start = Instant::now();
+    {
+        let batch_size = args.batch_size.unwrap_or(BATCH_SIZE);
+        let n_batches = if proc_sentences.len() % batch_size == 0 {
+            proc_sentences.len() / batch_size
+        } else {
+            proc_sentences.len() / batch_size + 1
+        };
 
-    let mut id = 0;
-    for (i, batch) in sentences.chunks(batch_size).enumerate() {
-        eprintln!("Uploading batch {}/{}", i + 1, n_batches);
+        let mut id = 0;
+        for (i, (orig_batch, proc_batch)) in orig_sentences
+            .chunks(batch_size)
+            .zip(proc_sentences.chunks(batch_size))
+            .enumerate()
+        {
+            eprintln!("Uploading batch {}/{}", i + 1, n_batches);
 
-        let sent_embeddings = model.embeddings(batch)?;
-        let mut points = vec![];
-        for (embedding, sentence) in sent_embeddings.axis_iter(Axis(0)).zip(batch.iter()) {
-            let sentence = sentence.replace(' ', "");
-            let payload: Payload = json!({"sentence": sentence}).try_into().unwrap();
-            points.push(PointStruct::new(id as u64, embedding.to_vec(), payload));
-            id += 1;
+            let sent_embeddings = model.embeddings(proc_batch)?;
+            let mut points = vec![];
+            for (embedding, sentence) in sent_embeddings.axis_iter(Axis(0)).zip(orig_batch.iter()) {
+                let payload: Payload = json!({"sentence": sentence}).try_into().unwrap();
+                points.push(PointStruct::new(id as u64, embedding.to_vec(), payload));
+                id += 1;
+            }
+            client.upsert_points(collection_name, points, None).await?;
         }
-        client.upsert_points(collection_name, points, None).await?;
-    }
 
-    // https://qdrant.tech/documentation/tutorials/bulk-upload/
-    client
-        .update_collection(
-            collection_name,
-            &OptimizersConfigDiff {
-                indexing_threshold: Some(20000),
-                ..Default::default()
-            },
-        )
-        .await?;
+        // https://qdrant.tech/documentation/tutorials/bulk-upload/
+        client
+            .update_collection(
+                collection_name,
+                &OptimizersConfigDiff {
+                    indexing_threshold: Some(20000),
+                    ..Default::default()
+                },
+            )
+            .await?;
+    }
+    let elapsed = start.elapsed();
+    eprintln!("Indexing time: {:?}", elapsed);
 
     // 5. Save model
     let data = model.serialize()?;
@@ -127,14 +138,25 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-/// https://github.com/Hironsan/wiki-article-dataset
-fn load_wiki_article_dataset<P: AsRef<Path>>(dataset_file: P) -> Result<Vec<String>> {
-    let file = File::open(dataset_file)?;
-    let reader = BufReader::new(file);
-    let mut sentences = vec![];
+/// https://huggingface.co/datasets/princeton-nlp/datasets-for-simcse
+fn load_wiki1m_dataset<P: AsRef<Path>>(dataset_file: P) -> Result<(Vec<String>, Vec<String>)> {
+    let reader = BufReader::new(File::open(dataset_file)?);
+    let tokenizer = VTextTokenizerParams::default().lang("en").build()?;
+    let separator = sif_embedding::DEFAULT_SEPARATOR.to_string();
+
+    let mut orig_sentences = vec![];
+    let mut proc_sentences = vec![];
+
     for line in reader.lines() {
-        let line = line?;
-        sentences.extend(line.split('\t').map(|s| s.to_string()));
+        let orig_sentence = line?;
+        let proc_sentence = tokenizer
+            .tokenize(&orig_sentence)
+            .collect::<Vec<_>>()
+            .join(&separator)
+            .to_lowercase();
+        orig_sentences.push(orig_sentence);
+        proc_sentences.push(proc_sentence);
     }
-    Ok(sentences)
+
+    Ok((orig_sentences, proc_sentences))
 }

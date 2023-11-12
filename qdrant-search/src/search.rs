@@ -15,10 +15,11 @@ use anyhow::Result;
 use clap::Parser;
 use finalfusion::prelude::*;
 use qdrant_client::prelude::*;
-use regex::Regex;
 use sif_embedding::SentenceEmbedder;
 use sif_embedding::Sif;
 use sif_embedding::WordProbabilities;
+use vtext::tokenize::Tokenizer;
+use vtext::tokenize::VTextTokenizerParams;
 use wordfreq_model::ModelKind;
 
 #[derive(Parser, Debug)]
@@ -48,12 +49,13 @@ async fn main() -> Result<()> {
     let model = Sif::deserialize(&data, &word_embeddings, &unigram_lm)?;
 
     let client = QdrantClient::from_url("http://localhost:6334").build()?;
-    let collection_name = "wiki-article-dataset";
+    let collection_name = "wiki1m";
 
-    let re = Regex::new(r"\s+").unwrap();
+    let tokenizer = VTextTokenizerParams::default().lang("en").build()?;
+    let separator = sif_embedding::DEFAULT_SEPARATOR.to_string();
 
     loop {
-        println!("単語間に空白を入れてクエリ文を入力して下さい");
+        println!("Enter a sentence to search (or empty to exit):");
         print!("> ");
         std::io::stdout().flush()?;
 
@@ -64,7 +66,12 @@ async fn main() -> Result<()> {
             break;
         }
 
-        let input = re.replace(input, &sif_embedding::DEFAULT_SEPARATOR.to_string());
+        let input = tokenizer
+            .tokenize(&input)
+            .collect::<Vec<_>>()
+            .join(&separator)
+            .to_lowercase();
+
         let sent_embedding = model.embeddings([input])?;
         let search_point = SearchPoints {
             collection_name: collection_name.into(),
