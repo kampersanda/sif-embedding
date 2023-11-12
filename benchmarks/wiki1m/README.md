@@ -12,6 +12,8 @@ Run the following commands:
 $ wget https://huggingface.co/datasets/princeton-nlp/datasets-for-simcse/resolve/main/wiki1m_for_simcse.txt
 ```
 
+It contains 1,000,000 sentences from English Wikipedia, whose average number of words is 22.8.
+
 ### 2. Prepare pretrained word embeddings
 
 You need to prepare pretrained word embeddings in [finalfusion](https://docs.rs/finalfusion/) format.
@@ -32,4 +34,7 @@ $ cargo run --release --features openblas -- \
 
 ## Evaluation results
 
+The following result was obtained by running the above command on a desktop PC (one core of Intel i7, 16 GB RAM).
 
+- SIF: 44085 sentences per second
+- uSIF: 24023 sentences per second
