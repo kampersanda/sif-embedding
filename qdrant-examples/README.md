@@ -57,3 +57,54 @@ $ cargo run --release --bin search --features openblas -- \
     -i model.sif \
     -f glove.42B.300d.fifu
 ```
+
+The following is an example output:
+
+```text
+...
+Enter a sentence to search (or empty to exit):
+> UNIX is basically a simple operating system, but you have to be a genius to understand the simplicity.
+search_result = SearchResponse {
+    result: [
+        ScoredPoint {
+            ...
+                        StringValue(
+                            "The Monitor Call API was very much ahead of its time, like most of the operating system, and made system programming on DECsystem-10s simple and powerful.",
+                        ),
+            ...
+        },
+        ScoredPoint {
+            ...
+                        StringValue(
+                            "It was a simple, efficient system, very effective primarily because of its simplicity.",
+                        ),
+            ...
+        },
+        ScoredPoint {
+            ...
+                        StringValue(
+                            "Erzya has a simple five-vowel system.",
+                        ),
+            ...
+        },
+        ScoredPoint {
+            ...
+                        StringValue(
+                            "True BASIC.“ Upon Kemeny's advice, True BASIC was not limited to a single OS or computer system.",
+                        ),
+            ...
+        },
+        ScoredPoint {
+            ...
+                        StringValue(
+                            "An open-loop controller is often used in simple processes because of its simplicity and low cost, especially in systems where feedback is not critical.",
+                        ),
+            ...
+        },
+    ],
+    time: 0.0455188,
+}
+Enter a sentence to search (or empty to exit):
+>
+...
+```
