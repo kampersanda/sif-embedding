@@ -43,6 +43,10 @@ on a personal desktop PC (one core of Intel i7, 16 GB RAM).
 
 [evaluations](./evaluations/) provides tools to evaluate sif-embedding on several tasks.
 
+## Example usage
+
+[qdrant-examples](./qdrant-examples/) provides an example of using sif-embedding with [qdrant/rust-client](https://github.com/qdrant/rust-client).
+
 ## Wiki
 
 [Trouble shooting](https://github.com/kampersanda/sif-embedding/wiki/Trouble-shooting): Tips on how to resolve errors I faced in my environment.
