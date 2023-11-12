@@ -32,6 +32,7 @@ struct Args {
     fifu_model: PathBuf,
 }
 
+#[allow(clippy::significant_drop_tightening)]
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
@@ -67,7 +68,7 @@ async fn main() -> Result<()> {
         }
 
         let input = tokenizer
-            .tokenize(&input)
+            .tokenize(input)
             .collect::<Vec<_>>()
             .join(&separator)
             .to_lowercase();

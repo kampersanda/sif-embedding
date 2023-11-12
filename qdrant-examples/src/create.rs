@@ -48,6 +48,7 @@ struct Args {
     batch_size: Option<usize>,
 }
 
+#[allow(clippy::significant_drop_tightening)]
 #[tokio::main]
 async fn main() -> Result<()> {
     let args = Args::parse();
