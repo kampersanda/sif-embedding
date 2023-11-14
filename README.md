@@ -43,7 +43,7 @@ on a personal desktop PC (one core of Intel i7, 16 GB RAM).
 
 [evaluations](./evaluations/) provides tools to evaluate sif-embedding on several tasks.
 
-## Example usage
+## Similarity search
 
 [qdrant-examples](./qdrant-examples/) provides an example of using sif-embedding with [qdrant/rust-client](https://github.com/qdrant/rust-client).
 
