@@ -38,6 +38,15 @@ const SVD_MAX_ITER: usize = 7;
 /// - Right singular vectors of shape `(k, m)`
 ///
 /// where `k` is the smaller one of `n_components` and `Rank(vectors)`.
+///
+/// # Complexities
+///
+/// For `m > n`,
+///
+/// * Time complexity: `O(2mn^2 + n^3 + n + mn) = O(m^3)`
+/// * Space complexity: `O(3n^2 + 3n + 2mn) = O(m^2)`
+///
+/// cf. https://arxiv.org/abs/1906.12085
 pub(crate) fn principal_components<S>(
     vectors: &ArrayBase<S, Ix2>,
     n_components: usize,
@@ -65,6 +74,11 @@ where
 /// - `vectors`: Sentence vectors to remove components from, of shape `(n, m)`
 /// - `components`: `k` principal components of shape `(k, m)`
 /// - `weights`: Weights of shape `(k,)`
+///
+/// # Complexities
+///
+/// * Time complexity: `O(nmk)`
+/// * Space complexity: `O(nm)`
 pub(crate) fn remove_principal_components<S>(
     vectors: &ArrayBase<S, Ix2>,
     components: &ArrayBase<S, Ix2>,
@@ -88,13 +102,17 @@ where
         },
     );
 
-    // (n,m).dot((m,k).t()).dot((k,m) = (n,m)
+    // (n,m).dot((k,m).t()).dot((k,m) = (n,m)
+    //
+    // * Time complexity: O(nmk)
+    // * Space complexity: O(nm)
     let projection = vectors
         .dot(&weighted_components.t())
         .dot(&weighted_components);
     vectors.to_owned() - &projection
 }
 
+/// Time complexity: O(sample_size)
 pub(crate) fn sample_sentences<'a, S>(sentences: &'a [S], sample_size: usize) -> Vec<&'a str>
 where
     S: AsRef<str> + 'a,

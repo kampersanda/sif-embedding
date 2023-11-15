@@ -240,6 +240,11 @@ where
 
     /// Applies SIF-weighting.
     /// (Lines 1--3 in Algorithm 1)
+    ///
+    /// # Complexities
+    ///
+    /// * Time complexity: `O(avg_num_words * embedding_size * num_sentences)`
+    /// * Space complexity: `O(embedding_size * num_sentences)`
     fn weighted_embeddings<I, S>(&self, sentences: I) -> Array2<Float>
     where
         I: IntoIterator<Item = S>,
@@ -247,10 +252,12 @@ where
     {
         let mut sent_embeddings = vec![];
         let mut n_sentences = 0;
+        // O(num_words * embedding_size * num_sentences)
         for sent in sentences {
             let sent = sent.as_ref();
             let mut n_words = 0;
             let mut sent_embedding = Array1::zeros(self.embedding_size());
+            // O(avg_num_words * embedding_size)
             for word in sent.split(self.separator) {
                 if let Some(word_embedding) = self.word_embeddings.embedding(word) {
                     let weight = self.param_a / (self.param_a + self.word_probs.probability(word));
@@ -324,13 +331,22 @@ where
     ///
     /// Sentences to fit are randomly sampled from `sentences` with [`Self::n_samples_to_fit`].
     ///
+    /// If `n_components` is 0, does nothing and returns `self`.
+    ///
     /// # Errors
     ///
     /// Returns an error if `sentences` is empty.
     ///
-    /// # Notes
+    /// # Complexities
     ///
-    /// If `n_components` is 0, does nothing and returns `self`.
+    /// * Time complexity: `O(L*D*S + max(D,S)^3)`
+    /// * Space complexity: `O(D*S + max(D,S)^2)`
+    ///
+    /// where
+    ///
+    /// * `L` is the average number of words in a sentence.
+    /// * `D` is the number of dimensions for word embeddings (`embedding_size`).
+    /// * `S` is the number of sentences used to fit (`n_samples_to_fit`).
     fn fit<S>(mut self, sentences: &[S]) -> Result<Self>
     where
         S: AsRef<str>,
@@ -343,12 +359,19 @@ where
             return Ok(self);
         }
 
+        // Time: O(n_samples_to_fit)
         let sentences = util::sample_sentences(sentences, self.n_samples_to_fit);
 
         // SIF-weighting.
+        //
+        // Time: O(avg_num_words * embedding_size * n_samples_to_fit)
+        // Space: O(embedding_size * n_samples_to_fit)
         let sent_embeddings = self.weighted_embeddings(sentences);
 
         // Common component removal.
+        //
+        // Time: O(max(embedding_size, n_samples_to_fit)^3)
+        // Space: O(max(embedding_size, n_samples_to_fit)^2)
         let (_, common_components) =
             util::principal_components(&sent_embeddings, self.n_components);
         self.common_components = Some(common_components);
@@ -358,13 +381,23 @@ where
 
     /// Computes embeddings for input sentences using the fitted model.
     ///
+    /// If `n_components` is 0, the fitting is not required.
+    ///
     /// # Errors
     ///
     /// Returns an error if the model is not fitted.
     ///
-    /// # Notes
+    /// # Complexities
     ///
-    /// If `n_components` is 0, the fitting is not required.
+    /// * Time complexity: `O(L*D*N + C*D*N)`
+    /// * Space complexity: `O(D*N)`
+    ///
+    /// where
+    ///
+    /// * `L` is the average number of words in a sentence.
+    /// * `D` is the number of dimensions for word embeddings (`embedding_size`).
+    /// * `N` is the number of sentences (`sentences.len()`).
+    /// * `C` is the number of components to remove (`n_components`).
     fn embeddings<I, S>(&self, sentences: I) -> Result<Array2<Float>>
     where
         I: IntoIterator<Item = S>,
@@ -373,7 +406,11 @@ where
         if self.n_components != 0 && self.common_components.is_none() {
             return Err(anyhow!("The model is not fitted."));
         }
+
         // SIF-weighting.
+        //
+        // Time: O(avg_num_words * embedding_size * n_sentences)
+        // Space: O(embedding_size * n_sentences)
         let sent_embeddings = self.weighted_embeddings(sentences);
         if sent_embeddings.is_empty() {
             return Ok(sent_embeddings);
@@ -381,7 +418,11 @@ where
         if self.n_components == 0 {
             return Ok(sent_embeddings);
         }
+
         // Common component removal.
+        //
+        // Time: O(embedding_size * n_sentences * n_components)
+        // Space: O(embedding_size * n_sentences)
         let common_components = self.common_components.as_ref().unwrap();
         let sent_embeddings =
             util::remove_principal_components(&sent_embeddings, common_components, None);
