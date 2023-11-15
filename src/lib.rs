@@ -63,6 +63,17 @@
 //! # }
 //! ```
 //!
+//! `model.embeddings` requires memory of `O(n_sentences * n_dimensions)`.
+//! If your input sentences are too large to fit in memory,
+//! you can compute sentence embeddings in a batch manner.
+//!
+//! ```ignore
+//! for batch in sentences.chunks(batch_size) {
+//!     let sent_embeddings = model.embeddings(batch)?;
+//!     ...
+//! }
+//! ```
+//!
 //! ## Feature specifications
 //!
 //! This crate provides the following features:
