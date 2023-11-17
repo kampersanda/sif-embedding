@@ -22,7 +22,7 @@ $ mkdir data
 $ tar xvf senteval.tar -C data
 ```
 
-We will use the data under the `data/STS` directory (STS12-16).
+We will use the data under the `data/STS` and `data/SICK` directories.
 
 ### 2. Prepare pretrained word embeddings
 
@@ -37,8 +37,8 @@ Here, we assume that you have `glove.42B.300d.fifu` in the current directory.
 Run the following commands:
 
 ```shell
-$ cargo run --release --features openblas -- -d data/STS -f glove.42B.300d.fifu -m sif > sif-score.tsv
-$ cargo run --release --features openblas -- -d data/STS -f glove.42B.300d.fifu -m usif > usif-score.tsv
+$ cargo run --release --features openblas -- -d data -f glove.42B.300d.fifu -m sif > sif-score.tsv
+$ cargo run --release --features openblas -- -d data -f glove.42B.300d.fifu -m usif > usif-score.tsv
 ```
 
 This command will report the Pearson's and Spearman's correlation coefficients between the cosine similarity of the sentence embeddings and the gold scores.
