@@ -174,19 +174,29 @@ fn main() -> Result<(), Box<dyn Error>> {
         println!();
     }
 
-    let input_file = format!("{data_dir}/STS/STSBenchmark/sts-test.csv");
-    let (gold_scores, sentences) = load_stsb_data(&input_file)?;
-    eprintln!("file = {}, n_examples = {}", &input_file, gold_scores.len());
-    let (pearson, spearman) = evaluate_main(
-        &word_embeddings,
-        &unigram_lm,
-        &gold_scores,
-        &sentences,
-        &preprocessor,
-        &args,
-    )?;
+    let stsb_files = vec!["sts-train", "sts-dev", "sts-test"];
+    let mut pearsons = vec![];
+    let mut spearmans = vec![];
     println!("file\tpearson\tspearman");
-    println!("STS/STSBenchmark/sts-test.csv\t{pearson}\t{spearman}");
+    for file in stsb_files {
+        let input_file = format!("{data_dir}/STS/STSBenchmark/{file}.csv");
+        let (gold_scores, sentences) = load_stsb_data(&input_file)?;
+        eprintln!("file = {}, n_examples = {}", &input_file, gold_scores.len());
+        let (pearson, spearman) = evaluate_main(
+            &word_embeddings,
+            &unigram_lm,
+            &gold_scores,
+            &sentences,
+            &preprocessor,
+            &args,
+        )?;
+        pearsons.push(pearson);
+        spearmans.push(spearman);
+        println!("{file}\t{pearson}\t{spearman}");
+    }
+    let mean_pearson = pearsons.iter().sum::<f64>() / pearsons.len() as f64;
+    let mean_spearman = spearmans.iter().sum::<f64>() / spearmans.len() as f64;
+    println!("Avg.\t{mean_pearson}\t{mean_spearman}");
     println!();
 
     Ok(())
