@@ -17,7 +17,9 @@ use sif_embedding::util;
 use sif_embedding::SentenceEmbedder;
 use sif_embedding::Sif;
 use sif_embedding::USif;
-use tantivy::tokenizer::*;
+use vtext::tokenize::Tokenizer;
+use vtext::tokenize::VTextTokenizer;
+use vtext::tokenize::VTextTokenizerParams;
 use wordfreq_model::ModelKind;
 
 #[derive(Clone, Debug)]
@@ -54,24 +56,26 @@ struct Args {
 }
 
 struct Preprocessor {
-    analyzer: tantivy::tokenizer::TextAnalyzer,
+    tokenizer: VTextTokenizer,
+    separator: String,
 }
 
 impl Preprocessor {
     fn new() -> Self {
-        // NOTE: Since senteval.tar provided at https://huggingface.co/datasets/princeton-nlp/datasets-for-simcse
-        // has been preprocessed (such as lowercasing), we only need simple tokenization for punctuation.
-        let analyzer = TextAnalyzer::builder(SimpleTokenizer::default()).build();
-        Self { analyzer }
+        let tokenizer = VTextTokenizerParams::default().lang("en").build().unwrap();
+        let separator = sif_embedding::DEFAULT_SEPARATOR.to_string();
+        Self {
+            tokenizer,
+            separator,
+        }
     }
 
     fn apply(&mut self, text: &str) -> String {
-        let mut tokens = self.analyzer.token_stream(text);
-        let mut token_texts = Vec::new();
-        while let Some(tok) = tokens.next() {
-            token_texts.push(tok.text.to_string());
-        }
-        token_texts.join(" ")
+        self.tokenizer
+            .tokenize(text)
+            .collect::<Vec<_>>()
+            .join(&self.separator)
+            .to_lowercase()
     }
 }
 
