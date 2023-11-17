@@ -20,6 +20,7 @@ use sif_embedding::USif;
 use vtext::tokenize::Tokenizer;
 use vtext::tokenize::VTextTokenizer;
 use vtext::tokenize::VTextTokenizerParams;
+use wordfreq::WordFreq;
 use wordfreq_model::ModelKind;
 
 #[derive(Clone, Debug)]
@@ -70,7 +71,7 @@ impl Preprocessor {
         }
     }
 
-    fn apply(&mut self, text: &str) -> String {
+    fn apply(&self, text: &str) -> String {
         self.tokenizer
             .tokenize(text)
             .collect::<Vec<_>>()
@@ -90,11 +91,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     eprintln!("word_embeddings.dims() = {}", word_embeddings.dims());
 
     let unigram_lm = wordfreq_model::load_wordfreq(ModelKind::LargeEn)?;
+    let preprocessor = Preprocessor::new();
 
-    let data_dir = args.data_dir;
-    let corpora = vec![
+    let data_dir = &args.data_dir;
+    let sts_corpora = vec![
         (
-            "STS12-en-test",
+            "STS/STS12-en-test",
             vec![
                 "MSRpar",
                 "MSRvid",
@@ -104,17 +106,16 @@ fn main() -> Result<(), Box<dyn Error>> {
             ],
         ),
         (
-            "STS13-en-test",
+            "STS/STS13-en-test",
             vec![
                 "FNWN",
                 "headlines",
                 "OnWN",
-                // This dataset is not provided due to the license issue.
-                // "SMT",
+                // "SMT", // not provided due to the license issue.
             ],
         ),
         (
-            "STS14-en-test",
+            "STS/STS14-en-test",
             vec![
                 "deft-forum",
                 "deft-news",
@@ -125,7 +126,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             ],
         ),
         (
-            "STS15-en-test",
+            "STS/STS15-en-test",
             vec![
                 "answers-forums",
                 "answers-students",
@@ -135,7 +136,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             ],
         ),
         (
-            "STS16-en-test",
+            "STS/STS16-en-test",
             vec![
                 "answer-answer",
                 "headlines",
@@ -146,9 +147,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         ),
     ];
 
-    let mut preprocessor = Preprocessor::new();
-
-    for (year, files) in corpora {
+    for (year, files) in sts_corpora {
         let mut pearsons = vec![];
         let mut spearmans = vec![];
         println!("year\tfile\tpearson\tspearman");
@@ -157,25 +156,14 @@ fn main() -> Result<(), Box<dyn Error>> {
             let input_file = format!("{data_dir}/{year}/STS.input.{file}.txt");
             let (gold_scores, sentences) = load_sts_data(&gs_file, &input_file)?;
             eprintln!("file = {}, n_examples = {}", file, gold_scores.len());
-            let sentences: Vec<_> = sentences.iter().map(|s| preprocessor.apply(s)).collect();
-            let (pearson, spearman) = match args.method {
-                MethodKind::Sif => {
-                    let param_a = sif_embedding::sif::DEFAULT_PARAM_A;
-                    let n_components = args
-                        .n_components
-                        .unwrap_or(sif_embedding::sif::DEFAULT_N_COMPONENTS);
-                    let model =
-                        Sif::with_parameters(&word_embeddings, &unigram_lm, param_a, n_components)?;
-                    evaluate(model, &gold_scores, &sentences)?
-                }
-                MethodKind::USif => {
-                    let n_components = args
-                        .n_components
-                        .unwrap_or(sif_embedding::usif::DEFAULT_N_COMPONENTS);
-                    let model = USif::with_parameters(&word_embeddings, &unigram_lm, n_components);
-                    evaluate(model, &gold_scores, &sentences)?
-                }
-            };
+            let (pearson, spearman) = evaluate_main(
+                &word_embeddings,
+                &unigram_lm,
+                &gold_scores,
+                &sentences,
+                &preprocessor,
+                &args,
+            )?;
             pearsons.push(pearson);
             spearmans.push(spearman);
             println!("{year}\t{file}\t{pearson}\t{spearman}");
@@ -183,8 +171,23 @@ fn main() -> Result<(), Box<dyn Error>> {
         let mean_pearson = pearsons.iter().sum::<f64>() / pearsons.len() as f64;
         let mean_spearman = spearmans.iter().sum::<f64>() / spearmans.len() as f64;
         println!("{year}\tAvg.\t{mean_pearson}\t{mean_spearman}");
-        println!()
+        println!();
     }
+
+    let input_file = format!("{data_dir}/STS/STSBenchmark/sts-test.csv");
+    let (gold_scores, sentences) = load_stsb_data(&input_file)?;
+    eprintln!("file = {}, n_examples = {}", &input_file, gold_scores.len());
+    let (pearson, spearman) = evaluate_main(
+        &word_embeddings,
+        &unigram_lm,
+        &gold_scores,
+        &sentences,
+        &preprocessor,
+        &args,
+    )?;
+    println!("file\tpearson\tspearman");
+    println!("STS/STSBenchmark/sts-test.csv\t{pearson}\t{spearman}");
+    println!();
 
     Ok(())
 }
@@ -216,6 +219,56 @@ fn load_sts_data(
         sentences.push(cols[1].to_string());
     }
     Ok((gold_scores, sentences))
+}
+
+fn load_stsb_data(input_path: &str) -> Result<(Vec<f64>, Vec<String>), Box<dyn Error>> {
+    let input_lines: Vec<String> = BufReader::new(File::open(input_path)?)
+        .lines()
+        .map(|l| l.unwrap())
+        .collect();
+
+    let mut gold_scores = vec![];
+    let mut sentences = vec![];
+    for input_line in &input_lines {
+        let cols: Vec<_> = input_line.split('\t').collect();
+        let score = cols[4].parse::<f64>()?;
+        let sent1 = cols[5].to_string();
+        let sent2 = cols[6].to_string();
+        gold_scores.push(score);
+        sentences.push(sent1);
+        sentences.push(sent2);
+    }
+
+    Ok((gold_scores, sentences))
+}
+
+fn evaluate_main(
+    word_embeddings: &Embeddings<VocabWrap, StorageWrap>,
+    unigram_lm: &WordFreq,
+    gold_scores: &[f64],
+    sentences: &[String],
+    preprocessor: &Preprocessor,
+    args: &Args,
+) -> Result<(f64, f64), Box<dyn Error>> {
+    let sentences: Vec<_> = sentences.iter().map(|s| preprocessor.apply(s)).collect();
+    let (pearson, spearman) = match args.method {
+        MethodKind::Sif => {
+            let param_a = sif_embedding::sif::DEFAULT_PARAM_A;
+            let n_components = args
+                .n_components
+                .unwrap_or(sif_embedding::sif::DEFAULT_N_COMPONENTS);
+            let model = Sif::with_parameters(word_embeddings, unigram_lm, param_a, n_components)?;
+            evaluate(model, &gold_scores, &sentences)?
+        }
+        MethodKind::USif => {
+            let n_components = args
+                .n_components
+                .unwrap_or(sif_embedding::usif::DEFAULT_N_COMPONENTS);
+            let model = USif::with_parameters(word_embeddings, unigram_lm, n_components);
+            evaluate(model, &gold_scores, &sentences)?
+        }
+    };
+    Ok((pearson, spearman))
 }
 
 fn evaluate<M>(
