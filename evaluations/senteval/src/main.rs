@@ -199,6 +199,31 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Avg.\t{mean_pearson}\t{mean_spearman}");
     println!();
 
+    let sick_files = vec!["SICK_train", "SICK_trial", "SICK_test_annotated"];
+    let mut pearsons = vec![];
+    let mut spearmans = vec![];
+    println!("file\tpearson\tspearman");
+    for file in sick_files {
+        let input_file = format!("{data_dir}/SICK/{file}.txt");
+        let (gold_scores, sentences) = load_sick_data(&input_file)?;
+        eprintln!("file = {}, n_examples = {}", &input_file, gold_scores.len());
+        let (pearson, spearman) = evaluate_main(
+            &word_embeddings,
+            &unigram_lm,
+            &gold_scores,
+            &sentences,
+            &preprocessor,
+            &args,
+        )?;
+        pearsons.push(pearson);
+        spearmans.push(spearman);
+        println!("{file}\t{pearson}\t{spearman}");
+    }
+    let mean_pearson = pearsons.iter().sum::<f64>() / pearsons.len() as f64;
+    let mean_spearman = spearmans.iter().sum::<f64>() / spearmans.len() as f64;
+    println!("Avg.\t{mean_pearson}\t{mean_spearman}");
+    println!();
+
     Ok(())
 }
 
@@ -244,6 +269,27 @@ fn load_stsb_data(input_path: &str) -> Result<(Vec<f64>, Vec<String>), Box<dyn E
         let score = cols[4].parse::<f64>()?;
         let sent1 = cols[5].to_string();
         let sent2 = cols[6].to_string();
+        gold_scores.push(score);
+        sentences.push(sent1);
+        sentences.push(sent2);
+    }
+
+    Ok((gold_scores, sentences))
+}
+
+fn load_sick_data(input_path: &str) -> Result<(Vec<f64>, Vec<String>), Box<dyn Error>> {
+    let input_lines: Vec<String> = BufReader::new(File::open(input_path)?)
+        .lines()
+        .map(|l| l.unwrap())
+        .collect();
+
+    let mut gold_scores = vec![];
+    let mut sentences = vec![];
+    for input_line in &input_lines[1..] {
+        let cols: Vec<_> = input_line.split('\t').collect();
+        let score = cols[3].parse::<f64>()?;
+        let sent1 = cols[1].to_string();
+        let sent2 = cols[2].to_string();
         gold_scores.push(score);
         sentences.push(sent1);
         sentences.push(sent2);
