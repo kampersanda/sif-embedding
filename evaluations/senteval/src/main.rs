@@ -314,14 +314,14 @@ fn evaluate_main(
                 .n_components
                 .unwrap_or(sif_embedding::sif::DEFAULT_N_COMPONENTS);
             let model = Sif::with_parameters(word_embeddings, unigram_lm, param_a, n_components)?;
-            evaluate(model, &gold_scores, &sentences)?
+            evaluate(model, gold_scores, &sentences)?
         }
         MethodKind::USif => {
             let n_components = args
                 .n_components
                 .unwrap_or(sif_embedding::usif::DEFAULT_N_COMPONENTS);
             let model = USif::with_parameters(word_embeddings, unigram_lm, n_components);
-            evaluate(model, &gold_scores, &sentences)?
+            evaluate(model, gold_scores, &sentences)?
         }
     };
     Ok((pearson, spearman))
