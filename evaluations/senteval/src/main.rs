@@ -150,7 +150,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     for (year, files) in sts_corpora {
         let mut pearsons = vec![];
         let mut spearmans = vec![];
-        println!("year\tfile\tpearson\tspearman");
+        println!("dir\tfile\tpearson\tspearman");
         for &file in &files {
             let gs_file = format!("{data_dir}/{year}/STS.gs.{file}.txt");
             let input_file = format!("{data_dir}/{year}/STS.input.{file}.txt");
@@ -177,11 +177,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let stsb_files = vec!["sts-train", "sts-dev", "sts-test"];
     let mut pearsons = vec![];
     let mut spearmans = vec![];
-    println!("file\tpearson\tspearman");
+    println!("dir\tfile\tpearson\tspearman");
     for file in stsb_files {
         let input_file = format!("{data_dir}/STS/STSBenchmark/{file}.csv");
         let (gold_scores, sentences) = load_stsb_data(&input_file)?;
-        eprintln!("file = {}, n_examples = {}", &input_file, gold_scores.len());
+        eprintln!("file = {}, n_examples = {}", &file, gold_scores.len());
         let (pearson, spearman) = evaluate_main(
             &word_embeddings,
             &unigram_lm,
@@ -192,21 +192,21 @@ fn main() -> Result<(), Box<dyn Error>> {
         )?;
         pearsons.push(pearson);
         spearmans.push(spearman);
-        println!("{file}\t{pearson}\t{spearman}");
+        println!("STS/STSBenchmark\t{file}\t{pearson}\t{spearman}");
     }
     let mean_pearson = pearsons.iter().sum::<f64>() / pearsons.len() as f64;
     let mean_spearman = spearmans.iter().sum::<f64>() / spearmans.len() as f64;
-    println!("Avg.\t{mean_pearson}\t{mean_spearman}");
+    println!("STS/STSBenchmark\tAvg.\t{mean_pearson}\t{mean_spearman}");
     println!();
 
     let sick_files = vec!["SICK_train", "SICK_trial", "SICK_test_annotated"];
     let mut pearsons = vec![];
     let mut spearmans = vec![];
-    println!("file\tpearson\tspearman");
+    println!("dir\tfile\tpearson\tspearman");
     for file in sick_files {
         let input_file = format!("{data_dir}/SICK/{file}.txt");
         let (gold_scores, sentences) = load_sick_data(&input_file)?;
-        eprintln!("file = {}, n_examples = {}", &input_file, gold_scores.len());
+        eprintln!("file = {}, n_examples = {}", &file, gold_scores.len());
         let (pearson, spearman) = evaluate_main(
             &word_embeddings,
             &unigram_lm,
@@ -217,11 +217,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         )?;
         pearsons.push(pearson);
         spearmans.push(spearman);
-        println!("{file}\t{pearson}\t{spearman}");
+        println!("SICK\t{file}\t{pearson}\t{spearman}");
     }
     let mean_pearson = pearsons.iter().sum::<f64>() / pearsons.len() as f64;
     let mean_spearman = spearmans.iter().sum::<f64>() / spearmans.len() as f64;
-    println!("Avg.\t{mean_pearson}\t{mean_spearman}");
+    println!("SICK\tAvg.\t{mean_pearson}\t{mean_spearman}");
     println!();
 
     Ok(())
