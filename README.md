@@ -22,7 +22,7 @@ SIF and uSIF described in the following papers:
 
  - **No GPU required**: This library runs on CPU only.
  - **Fast embeddings**: This library provides fast sentence embeddings thanks to the simple algorithms of SIF and uSIF. We observed that our SIF implementation could process ~10K–15K sentences per second on a personal desktop PC. (See [benchmarks](./benchmarks/).)
- - **Reasonable evaluation scores**: The performances of SIF and uSIF on similarity evaluation tasks do not outperform those of SOTA models such as SimCSE. However, they are not so bad. (See [evaluations](./evaluations/).)
+ - **Reasonable evaluation scores**: The performances of SIF and uSIF on similarity evaluation tasks do not outperform those of SOTA models such as SimCSE. However, they are not so worse. (See [evaluations](./evaluations/).)
 
 This library will help you if
 
