@@ -11,4 +11,5 @@ rm -rf ./JGLUE
 
 # Download JSICK
 git clone git@github.com:verypluming/JSICK.git
-mv ./JSICK ./data/jsick
+mv ./JSICK/jsick ./data/jsick
+rm -rf ./JSICK
