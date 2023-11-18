@@ -92,7 +92,7 @@ approx = "0.5.1"
 members = [
     "benchmarks/wiki1m",
     "finalfusion-tools",
-    "evaluations/jglue",
+    "evaluations/japanese",
     "evaluations/senteval",
     "finalfusion-tools",
     "qdrant-examples",

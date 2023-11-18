@@ -42,11 +42,31 @@ impl FromStr for MethodKind {
     }
 }
 
+#[derive(Clone, Debug)]
+enum EvalKind {
+    Jsts,
+    JsickTest,
+}
+
+impl FromStr for EvalKind {
+    type Err = &'static str;
+    fn from_str(mode: &str) -> Result<Self, Self::Err> {
+        match mode {
+            "jsts" => Ok(Self::Jsts),
+            "jsick_test" => Ok(Self::JsickTest),
+            _ => Err("Could not parse a mode"),
+        }
+    }
+}
+
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
     #[arg(short = 'd', long)]
     data_file: String,
+
+    #[arg(short = 'e', long)]
+    eval: EvalKind,
 
     #[arg(short = 'f', long)]
     input_fifu: String,
@@ -88,7 +108,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             .max_grouping_len(24)
     };
 
-    let (gold_scores, sentences) = load_jsts_data(&args.data_file)?;
+    let (gold_scores, sentences) = match args.eval {
+        EvalKind::Jsts => load_jsts_data(&args.data_file)?,
+        EvalKind::JsickTest => load_jsick_data(&args.data_file, "test")?,
+    };
+    eprintln!("Number of examples: {}", gold_scores.len());
 
     let worker = RefCell::new(tokenizer.new_worker());
     let sentences: Vec<String> = sentences.iter().map(|s| tokenize(s, &worker)).collect();
@@ -128,6 +152,28 @@ fn load_jsts_data(input_path: &str) -> Result<(Vec<f64>, Vec<String>), Box<dyn E
         gold_scores.push(example.label);
         sentences.push(example.sentence1);
         sentences.push(example.sentence2);
+    }
+    Ok((gold_scores, sentences))
+}
+
+fn load_jsick_data(
+    input_path: &str,
+    data_type: &str,
+) -> Result<(Vec<f64>, Vec<String>), Box<dyn Error>> {
+    let input_lines: Vec<String> = BufReader::new(File::open(input_path)?)
+        .lines()
+        .map(|l| l.unwrap())
+        .collect();
+    let mut gold_scores = vec![];
+    let mut sentences = vec![];
+    for line in &input_lines[1..] {
+        let cols = line.split('\t').collect::<Vec<_>>();
+        if cols[1] != data_type {
+            continue;
+        }
+        gold_scores.push(cols[11].parse::<f64>().unwrap());
+        sentences.push(cols[8].to_string());
+        sentences.push(cols[9].to_string());
     }
     Ok((gold_scores, sentences))
 }
