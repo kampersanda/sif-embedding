@@ -77,6 +77,8 @@ $ cargo run --release --features openblas -- \
 ## Experimental results
 
 We show the results obtained by the above commands.
+The values are Spearman's rank correlation coefficient (×100).
+
 As a comparison, results using Japanese-SimCSE models published by [cl-nagoya](https://huggingface.co/cl-nagoya) are also shown.
 The results are obtained from the [technical report](https://arxiv.org/abs/2310.19349).
 
