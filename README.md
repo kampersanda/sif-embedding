@@ -49,7 +49,7 @@ on a personal desktop PC (one core of Intel i7, 16 GB RAM).
 
 [evaluations](./evaluations/) provides tools to evaluate sif-embedding on several similarity evaluation tasks.
 
-### STSBenchmark
+### STS/SICK
 
 [evaluations/senteval](./evaluations/senteval/) provides evaluation tools and results
 for [SentEval STS/SICK Tasks](https://github.com/princeton-nlp/SimCSE/tree/main/SentEval).
@@ -64,7 +64,7 @@ for the STS-Benchmark.
 | princeton-nlp/unsup-simcse-bert-base-uncased | 76.9  | 81.7  | 76.5  | 78.4  |
 | princeton-nlp/sup-simcse-bert-base-uncased   | 83.3  | 86.2  | 84.3  | 84.6  |
 
-### JSICK + JSTS
+### JSTS/JSICK
 
 [eveluations/japanese](./evaluations/japanese/) provides evaluation tools and results
 for [JGLUE JSTS](https://github.com/yahoojapan/JGLUE) and [JSICK](https://github.com/verypluming/JSICK) tasks.
