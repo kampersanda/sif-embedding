@@ -76,9 +76,15 @@ $ cargo run --release --features openblas -- \
 
 ## Experimental results
 
-We show the results obtained by the above procedure for the `valid-v1.1.json` file.
+We show the results obtained by the above commands.
+As a comparison, results using Japanese-SimCSE models published by [cl-nagoya](https://huggingface.co/cl-nagoya) are also shown.
+The results are obtained from the [technical report](https://arxiv.org/abs/2310.19349).
 
-| Method | Pearson's | Spearman's |
-| ------ | --------: | ---------: |
-| SIF    |     0.793 |      0.746 |
-| uSIF   |     0.813 |      0.760 |
+| Model                           | JSICK (test) | JSTS (train) | JSTS (val) | Avg.  |
+| ------------------------------- | :----------: | :----------: | :--------: | :---: |
+| sif_embedding::Sif              |     79.7     |     67.6     |    74.6    | 74.0  |
+| sif_embedding::USif             |     79.7     |     69.3     |    76.0    | 75.0  |
+| cl-nagoya/unsup-simcse-ja-base  |     79.0     |     74.5     |    79.0    | 77.5  |
+| cl-nagoya/unsup-simcse-ja-large |     79.6     |     77.8     |    81.4    | 79.6  |
+| cl-nagoya/sup-simcse-ja-base    |     82.8     |     77.9     |    80.9    | 80.5  |
+| cl-nagoya/sup-simcse-ja-large   |     83.1     |     79.6     |    83.1    | 81.9  |
