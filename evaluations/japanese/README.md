@@ -17,7 +17,7 @@ We show steps to run the evaluation, assuming you are at this directory.
 Run the following commands:
 
 ```shell
-$ git clone https://github.com/yahoojapan/JGLUE.git
+$ ./download.sh
 ```
 
 We will use the data under the `JGLUE/datasets/jsts-v1.1` directory.
