@@ -1,6 +1,6 @@
-# SentEval STS Task
+# SentEval STS/SICK Tasks
 
-Here, we provide a tool to evaluate this library on [SentEval STS Task](https://github.com/princeton-nlp/SimCSE/tree/main/SentEval) provided by the [SimCSE](https://github.com/princeton-nlp/SimCSE) repository.
+Here, we provide a tool to evaluate this library on [SentEval STS/SICK Tasks](https://github.com/princeton-nlp/SimCSE/tree/main/SentEval) provided by the [SimCSE](https://github.com/princeton-nlp/SimCSE) repository.
 
 ## Requirements
 
