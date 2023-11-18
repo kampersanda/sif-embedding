@@ -9,7 +9,7 @@
 </p>
 
 This is a Rust implementation of simple but powerful sentence embedding algorithms based on
-*Smooth Inverse Frequency* and *Common Component Removal* described in the following papers:
+SIF and uSIF described in the following papers:
 
  - Sanjeev Arora, Yingyu Liang, and Tengyu Ma,
    [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
