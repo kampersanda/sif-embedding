@@ -19,6 +19,8 @@ pub const DEFAULT_PARAM_A: Float = 1e-3;
 /// following the original setting.
 pub const DEFAULT_N_COMPONENTS: usize = 1;
 
+const MODEL_MAGIC: &[u8] = b"sif_embedding::Sif 0.6\n";
+
 /// An implementation of *Smooth Inverse Frequency* and *Common Component Removal*,
 /// simple but pewerful techniques for sentence embeddings described in the paper:
 /// Sanjeev Arora, Yingyu Liang, and Tengyu Ma,
@@ -280,6 +282,7 @@ where
     /// Serializes the model.
     pub fn serialize(&self) -> Result<Vec<u8>> {
         let mut bytes = Vec::new();
+        bytes.extend_from_slice(MODEL_MAGIC);
         bincode::serialize_into(&mut bytes, &self.param_a)?;
         bincode::serialize_into(&mut bytes, &self.n_components)?;
         bincode::serialize_into(&mut bytes, &self.common_components)?;
@@ -298,7 +301,10 @@ where
     ///
     /// `word_embeddings` and `word_probs` must be the same as those used in serialization.
     pub fn deserialize(bytes: &[u8], word_embeddings: &'w W, word_probs: &'p P) -> Result<Self> {
-        let mut bytes = bytes;
+        if !bytes.starts_with(MODEL_MAGIC) {
+            return Err(anyhow!("The magic number of the input model mismatches."));
+        }
+        let mut bytes = &bytes[MODEL_MAGIC.len()..];
         let param_a = bincode::deserialize_from(&mut bytes)?;
         let n_components = bincode::deserialize_from(&mut bytes)?;
         let common_components = bincode::deserialize_from(&mut bytes)?;
