@@ -47,7 +47,39 @@ on a personal desktop PC (one core of Intel i7, 16 GB RAM).
 
 ## Evaluations
 
-[evaluations](./evaluations/) provides tools to evaluate sif-embedding on several tasks.
+[evaluations](./evaluations/) provides tools to evaluate sif-embedding on several similarity evaluation tasks.
+
+### STSBenchmark
+
+[evaluations/senteval](./evaluations/senteval/) provides evaluation tools and results
+for [SentEval STS/SICK Tasks](https://github.com/princeton-nlp/SimCSE/tree/main/SentEval).
+
+As one example, the following table shows the evaluation results with the Spearman's rank correlation coefficient
+for the STS-Benchmark.
+
+| Model                                        | train |  dev  | test  | Avg.  |
+| -------------------------------------------- | :---: | :---: | :---: | :---: |
+| sif_embedding::Sif                           | 65.2  | 75.3  | 63.6  | 68.0  |
+| sif_embedding::USif                          | 68.0  | 78.2  | 66.3  | 70.8  |
+| princeton-nlp/unsup-simcse-bert-base-uncased | 76.9  | 81.7  | 76.5  | 78.4  |
+| princeton-nlp/sup-simcse-bert-base-uncased   | 83.3  | 86.2  | 84.3  | 84.6  |
+
+### JSICK + JSTS
+
+[eveluations/japanese](./evaluations/japanese/) provides evaluation tools and results
+for [JGLUE JSTS](https://github.com/yahoojapan/JGLUE) and [JSICK](https://github.com/verypluming/JSICK) tasks.
+
+The following table shows the evaluation results with the Spearman's rank correlation coefficient.
+
+| Model                           | JSICK (test) | JSTS (train) | JSTS (val) | Avg.  |
+| ------------------------------- | :----------: | :----------: | :--------: | :---: |
+| sif_embedding::Sif              |     79.7     |     67.6     |    74.6    | 74.0  |
+| sif_embedding::USif             |     79.7     |     69.3     |    76.0    | 75.0  |
+| cl-nagoya/unsup-simcse-ja-base  |     79.0     |     74.5     |    79.0    | 77.5  |
+| cl-nagoya/unsup-simcse-ja-large |     79.6     |     77.8     |    81.4    | 79.6  |
+| cl-nagoya/sup-simcse-ja-base    |     82.8     |     77.9     |    80.9    | 80.5  |
+| cl-nagoya/sup-simcse-ja-large   |     83.1     |     79.6     |    83.1    | 81.9  |
+
 
 ## Similarity search
 
