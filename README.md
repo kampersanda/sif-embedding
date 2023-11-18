@@ -69,7 +69,7 @@ for the STS-Benchmark.
 [eveluations/japanese](./evaluations/japanese/) provides evaluation tools and results
 for [JGLUE JSTS](https://github.com/yahoojapan/JGLUE) and [JSICK](https://github.com/verypluming/JSICK) tasks.
 
-The following table shows the evaluation results with the Spearman's rank correlation coefficient.
+As one example, the following table shows the evaluation results with the Spearman's rank correlation coefficient.
 
 | Model                           | JSICK (test) | JSTS (train) | JSTS (val) | Avg.  |
 | ------------------------------- | :----------: | :----------: | :--------: | :---: |
