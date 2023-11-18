@@ -1,6 +1,7 @@
-# JGLUE JSTS Task
+# Similarity evaluation tasks for Japanese
 
-Here, we provide a tool to evaluate this library on [JGLUE JSTS Task](https://github.com/yahoojapan/JGLUE).
+Here, we provide a tool to evaluate this library on
+[JGLUE JSTS](https://github.com/yahoojapan/JGLUE) and [JSICK](https://github.com/verypluming/JSICK) tasks.
 
 ## Requirements
 
@@ -12,15 +13,15 @@ You need to install the GSL library, following https://crates.io/crates/GSL/6.0.
 
 We show steps to run the evaluation, assuming you are at this directory.
 
-### 1. Download JGLUE dataset
+### 1. Download datasets
 
-Run the following commands:
+Run the following command:
 
 ```shell
 $ ./download.sh
 ```
 
-We will use the data under the `JGLUE/datasets/jsts-v1.1` directory.
+We will use the data under the `data/jsick` and `data/jsts` directories.
 
 ### 2. Prepare pretrained word embeddings
 
@@ -41,19 +42,37 @@ $ wget https://github.com/daac-tools/vibrato/releases/download/v0.5.0/ipadic-mec
 $ tar xf ipadic-mecab-2_7_0.tar.xz
 ```
 
-### 4. Evaluate
+### 4. Run evaluation
 
 `src/main.rs` provides evaluation for SIF (with `-m sif`) and uSIF (with `-m usif`).
+This tool will report the Pearson's and Spearman's correlation coefficients
+between the cosine similarity of the sentence embeddings and the gold scores.
+
+#### 4.1 JSTS
+
+An example command is as follows:
 
 ```shell
 $ cargo run --release --features openblas -- \
-    -d JGLUE/datasets/jsts-v1.1/valid-v1.1.json \
+    -d data/jsts/valid-v1.1.json \
+    -e jsts \
     -f cc.ja.300.vec.fifu \
     -v ipadic-mecab-2_7_0/system.dic.zst \
     -m sif
 ```
 
-This command will report the Pearson's and Spearman's correlation coefficients between the cosine similarity of the sentence embeddings and the gold scores.
+#### 4.1 JSICK
+
+An example command is as follows:
+
+```shell
+$ cargo run --release --features openblas -- \
+    -d data/jsick/test.tsv \
+    -e jsick_test \
+    -f cc.ja.300.vec.fifu \
+    -v ipadic-mecab-2_7_0/system.dic.zst \
+    -m sif
+```
 
 ## Experimental results
 
