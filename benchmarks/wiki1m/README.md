@@ -34,7 +34,9 @@ $ cargo run --release --features openblas -- \
 
 ## Evaluation results
 
-The following result was obtained by running the above command on a desktop PC (one core of Intel i7, 16 GB RAM).
+The following result was obtained by running the above command on MacBook Air (one core of Apple M2, 24 GB RAM).
 
-- SIF: 14,101 sentences per second
-- uSIF: 11,616 sentences per second
+- SIF: 81972.4 ± 44.3 sentences per second
+- SIF+CR: 69080.3 ± 231.2 sentences per second
+- uSIF: 28451.6 ± 42.9 sentences per second
+- uSIF+CR: 26603.4 ± 167.4 sentences per second
