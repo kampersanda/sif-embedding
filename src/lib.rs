@@ -12,8 +12,9 @@
 //!
 //! This library will help you if
 //!
-//! - DNN-based sentence embeddings are too slow for your application, or
-//! - you do not have an option using GPUs.
+//! - DNN-based sentence embeddings are too slow for your application,
+//! - you do not have an option using GPUs, or
+//! - you want baseline sentence embeddings for your development.
 //!
 //! ## Getting started
 //!
