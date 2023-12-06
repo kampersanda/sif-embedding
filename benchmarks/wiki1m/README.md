@@ -32,9 +32,16 @@ $ cargo run --release --features openblas -- \
     -m sif
 ```
 
+If you want to omit common component removal (CCR) for SIF or piecewise CCR (PCCR) for uSIF,
+specify `-n 0`.
+
 ## Evaluation results
 
-The following result was obtained by running the above command on a desktop PC (one core of Intel i7, 16 GB RAM).
+The following result was obtained by running the above command on MacBook Air (one core of Apple M2, 24 GB RAM).
 
-- SIF: 14,101 sentences per second
-- uSIF: 11,616 sentences per second
+| Method    | Sentences per second |
+| --------- | -------------------- |
+| SIF       | 81972 ± 44.3         |
+| SIF+CCR   | 69080 ± 231.2        |
+| uSIF      | 28452 ± 42.9         |
+| uSIF+PCCR | 26603 ± 167.4        |

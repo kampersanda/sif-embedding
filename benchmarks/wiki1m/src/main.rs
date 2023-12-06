@@ -25,6 +25,7 @@ use vtext::tokenize::VTextTokenizerParams;
 use wordfreq_model::ModelKind;
 
 const BATCH_SIZE: usize = 1 << 16;
+const RUNS: usize = 5;
 
 #[derive(Clone, Debug)]
 enum MethodKind {
@@ -54,6 +55,9 @@ struct Args {
 
     #[arg(short = 'm', long, default_value = "sif")]
     method: MethodKind,
+
+    #[arg(short = 'n', long)]
+    n_components: Option<usize>,
 }
 
 fn main() -> Result<()> {
@@ -74,12 +78,19 @@ fn main() -> Result<()> {
 
     match args.method {
         MethodKind::Sif => {
-            let model = Sif::new(&word_embeddings, &unigram_lm);
+            let param_a = sif_embedding::sif::DEFAULT_PARAM_A;
+            let n_components = args
+                .n_components
+                .unwrap_or(sif_embedding::sif::DEFAULT_N_COMPONENTS);
+            let model = Sif::with_parameters(&word_embeddings, &unigram_lm, param_a, n_components)?;
             let model = model.fit(&sentences)?;
             benchmark(model, &sentences)?;
         }
         MethodKind::USif => {
-            let model = USif::new(&word_embeddings, &unigram_lm);
+            let n_components = args
+                .n_components
+                .unwrap_or(sif_embedding::usif::DEFAULT_N_COMPONENTS);
+            let model = USif::with_parameters(&word_embeddings, &unigram_lm, n_components);
             let model = model.fit(&sentences)?;
             benchmark(model, &sentences)?;
         }
@@ -122,25 +133,47 @@ where
 }
 
 fn benchmark<M: SentenceEmbedder>(model: M, sentences: &[String]) -> Result<()> {
-    let n_batches = if sentences.len() % BATCH_SIZE == 0 {
-        sentences.len() / BATCH_SIZE
-    } else {
-        sentences.len() / BATCH_SIZE + 1
-    };
+    let mut sentences_per_sec_results = Vec::with_capacity(RUNS);
 
-    let start = Instant::now();
-    for (i, batch) in sentences.chunks(BATCH_SIZE).enumerate() {
-        eprintln!("Processing batch {}/{}", i + 1, n_batches);
-        let sent_embeddings = model.embeddings(batch)?;
-        eprintln!("sent_embeddings.shape() = {:?}", sent_embeddings.shape());
+    for r in 0..=RUNS {
+        if r == 0 {
+            eprintln!("Warming up...");
+        } else {
+            eprintln!("Benchmarking...");
+            eprintln!("Run {}/{}", r, RUNS);
+        }
+
+        let start = Instant::now();
+        for batch in sentences.chunks(BATCH_SIZE) {
+            let sent_embeddings = model.embeddings(batch)?;
+            eprintln!("sent_embeddings.shape() = {:?}", sent_embeddings.shape());
+        }
+        let elapsed = start.elapsed();
+        let ms_per_sentence = elapsed.as_secs_f64() / sentences.len() as f64 * 1000.0;
+        let sentences_per_sec = sentences.len() as f64 / elapsed.as_secs_f64();
+
+        eprintln!("Total elapsed time: {:?}", elapsed);
+        eprintln!("Milli seconds per sentence: {:.4}", ms_per_sentence);
+        eprintln!("Sentences per second: {:.1}", sentences_per_sec);
+
+        if r != 0 {
+            sentences_per_sec_results.push(sentences_per_sec);
+        }
     }
-    let elapsed = start.elapsed();
-    let ms_per_sentence = elapsed.as_secs_f64() / sentences.len() as f64 * 1000.0;
-    let sentences_per_sec = sentences.len() as f64 / elapsed.as_secs_f64();
 
-    eprintln!("Total elapsed time: {:?}", elapsed);
-    eprintln!("Milli seconds per sentence: {:.4}", ms_per_sentence);
-    eprintln!("Sentences per second: {:.1}", sentences_per_sec);
+    let n_runs = sentences_per_sec_results.len() as f64;
+    let sentences_per_sec_mean = sentences_per_sec_results.iter().sum::<f64>() / n_runs;
+    let sentences_per_sec_stddev = (sentences_per_sec_results
+        .iter()
+        .map(|x| (x - sentences_per_sec_mean).powi(2))
+        .sum::<f64>()
+        / n_runs)
+        .sqrt();
+
+    eprintln!(
+        "Sentences per second: {:.1} ± {:.1}",
+        sentences_per_sec_mean, sentences_per_sec_stddev
+    );
 
     Ok(())
 }
