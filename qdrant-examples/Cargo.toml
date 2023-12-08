@@ -33,7 +33,7 @@ anyhow = "1.0"
 clap = { version = "4.2.7", features = ["derive"] }
 finalfusion = "0.17.2"
 ndarray = "0.15.6"
-qdrant-client = "1.6.0"
+qdrant-client = "~1.6.0"
 serde_json = { version = "1" }
 tokio = { version = "1", features = ["full"] }
 vtext = "0.2.0"
