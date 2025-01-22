@@ -18,6 +18,8 @@ SIF and uSIF described in the following papers:
    [Unsupervised Random Walk Sentence Embeddings: A Strong but Simple Baseline](https://aclanthology.org/W18-3012/),
    RepL4NLP 2018
 
+My blog post in Japanese is available [here](https://kampersanda.hatenablog.jp/entry/2023/12/09/124846).
+
 ## Features
 
  - **No GPU required**: This library runs on CPU only.

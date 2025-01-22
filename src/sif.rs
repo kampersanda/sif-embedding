@@ -21,7 +21,9 @@ pub const DEFAULT_N_COMPONENTS: usize = 1;
 
 const MODEL_MAGIC: &[u8] = b"sif_embedding::Sif 0.6\n";
 
-/// An implementation of *Smooth Inverse Frequency* and *Common Component Removal*,
+/// An implementation of SIF.
+///
+/// SIF is *Smooth Inverse Frequency* and *Common Component Removal*,
 /// simple but pewerful techniques for sentence embeddings described in the paper:
 /// Sanjeev Arora, Yingyu Liang, and Tengyu Ma,
 /// [A Simple but Tough-to-Beat Baseline for Sentence Embeddings](https://openreview.net/forum?id=SyK00v5xx),
@@ -322,7 +324,7 @@ where
     }
 }
 
-impl<'w, 'p, W, P> SentenceEmbedder for Sif<'w, 'p, W, P>
+impl<W, P> SentenceEmbedder for Sif<'_, '_, W, P>
 where
     W: WordEmbeddings,
     P: WordProbabilities,
