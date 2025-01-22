@@ -18,7 +18,9 @@ pub const DEFAULT_N_COMPONENTS: usize = 5;
 const FLOAT_0_5: Float = 0.5;
 const MODEL_MAGIC: &[u8] = b"sif_embedding::USif 0.6\n";
 
-/// An implementation of *Unsupervised Smooth Inverse Frequency* and *Piecewise Common Component Removal*,
+/// An implementation of uSIF.
+///
+/// uSIF is *Unsupervised Smooth Inverse Frequency* and *Piecewise Common Component Removal*,
 /// simple but pewerful techniques for sentence embeddings described in the paper:
 /// Kawin Ethayarajh,
 /// [Unsupervised Random Walk Sentence Embeddings: A Strong but Simple Baseline](https://aclanthology.org/W18-3012/),
@@ -385,7 +387,7 @@ where
     }
 }
 
-impl<'w, 'p, W, P> SentenceEmbedder for USif<'w, 'p, W, P>
+impl<W, P> SentenceEmbedder for USif<'_, '_, W, P>
 where
     W: WordEmbeddings,
     P: WordProbabilities,
