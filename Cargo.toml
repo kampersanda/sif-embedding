@@ -1,10 +1,10 @@
 [package]
 name = "sif-embedding"
 # NOTE(kampersanda): Do not forget to update the followings as well.
-#  - the version number in `lib.rs`
-#  - `README` in tutorial
+#  - the version number in `lib.rs` (if minor version is updated)
+#  - `README` in tutorial (if minor version is updated)
 #  - `MODEL_MAGIC` in `sif.rs` and `usif.rs` (if necessary)
-version = "0.6.1"
+version = "0.6.2"
 authors = ["Shunsuke Kanda (kampersanda) <shnsk.knd@gmail.com>"]
 description = "Smooth inverse frequency (SIF), a simple but powerful embedding technique for sentences"
 license = "MIT OR Apache-2.0"
